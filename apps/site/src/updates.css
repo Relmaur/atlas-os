@@ -1,0 +1,339 @@
+/* The Updates pages: a calm log. One spine down the left, a star on it for each update, newest at the top. */
+@import './site-base.css';
+
+body {
+  line-height: 1.65;
+}
+.updates .wrap {
+  max-width: 980px;
+}
+.head {
+  padding-block: 72px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.head h1 {
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 900;
+  line-height: 1.04;
+}
+.head > p:not(.eyebrow) {
+  font-size: 18px;
+  color: var(--ink-2);
+  max-width: 56ch;
+}
+.subs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+.subs small {
+  flex-basis: 100%;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+/* the spine */
+.log {
+  position: relative;
+  padding-block: 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+.log::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: 30px;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(var(--line-2), var(--line) 70%, transparent);
+}
+.rel {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 22px;
+  scroll-margin-top: 84px;
+}
+.node {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+}
+.node svg {
+  width: 44px;
+  height: 44px;
+  overflow: visible;
+}
+.rel.past .node svg {
+  opacity: 0.75;
+}
+.card {
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background: linear-gradient(170deg, rgba(14, 24, 46, 0.92), rgba(7, 12, 24, 0.92));
+  overflow: hidden;
+}
+.card-top {
+  padding: 26px 28px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.ver {
+  font: 500 12px var(--f-mono);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  color: var(--cyan-2);
+  background: rgba(34, 211, 238, 0.08);
+}
+.latest {
+  font: 600 10px var(--f-body);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #c9fbe6;
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  background: rgba(16, 185, 129, 0.12);
+}
+.update-name {
+  font-size: clamp(26px, 3.6vw, 38px);
+  font-weight: 900;
+  line-height: 1.08;
+}
+.update-name a {
+  text-decoration: none;
+}
+.update-name a:hover {
+  color: var(--cyan-2);
+}
+.lede {
+  font-size: 17px;
+  color: var(--ink-2);
+  max-width: 62ch;
+}
+.banner-fig {
+  margin: 18px 28px 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  position: relative;
+  aspect-ratio: 2/1;
+  background: #050811;
+}
+.banner-fig img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.92;
+}
+.banner-fig::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(4, 7, 15, 0.85));
+}
+.banner-fig figcaption {
+  position: absolute;
+  left: 18px;
+  bottom: 14px;
+  z-index: 1;
+  font: 500 12px var(--f-mono);
+  color: var(--ink-2);
+}
+.hl {
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.h {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(11, 19, 37, 0.6);
+}
+.h > i {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid;
+  font-style: normal;
+}
+.i-map {
+  border-color: rgba(167, 139, 250, 0.45);
+  color: #c4b5fd;
+}
+.i-card {
+  border-color: rgba(252, 211, 77, 0.5);
+  color: #fde68a;
+}
+.i-runs,
+.i-timers {
+  border-color: rgba(52, 211, 153, 0.5);
+  color: #6ee7b7;
+}
+.i-codex,
+.i-log {
+  border-color: rgba(34, 211, 238, 0.5);
+  color: var(--cyan-2);
+}
+.h-title {
+  font: 700 14px var(--f-display);
+  color: var(--ink);
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
+}
+.h p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.also {
+  padding: 0 28px 6px;
+}
+.also details {
+  border-top: 1px solid var(--line);
+  padding-block: 14px;
+}
+.also summary {
+  cursor: pointer;
+  font: 600 14px var(--f-body);
+  color: var(--ink-2);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.also summary::-webkit-details-marker {
+  display: none;
+}
+.also summary::before {
+  content: '+';
+  font: 500 16px var(--f-mono);
+  color: var(--cyan-2);
+  width: 16px;
+}
+.also details[open] summary::before {
+  content: '–';
+}
+.also ul {
+  margin: 12px 0 4px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ink-2);
+  font-size: 14.5px;
+}
+.foot {
+  padding: 16px 28px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.foot .acts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.copied {
+  color: var(--emerald);
+}
+.copy-url {
+  flex-basis: 100%;
+  font: 500 12.5px var(--f-mono);
+  color: var(--ink-2);
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+.back {
+  padding-top: 40px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.back a {
+  text-decoration: none;
+}
+.back a:hover {
+  color: var(--ink);
+}
+.single .log {
+  padding-top: 20px;
+}
+@media (max-width: 720px) {
+  .log::before {
+    left: 15px;
+  }
+  .rel {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .node,
+  .node svg {
+    width: 30px;
+    height: 30px;
+  }
+  .card-top {
+    padding: 20px 18px 4px;
+  }
+  .banner-fig {
+    margin: 14px 18px 0;
+  }
+  .banner-fig figcaption {
+    left: 10px;
+    right: 10px;
+    bottom: 8px;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hl {
+    padding: 18px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .also {
+    padding: 0 18px 4px;
+  }
+  .foot {
+    padding: 14px 18px 20px;
+  }
+}
+.rise {
+  transition:
+    opacity 1s cubic-bezier(0.19, 1, 0.22, 1),
+    transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.rise.pre {
+  opacity: 0;
+  transform: translateY(30px);
+}

@@ -1,11 +1,12 @@
 // Builds the two pages (the app and the Codex) with relative URLs, since the app lives in a subfolder: /app/ on
 // atlas-os.cloud (`pnpm build`, into dist-site/app) and /nms-os/ on GitHub Pages (plain `vite build`, into dist). public/wiki is a symlink to the repo's wiki mirror, copied into the build as-is.
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { latestOf, parseUpdate } from '@atlas/core/updates';
 
 // A Content Security Policy for both built pages: everything comes from the site itself, except the sync relay it
 // talks to, when that's on another origin; no inline or injected scripts, styles, frames or plugins. Build only: the
@@ -33,6 +34,18 @@ function contentSecurityPolicy(relay: string): Plugin {
   };
 }
 
+// The newest update (updates/*.md), for Home's "What's new" card. A new file there is what makes a new card appear.
+function latestUpdate() {
+  const dir = new URL('../../updates/', import.meta.url);
+  const index: unknown = JSON.parse(readFileSync(new URL('../../wiki/index.json', import.meta.url), 'utf8'));
+  const wikiPages = Array.isArray(index) ? index.length.toLocaleString('en-US') : '';
+  return latestOf(
+    readdirSync(dir)
+      .filter(file => file.endsWith('.md') && file !== 'README.md')
+      .map(file => parseUpdate(readFileSync(new URL(file, dir), 'utf8'), { wikiPages }))
+  );
+}
+
 // What Settings says this build is: the release, the commit and the day it was built. Cloudflare and GitHub name the
 // commit in their build environment; a local build asks git.
 function commit(): string {
@@ -53,7 +66,8 @@ export default defineConfig(({ mode }) => ({
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(version),
     'import.meta.env.VITE_APP_COMMIT': JSON.stringify(commit()),
-    'import.meta.env.VITE_APP_BUILT': JSON.stringify(new Date().toISOString().slice(0, 10))
+    'import.meta.env.VITE_APP_BUILT': JSON.stringify(new Date().toISOString().slice(0, 10)),
+    'import.meta.env.VITE_LATEST_UPDATE': JSON.stringify(JSON.stringify(latestUpdate()))
   },
   plugins: [
     contentSecurityPolicy(loadEnv(mode, import.meta.dirname, 'VITE_').VITE_SYNC_URL ?? ''),

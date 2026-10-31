@@ -6,4 +6,5 @@ interface ImportMetaEnv {
   readonly VITE_APP_VERSION?: string;
   readonly VITE_APP_COMMIT?: string;
   readonly VITE_APP_BUILT?: string;
+  readonly VITE_LATEST_UPDATE?: string;
 }

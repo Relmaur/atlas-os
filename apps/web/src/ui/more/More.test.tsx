@@ -78,6 +78,7 @@ test('About says ATLAS is fan-made and links to the issues for feedback', () => 
   expect(screen.getByRole('link', { name: 'hello@atlas-os.cloud' }).getAttribute('href')).toBe(
     'mailto:hello@atlas-os.cloud'
   );
+  expect(screen.getByRole('link', { name: "What's new" }).getAttribute('href')).toBe('https://atlas-os.cloud/updates/');
   expect(document.body.textContent).toContain('Not affiliated with Hello Games');
   expect(document.body.textContent).toContain('CC BY-NC-SA 3.0');
 });

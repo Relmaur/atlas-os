@@ -6,7 +6,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
-import { state } from './site-log.mjs';
+import { SEEN, state } from './site-log.mjs';
 
 const PORT = 4191;
 const OUT = new URL('../apps/site/public/screens/', import.meta.url).pathname;
@@ -40,9 +40,13 @@ try {
       reducedMotion: 'reduce', // a settled picture, not a frame of an animation
       serviceWorkers: 'block'
     });
-    await context.addInitScript(saved => {
-      if (!localStorage.getItem('nms_master_os_state')) localStorage.setItem('nms_master_os_state', saved);
-    }, JSON.stringify(state));
+    await context.addInitScript(
+      ([saved, [seenKey, seen]]) => {
+        if (!localStorage.getItem('nms_master_os_state')) localStorage.setItem('nms_master_os_state', saved);
+        localStorage.setItem(seenKey, seen);
+      },
+      [JSON.stringify(state), SEEN]
+    );
     const page = await context.newPage();
     for (const [name, hash] of Object.entries(SCREENS)) {
       await page.goto('about:blank'); // a real load: a change of hash alone would keep the last shot's changes

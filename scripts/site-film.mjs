@@ -3,41 +3,18 @@
 //   pnpm --filter @atlas/web build --mode e2e && node scripts/site-film.mjs
 // The one thing that isn't the app is the "Refiner done" banner, standing in for the phone's own notification.
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
-import { state } from './site-log.mjs';
+import { SEEN, withTravels } from './site-log.mjs';
 
 const PORT = 4192;
 const BASE = `http://localhost:${String(PORT)}/`;
 const OUT = new URL('../apps/site/public/', import.meta.url).pathname;
 const MAX_BYTES = 5 * 1024 * 1024;
 
-// Older travels, in the wiki's first galaxies, so the Map and the card have something to show.
-const { galaxies } = JSON.parse(readFileSync(new URL('../wiki/galaxies.json', import.meta.url), 'utf8'));
-let seed = 42;
-const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-const hex = digits =>
-  Math.floor(random() * 16 ** digits)
-    .toString(16)
-    .toUpperCase()
-    .padStart(digits, '0');
-const STARS = ['yellow', 'yellow', 'red', 'green', 'blue', 'purple'];
-const older = Array.from({ length: 48 }, (_, i) => {
-  const at = new Date(Date.now() - (60 - i) * 2 * 86_400_000).toISOString();
-  return {
-    id: `old-${String(i)}`,
-    name: `Waypoint ${String(i + 1)}`,
-    galaxy: galaxies[Math.floor(i / 12)].name,
-    glyphs: `0${hex(3)}${hex(2)}${hex(3)}${hex(3)}`,
-    star: STARS[Math.floor(random() * STARS.length)],
-    planetCount: 1 + Math.floor(random() * 4),
-    visits: [{ at }],
-    createdAt: at
-  };
-});
-const log = { ...state, systems: [...older, ...state.systems] };
+const log = withTravels(48, 4);
 
 const pause = ms => new Promise(done => setTimeout(done, ms));
 
@@ -65,9 +42,13 @@ try {
     hasTouch: true,
     serviceWorkers: 'block'
   });
-  await context.addInitScript(saved => {
-    if (!localStorage.getItem('nms_master_os_state')) localStorage.setItem('nms_master_os_state', saved);
-  }, JSON.stringify(log));
+  await context.addInitScript(
+    ([saved, [seenKey, seen]]) => {
+      if (!localStorage.getItem('nms_master_os_state')) localStorage.setItem('nms_master_os_state', saved);
+      localStorage.setItem(seenKey, seen);
+    },
+    [JSON.stringify(log), SEEN]
+  );
   const page = await context.newPage();
   await page.goto(`${BASE}#home`);
   await page.waitForLoadState('networkidle');

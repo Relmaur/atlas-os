@@ -1,4 +1,6 @@
 // The invented log the product page's screens and video show: names a player might give, and nobody's own save.
+import { readdirSync, readFileSync } from 'node:fs';
+
 const HOUR = 3_600_000;
 const now = Date.now();
 const ago = hours => new Date(now - hours * HOUR).toISOString();
@@ -62,3 +64,37 @@ export const state = {
     { id: 't2', kind: 'crop', label: 'Frost Crystal', startedAt: ago(0.2), endsAt: ahead(42), alerted: false }
   ]
 };
+
+// Older travels, in the wiki's first galaxies, so the Map and the card have something to show. A seed keeps them the same.
+const { galaxies } = JSON.parse(readFileSync(new URL('../wiki/galaxies.json', import.meta.url), 'utf8'));
+export function withTravels(count, galaxyCount) {
+  let seed = 42;
+  const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const hex = digits =>
+    Math.floor(random() * 16 ** digits)
+      .toString(16)
+      .toUpperCase()
+      .padStart(digits, '0');
+  const stars = ['yellow', 'yellow', 'red', 'green', 'blue', 'purple'];
+  const older = Array.from({ length: count }, (_, i) => {
+    const at = new Date(Date.now() - (count + 10 - i) * 86_400_000).toISOString();
+    return {
+      id: `old-${String(i)}`,
+      name: `Waypoint ${String(i + 1)}`,
+      galaxy: galaxies[Math.floor((i * galaxyCount) / count)].name,
+      glyphs: `0${hex(3)}${hex(2)}${hex(3)}${hex(3)}`,
+      star: stars[Math.floor(random() * stars.length)],
+      planetCount: 1 + Math.floor(random() * 4),
+      visits: [{ at }],
+      createdAt: at
+    };
+  });
+  return { ...state, systems: [...older, ...state.systems] };
+}
+
+// Recordings shouldn't show the "What's new" card: it's for players, once.
+const newest = readdirSync(new URL('../updates/', import.meta.url))
+  .filter(file => /^\d{4}-\d{2}-\d{2}-.+\.md$/.test(file))
+  .sort()
+  .at(-1);
+export const SEEN = ['atlas_update_seen', newest.slice(11, -3)];

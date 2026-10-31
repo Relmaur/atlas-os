@@ -1,0 +1,253 @@
+/* What the product page and the Updates pages share: type, colours, the sky, the nav and the footer. Fonts are
+   self-hosted, like the app's: no third-party requests here. */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/orbitron/700.css';
+@import '@fontsource/orbitron/800.css';
+@import '@fontsource/orbitron/900.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+:root {
+  --void: #04070f;
+  --deep: #070c18;
+  --panel: #0b1325;
+  --line: #1a2540;
+  --line-2: #24324f;
+  --ink: #eef3fb;
+  --ink-2: #b6c2d6;
+  --ink-3: #8b9ab3;
+  --cyan: #22d3ee;
+  --cyan-2: #67e8f9;
+  --emerald: #34d399;
+  --gold: #fcd34d;
+  --f-display: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
+  --f-body: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: dark;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+  background: var(--void);
+}
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--f-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 60;
+  background: rgba(4, 7, 15, 0.9);
+}
+a {
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+h1,
+h2,
+h3 {
+  font-family: var(--f-display);
+  text-wrap: balance;
+  margin: 0;
+  letter-spacing: 0.005em;
+}
+p {
+  margin: 0;
+}
+.eyebrow {
+  font: 600 11px/1 var(--f-body);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--cyan-2);
+}
+.mono {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+}
+main,
+header,
+footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* The sky: stars on a canvas. */
+#sky {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+/* nav */
+.nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 50;
+  transition:
+    background 0.4s var(--ease),
+    border-color 0.4s;
+}
+.nav.solid {
+  background: rgba(4, 7, 15, 0.72);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+.nav .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 68px;
+  gap: 16px;
+}
+.wm {
+  font: 800 17px var(--f-display);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+.wm i {
+  font-style: normal;
+  color: var(--cyan-2);
+}
+.nav-links {
+  display: flex;
+  gap: 28px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.nav-links a {
+  text-decoration: none;
+}
+.nav-links a:hover {
+  color: var(--ink);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font: 600 15px var(--f-body);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    transform 0.3s var(--ease),
+    background 0.3s,
+    border-color 0.3s;
+  white-space: nowrap;
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn-p {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(52, 211, 153, 0.55);
+  color: #c9fbe6;
+}
+.btn-p:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #34d399;
+}
+.btn-g {
+  background: transparent;
+  cursor: pointer;
+  border-color: var(--line-2);
+  color: var(--ink-2);
+}
+.btn-g:hover {
+  border-color: #3b4b6d;
+  color: var(--ink);
+}
+.btn-sm {
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.btn-tip {
+  border-color: rgba(252, 211, 77, 0.5);
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.1);
+}
+.btn-tip:hover {
+  border-color: var(--gold);
+}
+@media (max-width: 760px) {
+  .nav-links {
+    display: none;
+  }
+}
+
+/* footer */
+footer {
+  margin-top: 80px;
+  border-top: 1px solid var(--line);
+}
+footer .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 36px 48px;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+footer b {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+footer .links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+footer .links a {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+footer .links a:hover {
+  color: var(--ink);
+}
+.credit {
+  max-width: 520px;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

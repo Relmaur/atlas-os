@@ -1,6 +1,6 @@
 // Builds the product page. Its two big numbers are counted here, from the same wiki files the app ships, and written
 // into the HTML, so they can't drift and the page is complete without a script.
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 import { z } from 'zod';
 import react from '@vitejs/plugin-react';
@@ -8,6 +8,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { GameDataSchema } from '@atlas/core/game-data';
 import { makeCatalog } from '@atlas/core/planner';
 import { rankCrafts } from '@atlas/core/profit';
+import { newestFirst, parseUpdate } from '@atlas/core/updates';
+import { renderFeed, renderList, renderUpdate } from './src/updates-render.ts';
 
 const wikiFile = (name: string) => new URL(`../../wiki/${name}`, import.meta.url);
 
@@ -47,4 +49,77 @@ function fillPage(): Plugin {
   };
 }
 
-export default defineConfig({ base: './', plugins: [react(), tailwindcss(), fillPage()] });
+// The update files (updates/*.md), with their counts filled in. Read fresh for each page, so editing one shows in dev.
+const updatesDir = new URL('../../updates/', import.meta.url);
+function readUpdates() {
+  const wikiPages = counts().pages.toLocaleString('en-US');
+  return newestFirst(
+    readdirSync(updatesDir)
+      .filter(file => file.endsWith('.md') && file !== 'README.md')
+      .map(file => parseUpdate(readFileSync(new URL(file, updatesDir), 'utf8'), { wikiPages }))
+  );
+}
+
+// /updates/, a page per update and /updates.xml: no HTML files to keep, only what the update files say. They're emitted
+// beside the page's own build, or served as they're asked for in dev.
+function updatesPages(): Plugin {
+  return {
+    name: 'atlas-site-updates',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? '').split(/[?#]/)[0] ?? '';
+        const updates = () => readUpdates();
+        if (path === '/updates.xml') {
+          res.setHeader('Content-Type', 'application/atom+xml');
+          res.end(renderFeed(updates()));
+          return;
+        }
+        const match = /^\/updates\/(?:([a-z0-9-]+)\/)?$/.exec(path);
+        if (!match) {
+          next();
+          return;
+        }
+        const assets = '<script type="module" src="/src/updates.ts"></script>';
+        const all = updates();
+        const update = all.find(item => item.slug === match[1]);
+        if (match[1] && !update) {
+          next();
+          return;
+        }
+        const html = update ? renderUpdate(update, update === all[0], assets) : renderList(all, assets);
+        void server.transformIndexHtml(path, html).then(page => {
+          res.setHeader('Content-Type', 'text/html');
+          res.end(page);
+        });
+      });
+    },
+    generateBundle(_, bundle) {
+      const entry = Object.values(bundle).find(file => file.type === 'chunk' && file.name === 'updates');
+      if (entry?.type !== 'chunk') throw new Error('The Updates script is missing from the build');
+      const css = [...(entry.viteMetadata?.importedCss ?? [])].map(file => `<link rel="stylesheet" href="/${file}">`);
+      const assets = [...css, `<script type="module" src="/${entry.fileName}"></script>`].join('\n');
+      const all = readUpdates();
+      this.emitFile({ type: 'asset', fileName: 'updates/index.html', source: renderList(all, assets) });
+      this.emitFile({ type: 'asset', fileName: 'updates.xml', source: renderFeed(all) });
+      for (const update of all)
+        this.emitFile({
+          type: 'asset',
+          fileName: `updates/${update.slug}/index.html`,
+          source: renderUpdate(update, update === all[0], assets)
+        });
+    }
+  };
+}
+
+export default defineConfig({
+  base: './',
+  plugins: [react(), tailwindcss(), fillPage(), updatesPages()],
+  build: {
+    rolldownOptions: {
+      input: {
+        main: new URL('index.html', import.meta.url).pathname,
+        updates: new URL('src/updates.ts', import.meta.url).pathname
+      }
+    }
+  }
+});

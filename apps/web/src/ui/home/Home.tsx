@@ -1,6 +1,7 @@
 // Home (design 01): what you need mid-session. The current system as a hero with its orbit diagram, logging a new
 // system with a slide, your timers, starting a session with a hold, and the systems to warp back to. The outlaw
 // stations moved to Runs, the fleet to Log › Fleet, and Keep screen on to Settings.
+import { WhatsNew } from './WhatsNew.tsx';
 import { useEffect } from 'react';
 import { biomeFamily } from '@atlas/core/facts';
 import { formatClock, formatCountdown } from '@atlas/core/format';
@@ -42,12 +43,14 @@ export function Home() {
     return (
       <div className="flex flex-col gap-section max-w-2xl">
         <HomeHeader />
+        <WhatsNew emptyLog />
         <FirstRun />
       </div>
     );
   return (
     <div className="flex flex-col gap-section max-w-2xl">
       <HomeHeader />
+      <WhatsNew emptyLog={false} />
       <Hero system={summary.current} now={now} />
       {timers.length > 0 && <Timers timers={homeTimers(state.timers, now)} />}
       <HoldToActivate

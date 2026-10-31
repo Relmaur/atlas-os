@@ -9,7 +9,7 @@ import { useAppState } from '../useAppState.ts';
 import { promptInstall, toggleKeepAwake, useDevice, type Device } from './device-store.ts';
 import { useWikiCount } from '../shell/wiki-index.ts';
 import { SYNC_URL, useSyncAttention, useSyncStatus } from '../../app/sync.ts';
-import { FEEDBACK_URL, KOFI_URL } from '../../app/support.ts';
+import { FEEDBACK_URL, UPDATES_URL, KOFI_URL } from '../../app/support.ts';
 import { AlertsSwitch } from '../session/AlertsSwitch.tsx';
 import { usePushStatus } from '../../app/push.ts';
 import { goBack } from '../shell/section-store.ts';
@@ -265,6 +265,15 @@ export function More() {
             className="self-start mt-1 inline-flex items-center gap-1.5 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
           >
             Feedback and source code
+            <i className="ph-bold ph-arrow-square-out" aria-hidden="true" />
+          </a>
+          <a
+            href={UPDATES_URL}
+            target="_blank"
+            rel="noopener"
+            className="self-start inline-flex items-center gap-1.5 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
+          >
+            What's new
             <i className="ph-bold ph-arrow-square-out" aria-hidden="true" />
           </a>
           <a

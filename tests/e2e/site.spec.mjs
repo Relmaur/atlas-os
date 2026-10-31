@@ -139,3 +139,93 @@ test('the page is listed under its real address', async ({ page }) => {
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://atlas-os.cloud/');
   expect(await page.locator('meta[name="robots"]').count()).toBe(0);
 });
+
+test('the Updates list: both updates, newest first, gold on the latest, and a link back from the product page', async ({
+  page
+}) => {
+  const offsite = [];
+  page.on('request', request => {
+    if (!request.url().startsWith('http://localhost')) offsite.push(request.url());
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  await expect(page.locator('footer').getByRole('link', { name: 'Updates' })).toHaveAttribute('href', '/updates/');
+  await page.goto('./updates/');
+  await expect(page).toHaveTitle(/What's new in ATLAS:OS/);
+  await expect(page.locator('.update-name')).toHaveText(['First Light', 'Where it started']);
+  await expect(page.locator('.rel').first().locator('.latest')).toHaveText('Latest');
+  await expect(page.locator('.rel').nth(1).locator('.latest')).toHaveCount(0);
+  await expect(page.locator('.rel').first().locator('.ver')).toHaveText('3.21');
+  await expect(page.locator('.rel').first().locator('.h')).toHaveCount(4);
+  await expect(page.locator('.rel').first().locator('.lede')).toContainText(/\d,\d{3} pages/);
+  expect(await page.locator('body').innerText()).not.toContain('{{');
+  await expect(page.locator('.rel').first().locator('details')).toHaveCount(2);
+  const { violations } = await new AxeBuilder({ page }).analyze();
+  expect(violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const banner = page.locator('.banner-fig img');
+  await banner.scrollIntoViewIfNeeded();
+  await expect.poll(() => banner.evaluate(img => img.naturalWidth)).toBe(1600);
+  expect(offsite).toEqual([]);
+});
+
+test('an update has its own page, with the tags a shared link needs', async ({ page, request }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./updates/first-light/');
+  await expect(page).toHaveTitle('ATLAS:OS · First Light');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('First Light');
+  const meta = name => page.locator(`meta[property="${name}"], meta[name="${name}"]`);
+  await expect(meta('og:title')).toHaveAttribute('content', 'ATLAS:OS · First Light');
+  await expect(meta('og:description')).toHaveAttribute('content', /new home at atlas-os\.cloud/);
+  await expect(meta('og:image')).toHaveAttribute('content', 'https://atlas-os.cloud/banners/first-light.jpg');
+  await expect(meta('twitter:card')).toHaveAttribute('content', 'summary_large_image');
+  const { violations } = await new AxeBuilder({ page }).analyze();
+  expect(violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
+
+  await page.goto('./updates/origins/');
+  await expect(page.locator('.banner-fig')).toHaveCount(0); // its picture is for sharing only
+  await expect(meta('og:image')).toHaveAttribute('content', 'https://atlas-os.cloud/banners/origins.jpg');
+  expect((await request.get('./banners/origins.jpg')).ok()).toBe(true);
+  expect((await request.get('./banners/first-light.jpg')).ok()).toBe(true);
+});
+
+test('Copy link gives the update its own address, or shows it if the clipboard refuses', async ({ page }) => {
+  await page.goto('./updates/');
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: text => {
+          window.copied = text;
+          return Promise.resolve();
+        }
+      }
+    });
+  });
+  const button = page.locator('.rel').first().locator('[data-copy]'); // its name changes when clicked
+  await button.click();
+  await expect(button).toHaveText('Link copied');
+  expect(await page.evaluate(() => window.copied)).toBe('https://atlas-os.cloud/updates/first-light/');
+
+  await page.evaluate(() => {
+    navigator.clipboard.writeText = () => Promise.reject(new Error('refused'));
+  });
+  const second = page.locator('.rel').nth(1).locator('[data-copy]');
+  await second.click();
+  await expect(page.locator('.rel').nth(1).locator('.copy-url')).toHaveText('https://atlas-os.cloud/updates/origins/');
+});
+
+test('the feed lists every update, and later updates rise in on scroll', async ({ page, request }) => {
+  const feed = await (await request.get('./updates.xml')).text();
+  expect(feed).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
+  expect(feed).toContain('<id>https://atlas-os.cloud/updates/first-light/</id>');
+  expect(feed).toContain('<id>https://atlas-os.cloud/updates/origins/</id>');
+  expect(feed.indexOf('first-light')).toBeLessThan(feed.indexOf('origins'));
+  expect(feed).not.toContain('{{');
+
+  await page.goto('./updates/');
+  await expect(page.locator('.rel').first()).not.toHaveClass(/\bpre\b/); // there at rest
+  const last = page.locator('.rel').last();
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).not.toHaveClass(/\bpre\b/);
+});
