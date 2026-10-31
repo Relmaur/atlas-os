@@ -1,3 +1,2 @@
-# Until the product page takes the root (it's at /preview meanwhile). A temporary redirect, so nothing remembers it
-# afterwards.
-/ /app/ 302
+# The product page's old preview address. A temporary redirect, so nothing remembers it afterwards.
+/preview / 302

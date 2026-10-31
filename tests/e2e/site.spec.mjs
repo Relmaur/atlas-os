@@ -133,3 +133,9 @@ test('the hero video is muted, inline and labelled, and holds still with reduced
   const poster = await page.request.get('./poster.jpg');
   expect(poster.ok()).toBe(true);
 });
+
+test('the page is listed under its real address', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://atlas-os.cloud/');
+  expect(await page.locator('meta[name="robots"]').count()).toBe(0);
+});

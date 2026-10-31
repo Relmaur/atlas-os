@@ -6,6 +6,7 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 ### Added
+- **The product page** at https://atlas-os.cloud: what ATLAS is, with the app's own screens and cards, how to install it, and what it costs. The app stays at /app/. It's free of analytics and third-party requests, like the app.
 - Settings › About has a contact address: hello@atlas-os.cloud.
 
 ### Changed

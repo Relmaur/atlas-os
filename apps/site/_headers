@@ -24,14 +24,10 @@
 /poster.jpg
   Cache-Control: public, max-age=86400
 
-# The product page at its preview address, until it takes the root: kept out of search results.
-/preview
-  Cache-Control: no-cache, no-transform
-  X-Robots-Tag: noindex
-/preview.html
-  Cache-Control: no-cache, no-transform
-  X-Robots-Tag: noindex
+# The product page, asked for again like the app's pages, and for the same reason.
 /
+  Cache-Control: no-cache, no-transform
+/index.html
   Cache-Control: no-cache, no-transform
 
 # Always asked for again: these say which hashed files are current. no-transform keeps Cloudflare from rewriting the

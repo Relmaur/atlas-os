@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "pnpm --filter @atlas/web dev",
-    "build": "pnpm index:wiki && pnpm --filter @atlas/web build --mode site --outDir dist-site/app --emptyOutDir && pnpm --filter @atlas/site build --outDir ../web/dist-site --emptyOutDir false && cp apps/web/dist-site/index.html apps/web/dist-site/preview.html && cp apps/site/_headers apps/site/_redirects apps/web/dist-site/",
+    "build": "pnpm index:wiki && pnpm --filter @atlas/web build --mode site --outDir dist-site/app --emptyOutDir && pnpm --filter @atlas/site build --outDir ../web/dist-site --emptyOutDir false && cp apps/site/_headers apps/site/_redirects apps/web/dist-site/",
     "preview": "pnpm --filter @atlas/web preview",
     "start": "pnpm dev",
     "sync:wiki": "node packages/wiki/src/sync.ts",

@@ -8,11 +8,11 @@ The site has been on GitHub Pages at `https://relmaur.github.io/nms-os/`. That o
 ## Decision
 | Address | What | Runs on |
 |---|---|---|
-| `atlas-os.cloud/` | The product page. Until it exists, a temporary redirect to `/app/` | Worker `atlas-os`, static assets only |
+| `atlas-os.cloud/` | The product page (`apps/site`) | Worker `atlas-os`, static assets only |
 | `atlas-os.cloud/app/` | The app; manifest and service worker scope follow its folder | Same |
 | `atlas-os.cloud/api/sync/*` | The relay | Worker `atlas-sync` + D1, on a route |
 
-- **Build:** `pnpm build` makes `apps/web/dist-site/`: the app in `app/` (`--mode site`), `_headers` and `_redirects` from `apps/site/` at the root. Cloudflare's Git integration runs it on every push to `main`, then `npx wrangler deploy` (the pinned root Wrangler, root `wrangler.toml`). Node comes from `.node-version`, pnpm from `packageManager`. GitHub Actions still runs the gate and still deploys the old site from a plain `vite build`.
+- **Build:** `pnpm build` makes `apps/web/dist-site/`: the app in `app/` (`--mode site`), the product page at the root, `_headers` and `_redirects` from `apps/site/` at the root. Cloudflare's Git integration runs it on every push to `main`, then `npx wrangler deploy` (the pinned root Wrangler, root `wrangler.toml`). Node comes from `.node-version`, pnpm from `packageManager`. GitHub Actions still runs the gate and still deploys the old site from a plain `vite build`.
 - **Paths stay relative,** so nothing in the app names `/app/`. The manifest's `id`, `start_url` and `scope` and the service worker's scope all resolve to the app's folder.
 - **The relay is same-origin:** the site build's `VITE_SYNC_URL` is `/api/sync`, so the CSP is `'self'` only and the app calls no other origin. The relay strips that prefix, and still answers on workers.dev for the old site and published MCP servers.
 - **Headers** (`apps/site/_headers`): the CSP plus `frame-ancestors 'none'`, HSTS at one day, `no-referrer`, `nosniff`, a tight `Permissions-Policy`. Hashed assets are cached for a year as immutable; pages, manifest and `sw.js` are `no-cache`.
