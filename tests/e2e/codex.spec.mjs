@@ -33,9 +33,9 @@ test('obsolete pages appear only when asked for', async ({ page }) => {
   await expect.poll(count).toBeGreaterThan(current);
 });
 
-test('the main app’s header search reaches wiki articles', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'phone', 'the phone opens search from a button; covered on desktop');
+test('the main app’s search reaches wiki articles', async ({ page }) => {
   await page.goto('./');
+  await page.getByRole('button', { name: 'Search and quick actions' }).click();
   await page.locator('#globalSearchInput').fill('oxygen');
   await expect(page.locator('#globalSearchResults')).toContainText('Oxygen');
 });

@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
 import { loadAppState, setAppState } from '../../app/store.ts';
@@ -104,20 +104,36 @@ test('a search with no match says so', async () => {
   expect(screen.getByRole('listbox').textContent).toContain('Nothing matches “zzzz”');
 });
 
-test('the sidebar and tab bar mark the open section and count the log', () => {
-  render(
-    <>
-      <Sidebar />
-      <TabBar />
-    </>
-  );
+test('the rail holds the search key, the four tabs and Settings, which lights on its own', () => {
+  render(<Sidebar />);
+  act(() => {
+    void showSection('more');
+  });
+  const rail = screen.getByRole('navigation', { name: 'Primary' });
+  expect(within(rail).getByRole('button', { name: 'Search and quick actions' })).toBeTruthy();
+  expect(
+    within(rail)
+      .getAllByRole('link')
+      .map(link => link.textContent.trim())
+  ).toEqual(['Home', 'Log', expect.stringMatching(/^Runs/), 'Codex', 'Settings']);
+  expect(within(rail).getByRole('link', { name: 'Settings' }).getAttribute('aria-current')).toBe('page');
+  expect(within(rail).getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBeNull();
+});
+
+test('g then a letter jumps to a tab', async () => {
+  render(<Sidebar />);
+  await userEvent.keyboard('gl');
+  await waitFor(() => {
+    expect(screen.getByRole('link', { name: 'Log' }).getAttribute('aria-current')).toBe('page');
+  });
+});
+
+test('the tab bar marks the open section', () => {
+  render(<TabBar />);
   act(() => {
     void showSection('book1');
   });
-  expect(document.getElementById('nav-guides')?.getAttribute('aria-current')).toBe('page'); // a book is in Guides
   expect(screen.getByRole('link', { name: 'Codex' }).getAttribute('aria-current')).toBe('page'); // and in the Codex tab
-  expect(document.getElementById('sidebarSystemsCount')?.textContent).toBe('2');
-  expect(document.getElementById('sidebarOutlawCount')?.textContent).toBe('1/1');
   // A ready station lights the Runs tab's live dot, and its name says how many.
   const runs = screen.getByRole('link', { name: /^Runs/ });
   expect(runs.textContent).toContain('1 station ready');

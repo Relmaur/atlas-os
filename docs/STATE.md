@@ -183,6 +183,8 @@ CI runs typecheck + lint + unit tests only (owner's decision: browser tests run 
 - The product page's "Tilt your phone" shows only where the page's card answers motion: a phone (coarse pointer, under 768px), with script and without reduced motion. The card follows motion there. Where the browser has a permission call (iOS, and Chromium too), the line reads "Tap the card and tilt your phone".
 
 **Next: the wide-screen app, in stages (owner, 2026-10-31).** `design/desktop-direction.md` in the private folder is the brief: the 88px rail, list/detail panes and side panels from 1024px, tested at 390, 768, 1280 and 1440. Every judgement call gets listed for the owner's canvas review.
+- **Stage 1, the shell, built (unreleased):** from 1024 the 88px rail (`shell/Sidebar.tsx`: search key, Home · Log · Runs · Codex, Settings at the foot) replaces the old sidebar and header; from 768 to 1023 the phone's structure centred at 640px; search is one overlay below lg and a floating panel beside the rail from lg; `g` then h/l/r/c, and `n` in Log, listed in Settings from lg.
+  - Judgement calls: Home keeps its own header from lg, without the gear, so its timer button has a home; the header's Export and Import (and dropping a file on it) are gone from lg, leaving them in Settings; the Codex page keeps its own slim header until its stage.
 
 **3.14.0, getting ready to share with the NMS community** (owner, 2026-10-27; ADR-0007). The owner is still the only user; nothing has been shared yet:
 - The app holds nobody's save: the starter data and Books II, III and V are general.

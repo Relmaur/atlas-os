@@ -1,5 +1,6 @@
-// The main page's header: the logo (back to Home), the search (from md), Settings below lg, the session, and Export
-// and Import (click, or drop a file).
+// The main page's header below lg, on the screens that don't draw their own: the logo (back to Home), Settings, the
+// session, and Export and Import (click, or drop a file). From lg the rail takes over and only the search stays mounted
+// here, shown as a floating panel when the rail's key opens it.
 import { useState } from 'react';
 import { exportState, importState } from '../../app/backup.ts';
 import { Search } from './Search.tsx';
@@ -10,14 +11,14 @@ import { useAppState } from '../useAppState.ts';
 export function Header() {
   const [dropping, setDropping] = useState(false);
   return (
-    <div className="max-w-[1600px] mx-auto h-14 lg:h-16 px-4 sm:px-6 flex items-center gap-3 sm:gap-4">
+    <div className="max-w-[1600px] mx-auto h-14 lg:h-0 px-4 sm:px-6 flex items-center gap-3 sm:gap-4">
       <a
         href="#home"
         onClick={event => {
           event.preventDefault();
           void showSection('home');
         }}
-        className="flex items-center gap-3 shrink-0 min-w-0 rounded-lg"
+        className="lg:hidden flex items-center gap-3 shrink-0 min-w-0 rounded-lg"
       >
         <i className="ph-bold ph-diamond text-[22px] text-scanner-cyan-glow" aria-hidden="true" />
         <span className="font-display font-bold text-sm sm:text-base tracking-wider text-white whitespace-nowrap">
@@ -27,8 +28,8 @@ export function Header() {
 
       <Search />
 
-      <div className="ml-auto md:ml-0 flex items-center gap-1.5 sm:gap-2 shrink-0">
-        {/* Settings (More) has no tab: below lg it sits behind this gear. Search moved to the tab bar's key. */}
+      <div className="lg:hidden ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Settings (More) has no tab: below lg it sits behind this gear. Search is on the tab bar's key. */}
         <a
           href="#more"
           aria-label="Settings"

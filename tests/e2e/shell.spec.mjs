@@ -89,3 +89,45 @@ test('old and shortcut addresses still land', async ({ page }) => {
   await page.goto('./#nowhere');
   await expect(page.locator('#sec-home')).toBeVisible();
 });
+
+test('the shell at each width: the pill below lg, centred from 768; the rail from 1024, with search beside it', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  const rail = page.getByRole('navigation', { name: 'Primary' });
+  const key = page.getByRole('button', { name: 'Search and quick actions' });
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('./');
+  await expect(page.locator('#tabBar')).toBeVisible();
+  const pill = await page.locator('#tabBar').boundingBox();
+  const keyBox = await key.boundingBox();
+  expect(pill.x).toBeCloseTo(768 / 2 - 320, 0);
+  expect(keyBox.x + keyBox.width).toBeCloseTo(768 / 2 + 320, 0);
+  for (const width of [1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator('#tabBar')).toBeHidden();
+    await expect(rail.getByRole('link', { name: 'Settings' })).toBeVisible();
+    expect((await page.locator('#sidebarNav').boundingBox()).width).toBe(88);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await key.click();
+  const field = page.locator('#globalSearchInput');
+  await expect(field).toBeFocused();
+  expect((await field.boundingBox()).x).toBeGreaterThan(88);
+  await page.locator('.app-main').click({ position: { x: 900, y: 500 }, force: true });
+  await expect(field).toBeHidden();
+});
+
+test('keyboard shortcuts: g then a letter, and n in Log, and they are listed in Settings', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'no hardware keyboard on the phone run');
+  await page.goto('./');
+  await page.keyboard.press('g');
+  await page.keyboard.press('l');
+  await expect(page.locator('#sec-systems')).toBeVisible();
+  await page.keyboard.press('n');
+  await expect(page).toHaveURL(/#note\//);
+  await page.goto('./#more');
+  await expect(page.getByRole('region', { name: 'Keyboard' })).toContainText('Go to Runs');
+});

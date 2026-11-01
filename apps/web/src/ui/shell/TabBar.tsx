@@ -1,4 +1,4 @@
-// The floating tab bar below lg (the Codex page carries a static copy): four sections, Home · Log · Runs · Codex, and
+// The floating tab bar below lg, and the rail's tabs from lg (the Codex page carries a static copy): four sections, Home · Log · Runs · Codex, and
 // the round search key beside them. Every screen lights the tab of the section it belongs to.
 import { useEffect } from 'react';
 import { rankOutlaw } from '@atlas/core/systems-model';
@@ -35,11 +35,49 @@ export function tabOf(section: string): string {
   return TAB_OF[section] ?? (section.startsWith('book') ? 'codex' : 'home');
 }
 
-export function TabBar() {
+// The four tabs, in the pill and the rail. On the rail Settings has its own item, so it doesn't light Home there.
+export function PrimaryTabs({ settingsApart = false }: { settingsApart?: boolean }) {
   const section = useSection();
   const { ready } = useOutlawReady();
-  const at = tabOf(section);
+  const at = settingsApart && section === 'more' ? '' : tabOf(section);
   const syncAttention = useSyncAttention();
+  // `mark` is the dot on the icon: the live dot (the bar's only glow) when a run needs you, or a plain amber dot when
+  // Settings needs you (sync can't continue on its own). Either way the tab's name says it to a screen reader.
+  const tab = (key: string, href: string, icon: string, label: string, mark?: 'live' | 'alert', note?: string) => (
+    <a href={href} data-tab={key} aria-current={at === key ? 'page' : undefined} className="tab-item">
+      <span className="tab-icon">
+        <i className={`ph-bold ${icon}`} aria-hidden="true" />
+        {mark && <span className={mark === 'live' ? 'tab-live' : 'tab-alert'} aria-hidden="true" />}
+      </span>
+      <span>{label}</span>
+      {note && <span className="sr-only"> ({note})</span>}
+    </a>
+  );
+  return (
+    <>
+      {tab(
+        'home',
+        '#home',
+        'ph-house',
+        'Home',
+        syncAttention ? 'alert' : undefined,
+        syncAttention ? 'sync needs attention' : ''
+      )}
+      {tab('log', '#systems', 'ph-planet', 'Log')}
+      {tab(
+        'runs',
+        '#runs',
+        'ph-path',
+        'Runs',
+        ready ? 'live' : undefined,
+        ready ? `${ready} ${ready === 1 ? 'station' : 'stations'} ready` : ''
+      )}
+      {tab('codex', 'wiki/', 'ph-book-open', 'Codex')}
+    </>
+  );
+}
+
+export function TabBar() {
   const searching = useSearchOpen();
 
   // Ready stations on the installed app's icon too (where the platform supports badges). It keeps counting while the
@@ -61,39 +99,10 @@ export function TabBar() {
     };
   }, []);
 
-  // `mark` is the dot on the icon: the live dot (the bar's only glow) when a run needs you, or a plain amber dot when
-  // Settings needs you (sync can't continue on its own). Either way the tab's name says it to a screen reader.
-  const tab = (key: string, href: string, icon: string, label: string, mark?: 'live' | 'alert', note?: string) => (
-    <a href={href} data-tab={key} aria-current={at === key ? 'page' : undefined} className="tab-item">
-      <span className="tab-icon">
-        <i className={`ph-bold ${icon}`} aria-hidden="true" />
-        {mark && <span className={mark === 'live' ? 'tab-live' : 'tab-alert'} aria-hidden="true" />}
-      </span>
-      <span>{label}</span>
-      {note && <span className="sr-only"> ({note})</span>}
-    </a>
-  );
   return (
     <div className="lg:hidden">
       <nav id="tabBar" aria-label="Primary" className="tab-bar">
-        {tab(
-          'home',
-          '#home',
-          'ph-house',
-          'Home',
-          syncAttention ? 'alert' : undefined,
-          syncAttention ? 'sync needs attention' : ''
-        )}
-        {tab('log', '#systems', 'ph-planet', 'Log')}
-        {tab(
-          'runs',
-          '#runs',
-          'ph-path',
-          'Runs',
-          ready ? 'live' : undefined,
-          ready ? `${ready} ${ready === 1 ? 'station' : 'stations'} ready` : ''
-        )}
-        {tab('codex', 'wiki/', 'ph-book-open', 'Codex')}
+        <PrimaryTabs />
       </nav>
       <button
         type="button"

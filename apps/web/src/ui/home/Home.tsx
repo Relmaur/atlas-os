@@ -181,11 +181,11 @@ function EmptyOrbit() {
   );
 }
 
-// Below lg, Home has its own header (the app's is hidden here): the wordmark, sync's state, the timers (until Search's
-// quick actions can start one) and Settings. From lg the sidebar and the app header carry them.
+// Home has its own header: the wordmark, sync's state, the timers (until Search's quick actions can start one) and,
+// below lg, Settings. From lg the rail holds Settings.
 function HomeHeader() {
   return (
-    <header className="lg:hidden flex items-center justify-between gap-3 pt-[env(safe-area-inset-top)] mb-2">
+    <header className="flex items-center justify-between gap-3 pt-[env(safe-area-inset-top)] mb-2">
       <span className="flex items-center gap-2.5">
         <i className="ph-bold ph-diamond text-[22px] text-scanner-cyan-glow" aria-hidden="true" />
         <span className="font-display text-wordmark text-ink-bright">
@@ -202,7 +202,7 @@ function HomeHeader() {
           href="#more"
           aria-label="Settings"
           title="Settings"
-          className="w-10 h-10 rounded-[10px] border border-hairline bg-panel text-ink-soft grid place-items-center hover:border-control-edge transition-colors duration-[var(--duration-micro)]"
+          className="lg:hidden w-10 h-10 rounded-[10px] border border-hairline bg-panel text-ink-soft grid place-items-center hover:border-control-edge transition-colors duration-[var(--duration-micro)]"
         >
           <i className="ph-bold ph-gear-six text-lg" aria-hidden="true" />
         </a>

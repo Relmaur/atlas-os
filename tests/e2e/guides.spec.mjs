@@ -30,9 +30,9 @@ test('the book pager walks to the next book', async ({ page }) => {
   await expect(page.locator('#sec-book4 h1')).toContainText('Self-Sufficient');
 });
 
-test('the header search finds text in a book and scrolls to it', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'phone', 'the phone opens search from a button; covered on desktop');
+test('search finds text in a book and scrolls to it', async ({ page }) => {
   await page.goto('./');
+  await page.getByRole('button', { name: 'Search and quick actions' }).click();
   await page.locator('#globalSearchInput').fill('Golden Triangle');
   const hit = page.locator('#globalSearchResults .search-hit').filter({ hasText: 'Self-Sufficient' }).first();
   await hit.click();

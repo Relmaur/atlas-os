@@ -1,122 +1,70 @@
-// Desktop navigation (the bottom tab bar replaces it below lg), with live counts beside each place.
-import type { ReactNode } from 'react';
-import { guideProgress } from '@atlas/core/guides';
-import { useAppState } from '../useAppState.ts';
-import { useWikiCount } from './wiki-index.ts';
-import { useLoaded, useOutlawReady } from './counts.ts';
+// The left rail from lg (design/desktop-direction): the search key, the same four tabs as the phone's pill, and
+// Settings at the foot. Below lg the floating tab bar takes over. It also holds the keyboard shortcuts.
+import { useEffect } from 'react';
+import { newNote } from '../notes/note-nav.ts';
+import { toggleSearch, useSearchOpen } from './Search.tsx';
 import { showSection, useSection } from './section-store.ts';
-import { useSyncAttention } from '../../app/sync.ts';
+import { PrimaryTabs, tabOf } from './TabBar.tsx';
 
-const PART_OF: Record<string, string> = {
-  system: 'systems',
-  map: 'systems',
-  session: 'home',
-  card: 'more',
-  cards: 'more',
-  frontier: 'systems',
-  ship: 'gear',
-  outlaw: 'runs',
-  note: 'notes',
-  plan: 'calculators',
-  crafts: 'calculators'
-};
+const CHORD_MS = 1000;
+
+// g then a letter jumps to a tab; n starts a note in Log. Never while typing or with a modifier held, so the browser's
+// own shortcuts and every text field keep working.
+function useShortcuts(section: string) {
+  useEffect(() => {
+    let chordAt = 0;
+    const onKey = (event: KeyboardEvent) => {
+      const el = document.activeElement;
+      const typing =
+        el instanceof HTMLElement && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
+      if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (chordAt && performance.now() - chordAt < CHORD_MS) {
+        chordAt = 0;
+        if (key === 'h') void showSection('home');
+        else if (key === 'l') void showSection('systems');
+        else if (key === 'r') void showSection('runs');
+        else if (key === 'c') location.assign('wiki/');
+      } else if (key === 'g') {
+        chordAt = performance.now();
+      } else if (key === 'n' && tabOf(section) === 'log') {
+        newNote();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [section]);
+}
 
 export function Sidebar() {
-  const state = useAppState();
   const section = useSection();
-  const outlaw = useOutlawReady();
-  const wikiCount = useWikiCount();
-  const loaded = useLoaded();
-  const syncAttention = useSyncAttention();
-  // A book is part of Guides; one system is part of Systems, and so on.
-  const at = section.startsWith('book') ? 'guides' : (PART_OF[section] ?? section);
-  const item = (key: string, icon: string, color: string, label: string, count?: ReactNode, countId?: string) => (
-    <li>
+  const searching = useSearchOpen();
+  useShortcuts(section);
+  return (
+    <nav aria-label="Primary" className="rail">
       <button
         type="button"
-        onClick={() => {
-          void showSection(key);
-        }}
-        id={`nav-${key}`}
-        aria-current={at === key ? 'page' : undefined}
-        className="nav-btn"
+        onClick={toggleSearch}
+        aria-label="Search and quick actions"
+        aria-expanded={searching}
+        className="search-key"
       >
-        <span className={`nav-tile ${color}`}>
-          <i className={`ph-bold ${icon}`} aria-hidden="true" />
-        </span>
-        <span className="truncate">{label}</span>
-        {count !== undefined && (
-          <span id={countId} className="nav-count">
-            {count}
-          </span>
-        )}
+        <i className="ph-bold ph-magnifying-glass" aria-hidden="true" />
       </button>
-    </li>
-  );
-  return (
-    <nav className="flex-1 overflow-y-auto overscroll-contain px-3 py-6 space-y-8">
-      <div>
-        <p className="nav-group-label">Companion</p>
-        <ul className="space-y-1">
-          {item('home', 'ph-house', 'text-cyan-300', 'Home')}
-          {item(
-            'systems',
-            'ph-planet',
-            'text-purple-300',
-            'Systems',
-            loaded ? state.systems.length : 0,
-            'sidebarSystemsCount'
-          )}
-          {item(
-            'runs',
-            'ph-path',
-            'text-red-300',
-            'Runs',
-            outlaw.total ? `${String(outlaw.ready)}/${String(outlaw.total)}` : '0',
-            'sidebarOutlawCount'
-          )}
-          {item('gear', 'ph-rocket', 'text-cyan-300', 'Ships & Multi-Tools', loaded ? state.gear.length : 0)}
-          {item('notes', 'ph-note-pencil', 'text-sky-300', 'Notes', loaded ? state.notes.length : 0)}
-          {item('calculators', 'ph-calculator', 'text-amber-300', 'Calculators')}
-          <li>
-            <a href="wiki/" className="nav-btn">
-              <span className="nav-tile text-emerald-300">
-                <i className="ph-bold ph-books" aria-hidden="true" />
-              </span>
-              <span className="truncate">Wiki Codex</span>
-              <span id="sidebarWikiCount" className="nav-count">
-                {(wikiCount ?? 0).toLocaleString()}
-              </span>
-              <i className="ph-bold ph-arrow-up-right text-xs text-slate-400 ml-2" aria-hidden="true" />
-            </a>
-          </li>
-        </ul>
-      </div>
-      <div>
-        <p className="nav-group-label">Library</p>
-        <ul className="space-y-1">
-          {item(
-            'guides',
-            'ph-book-open-text',
-            'text-sky-300',
-            'Guides',
-            `${String(loaded ? guideProgress(state.checklists).pct : 0)}%`
-          )}
-          {item(
-            'more',
-            'ph-gear-six',
-            'text-slate-300',
-            'Device & data',
-            syncAttention ? (
-              <>
-                <span className="tab-alert static inline-block" aria-hidden="true" />
-                <span className="sr-only">Sync needs attention</span>
-              </>
-            ) : undefined
-          )}
-        </ul>
-      </div>
-      <p className="px-3 text-xs text-slate-400">Fan-made. Not affiliated with Hello Games.</p>
+      <PrimaryTabs settingsApart />
+      <a
+        href="#more"
+        aria-current={section === 'more' ? 'page' : undefined}
+        title="Settings"
+        className="tab-item rail-settings"
+      >
+        <span className="tab-icon">
+          <i className="ph-bold ph-gear-six" aria-hidden="true" />
+        </span>
+        <span>Settings</span>
+      </a>
     </nav>
   );
 }

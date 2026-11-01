@@ -39,11 +39,8 @@ const showRecap = async page => {
   await page.locator('#sec-session').getByRole('button', { name: 'End session' }).click();
 };
 
-// The search key on a phone and tablet; from md the header's field.
 const openSearch = async page => {
-  const key = page.getByRole('button', { name: 'Search and quick actions' });
-  if (await key.isVisible()) await key.click();
-  else await page.locator('#globalSearchInput').focus();
+  await page.getByRole('button', { name: 'Search and quick actions' }).click();
   await page.locator('#searchQuick').waitFor();
 };
 const searchFor = async page => {

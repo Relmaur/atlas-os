@@ -1,7 +1,7 @@
 // Search (design 19, with c07's sheet): your gear, notes and systems, Codex articles and the books, in one list driven
 // from the keyboard (arrows, Enter, Esc; / or ⌘K to start). Chips scope it to one kind, with how many each holds. An
-// empty field offers the quick actions and what was opened last. From md it drops down under the header's field; on a
-// phone it fills the screen above the tab bar, opened from the search key.
+// empty field offers the quick actions and what was opened last. Below lg it fills the screen above the tab bar; from lg
+// it floats beside the rail. Either way the search key opens it.
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { search } from '@atlas/core/search';
 import { searchSystems, type System } from '@atlas/core/systems-model';
@@ -23,7 +23,7 @@ import { newNote, openNote } from '../notes/note-nav.ts';
 // How many of each kind "All" shows; a chip scoped to one kind shows up to SCOPED.
 const LIMIT = { gear: 3, notes: 4, systems: 5, codex: 6, guides: 6 } as const;
 const SCOPED = 30;
-const PHONE = '(max-width: 767px)';
+const PHONE = '(max-width: 1023px)';
 
 type Scope = 'all' | 'gear' | 'notes' | 'systems' | 'codex' | 'guides';
 const SCOPES: [Scope, string][] = [
@@ -254,12 +254,14 @@ export function Search() {
         el instanceof HTMLElement && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
       if ((event.key === '/' && !typing) || (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey))) {
         event.preventDefault();
-        if (matchMedia(PHONE).matches) openSearch();
-        else input.current?.focus();
+        openSearch();
       }
     };
     const onDown = (event: PointerEvent) => {
-      if (event.target instanceof Node && !root.current?.contains(event.target)) setFocused(false);
+      if (!(event.target instanceof Node) || root.current?.contains(event.target)) return;
+      if (event.target instanceof Element && event.target.closest('.search-key')) return; // the key toggles it itself
+      setFocused(false);
+      if (!matchMedia(PHONE).matches) setOverlay(false); // below lg the search fills the screen, so a tap can't be outside
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onDown);
@@ -435,7 +437,7 @@ export function Search() {
   const recent = typed ? [] : readRecent().filter(stillThere);
 
   return (
-    <div ref={root} id="globalSearch" className="hidden md:block relative flex-1 max-w-xl mx-auto">
+    <div ref={root} id="globalSearch" className="hidden relative flex-1 max-w-xl mx-auto">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <i
@@ -462,13 +464,13 @@ export function Search() {
               run(event.target.value);
             }}
             onKeyDown={onKeyDown}
-            className="w-full h-11 md:h-10 bg-slate-ground border border-control-edge hover:border-control-edge-hover focus:border-scanner-cyan-edge-strong focus:shadow-[0_0_0_3px_rgba(34,211,238,0.12)] rounded-control pl-10 pr-10 text-base md:text-sm text-ink-bright placeholder:text-ink-disabled focus:outline-hidden transition"
+            className="w-full h-11 bg-slate-ground border border-control-edge hover:border-control-edge-hover focus:border-scanner-cyan-edge-strong focus:shadow-[0_0_0_3px_rgba(34,211,238,0.12)] rounded-control pl-10 pr-10 text-base md:text-sm text-ink-bright placeholder:text-ink-disabled focus:outline-hidden transition"
           />
-          <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-ink-muted border border-control-edge rounded px-1.5 py-0.5 pointer-events-none">
+          <kbd className="hidden lg:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-ink-muted border border-control-edge rounded px-1.5 py-0.5 pointer-events-none">
             /
           </kbd>
         </div>
-        <button type="button" onClick={close} className="md:hidden h-11 px-1 text-[15px] font-medium text-ink-soft">
+        <button type="button" onClick={close} className="lg:hidden h-11 px-1 text-[15px] font-medium text-ink-soft">
           Cancel
         </button>
       </div>

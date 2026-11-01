@@ -121,7 +121,7 @@ test('a note pinned to Book III is listed under the book and shown on Home, rend
   await expect(home.getByRole('link', { name: 'Oxygen' })).toHaveAttribute('href', 'wiki/#/?q=Oxygen');
 });
 
-test('a new note from a book starts pinned there; the header search finds it', async ({ page }, testInfo) => {
+test('a new note from a book starts pinned there; search finds it', async ({ page }) => {
   await page.goto('./#book2');
   await page.getByRole('button', { name: 'Add a note to Book II' }).click();
   await expect(page).toHaveURL(/#note\/note-/);
@@ -133,7 +133,7 @@ test('a new note from a book starts pinned there; the header search finds it', a
   await expect(row.locator('img')).toHaveCount(0);
   expect((await storedState(page)).notes.find(note => note.title === 'Outlaw loop timing').pins).toEqual(['book2']);
 
-  if (testInfo.project.name === 'phone') await page.getByRole('button', { name: 'Search and quick actions' }).click();
+  await page.getByRole('button', { name: 'Search and quick actions' }).click();
   await page.locator('#globalSearchInput').fill('loop timing');
   await page
     .locator('#globalSearchResults')

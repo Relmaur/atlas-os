@@ -1,7 +1,7 @@
 // Settings (design 20, the section is still #more): reached from the gear in Home's header. Your data (sync, Export,
 // Import), this device (keep-awake, timer alerts, the offline Codex, install, storage protection), past play sessions,
 // a way to support the app, and what it is.
-import { useState, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { formatAgo, formatDuration } from '@atlas/core/format';
 import { sessionRecap } from '@atlas/core/session';
 import { exportState, importState, undoImport, useImportUndo } from '../../app/backup.ts';
@@ -17,6 +17,16 @@ import { SyncSheet, openSyncSheet } from './SyncSheet.tsx';
 
 const TOP_BUTTON =
   'w-11 h-11 rounded-control bg-slate-ground border border-control-edge grid place-items-center text-ink hover:border-control-edge-hover';
+// Handled in shell/Sidebar.tsx and shell/Search.tsx. Shown from lg, where there's usually a keyboard.
+const SHORTCUTS: [keys: string, what: string][] = [
+  ['/ or ⌘K', 'Search'],
+  ['g then h', 'Go to Home'],
+  ['g then l', 'Go to Log'],
+  ['g then r', 'Go to Runs'],
+  ['g then c', 'Go to the Codex'],
+  ['n', 'New note, while in Log'],
+  ['Esc', 'Close the top panel']
+];
 const ROW = 'w-full flex items-center gap-3 min-h-[60px] px-4 py-3 text-left';
 const LINK_ROW = `${ROW} hover:bg-slate-ground`;
 
@@ -128,6 +138,20 @@ export function More() {
           ? 'Everything you log stays on this device, plus the encrypted copy sync keeps for your devices.'
           : 'Everything you log stays on this device until you export it or turn on sync.'}
       </p>
+
+      <section aria-labelledby="keysTitle" className="hidden lg:block">
+        <h2 id="keysTitle" className="text-label uppercase text-ink-label px-1 pb-2">
+          Keyboard
+        </h2>
+        <dl className="rounded-card bg-panel-glass border border-hairline px-4 py-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sub text-ink">
+          {SHORTCUTS.map(([keys, what]) => (
+            <Fragment key={keys}>
+              <dt className="font-mono text-caption text-ink-soft">{keys}</dt>
+              <dd>{what}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      </section>
 
       <Group title="This device">
         {device.wakeSupported && (

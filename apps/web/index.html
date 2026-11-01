@@ -35,10 +35,10 @@
     <header id="headerRoot" class="app-header sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800"></header>
 
     <!-- Main Workspace Container -->
-    <div class="flex-1 max-w-[1600px] w-full mx-auto flex relative">
+    <div class="flex-1 w-full flex relative">
 
-        <!-- Desktop navigation, the bottom tab bar replaces it below lg (React: src/ui/shell/Sidebar.tsx) -->
-        <aside id="sidebarNav" aria-label="Primary" class="hidden lg:flex lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-72 lg:shrink-0 flex-col"></aside>
+        <!-- The rail from lg; the bottom tab bar replaces it below (React: src/ui/shell/Sidebar.tsx) -->
+        <aside id="sidebarNav" class="hidden lg:flex lg:sticky lg:top-0 lg:h-dvh lg:w-[88px] lg:shrink-0 flex-col"></aside>
 
         <!-- Main Content Area -->
         <main class="app-main flex-1 min-w-0 px-4 py-5 sm:p-6 lg:p-8">
