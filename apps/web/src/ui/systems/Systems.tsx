@@ -23,6 +23,7 @@ import { Button } from '../parts/Button.tsx';
 import { LogSegment } from '../parts/LogSegment.tsx';
 import { OrbitDiagram } from '../parts/StarChart.tsx';
 import { MetaLine, OutlawPill } from '../parts/SystemBits.tsx';
+import { useSectionParam } from '../shell/section-store.ts';
 import { openSystem, openSystemEditor, setSystemFilter, useSystemFilter } from './panel-store.ts';
 
 const plural = (n: number, word: string) => `${String(n)} ${word}${n === 1 ? '' : 's'}`;
@@ -82,7 +83,7 @@ export function Systems() {
       <p id="systemResultCount" role="status" className="sr-only">
         {filterActive(filter) ? `${String(visible.length)} of ${plural(systems.length, 'system')}` : ''}
       </p>
-      <ul id="systemList" className="grid grid-cols-1 lg:grid-cols-2 gap-section">
+      <ul id="systemList" className="grid grid-cols-1 gap-section">
         {visible.map(system => (
           <li key={system.id}>
             <SystemCard
@@ -95,7 +96,7 @@ export function Systems() {
           </li>
         ))}
         {systems.length > 0 && visible.length === 0 && (
-          <li className="lg:col-span-2 p-card rounded-card border border-dashed border-control-edge flex flex-col items-center gap-2 text-center text-sub text-ink-muted">
+          <li className="p-card rounded-card border border-dashed border-control-edge flex flex-col items-center gap-2 text-center text-sub text-ink-muted">
             No systems match these filters.
             <Button
               variant="ghost"
@@ -108,7 +109,7 @@ export function Systems() {
           </li>
         )}
         {systems.length === 0 && (
-          <li className="lg:col-span-2 text-sub text-ink-muted">
+          <li className="text-sub text-ink-muted">
             Your log is empty. Log a system after your next warp; only its name is needed.
           </li>
         )}
@@ -224,6 +225,7 @@ function SystemCard({
   restockHours: number;
   familyOf: (biome: string) => string | null;
 }) {
+  const open = useSectionParam() === system.id;
   const last = lastVisit(system);
   const visited = last ? `Last visit ${formatAgo(last.at, now)}` : 'Never visited';
   const meta = systemMeta(system);
@@ -235,6 +237,7 @@ function SystemCard({
       onClick={() => {
         openSystem(system.id);
       }}
+      aria-current={open ? 'true' : undefined}
       className="text-left break-words focus-visible:outline-none after:absolute after:inset-0 after:content-['']"
     >
       {system.name}

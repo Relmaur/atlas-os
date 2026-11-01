@@ -8,6 +8,21 @@ export function onSection(key: string, run: () => void): void {
   hooks.set(key, run);
 }
 
+// From lg a detail screen sits beside its list (design/desktop-direction): which list each belongs to. theme.css lays
+// out the panes from body[data-pane].
+const LIST_OF: Record<string, string> = {
+  systems: 'systems',
+  system: 'systems',
+  gear: 'gear',
+  ship: 'gear',
+  notes: 'notes',
+  note: 'notes',
+  runs: 'runs',
+  outlaw: 'runs',
+  guides: 'guides'
+};
+const listOf = (section: string): string => LIST_OF[section] ?? (section.startsWith('book') ? 'guides' : '');
+
 let current = '';
 let param = ''; // what follows the section in the hash: #system/<id> opens System detail for <id>
 const listeners = new Set<() => void>();
@@ -67,6 +82,7 @@ export function showSection(key: string): Promise<void> {
   }
   const { section, shortcut, param: next } = resolve(key);
   const swap = () => {
+    document.body.dataset.pane = listOf(section);
     document.body.dataset.section = section; // for styles that differ by screen (theme.css: Home's header)
     document.querySelectorAll('.book-section').forEach(element => {
       element.classList.toggle('hidden', element.id !== `sec-${section}`);

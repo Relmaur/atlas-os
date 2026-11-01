@@ -39,7 +39,7 @@ export function More() {
   const canUndoImport = useImportUndo();
   const [confirmUndo, setConfirmUndo] = useState(false);
   return (
-    <div className="flex flex-col gap-4 pt-[env(safe-area-inset-top)]">
+    <div className="flex flex-col gap-4 pt-[env(safe-area-inset-top)] lg:max-w-[640px] lg:mx-auto">
       <header className="flex flex-col gap-1.5">
         <div className="lg:hidden">
           <button

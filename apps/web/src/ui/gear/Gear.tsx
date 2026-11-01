@@ -16,6 +16,7 @@ import {
 import type { FactsFile } from '@atlas/core/facts';
 import { useAppState } from '../useAppState.ts';
 import { openGearEditor } from '../parts/editor-store.ts';
+import { useSectionParam } from '../shell/section-store.ts';
 import { LogSegment } from '../parts/LogSegment.tsx';
 import { loadFacts, useFacts } from './facts-store.ts';
 import { ClassPill, KindTile, TechGrid, gridLabel } from './fleet-bits.tsx';
@@ -146,6 +147,7 @@ function FleetCard({
   open: boolean;
   onToggle: (open: boolean) => void;
 }) {
+  const openOnScreen = useSectionParam() === item.id;
   const rules = slotRules(facts, item.kind, item.class);
   // The grid the wiki gives for this kind and class (6 rows for an S-class ship), never smaller than the marks need.
   const grid = slotGrid(item.superchargedSlots, { rows: Math.min(rules.maxRows, 6), cols: rules.columns });
@@ -194,6 +196,7 @@ function FleetCard({
           )}
           <a
             href={`#ship/${encodeURIComponent(item.id)}`}
+            aria-current={openOnScreen ? 'true' : undefined}
             className="text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
           >
             Open {item.name} →

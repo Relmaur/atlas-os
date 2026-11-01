@@ -3,6 +3,7 @@
 // they're part of the log: on this device, in Export, and in sync.
 import { useState } from 'react';
 import { filterNotes, noteChips, noteExcerpt, type NoteFilter } from '@atlas/core/notes';
+import { useSectionParam } from '../shell/section-store.ts';
 import { useAppState } from '../useAppState.ts';
 import { importNoteFiles } from '../actions.ts';
 import { LogSegment } from '../parts/LogSegment.tsx';
@@ -11,6 +12,7 @@ import { newNote } from './note-nav.ts';
 import { TAG, shortDate } from './note-bits.tsx';
 
 export function Notes() {
+  const openId = useSectionParam();
   const { notes } = useAppState();
   const [query, setQuery] = useState('');
   const [chosen, setFilter] = useState<NoteFilter>('all');
@@ -93,6 +95,7 @@ export function Notes() {
             <li key={note.id} data-note={note.id}>
               <a
                 href={`#note/${encodeURIComponent(note.id)}`}
+                aria-current={openId === note.id ? 'true' : undefined}
                 className="flex items-start gap-3 px-4 py-3.5 hover:bg-slate-ground"
               >
                 <span

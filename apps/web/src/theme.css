@@ -1360,3 +1360,64 @@ label.list-row:active {
     margin-top: auto;
   }
 }
+
+/* From 1024: a detail screen beside its list (section-store.ts sets data-pane). The list keeps its own scroll, so it
+   stays where it was while details change. */
+@media (min-width: 1024px) {
+  body:is([data-pane='systems'], [data-pane='gear'], [data-pane='notes'], [data-pane='runs'], [data-pane='guides'])
+    .app-main {
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    column-gap: 32px;
+    align-items: start;
+  }
+  body[data-pane] #storageBannerRoot,
+  body[data-pane] #sessionBarRoot {
+    grid-column: 1 / -1;
+  }
+  body:is([data-pane='systems'], [data-pane='gear'], [data-pane='notes'], [data-pane='runs'], [data-pane='guides'])
+    .book-section {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  body[data-pane='systems'] #sec-systems,
+  body[data-pane='gear'] #sec-gear,
+  body[data-pane='notes'] #sec-notes,
+  body[data-pane='runs'] #sec-runs,
+  body[data-pane='guides'] #sec-guides {
+    display: block;
+    grid-column: 1;
+    position: sticky;
+    top: 2rem;
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
+    padding: 2px; /* room for the cards' focus rings, which the scroll box would clip */
+  }
+  body:is(
+      [data-section='systems'],
+      [data-section='gear'],
+      [data-section='notes'],
+      [data-section='runs'],
+      [data-section='guides']
+    )
+    #panePlaceholder {
+    display: block;
+    grid-column: 2;
+    grid-row: 3;
+    padding-top: 6rem;
+    text-align: center;
+    color: var(--color-ink-muted);
+    font-size: var(--text-sub);
+  }
+  /* What's open in the list. */
+  :is(#sec-systems, #sec-gear) li:has([aria-current='true']) > * {
+    border-color: var(--color-scanner-cyan-edge);
+  }
+  #sec-notes li a[aria-current='true'] {
+    background: var(--color-scanner-cyan-tint);
+  }
+  /* Single-column screens sit in the middle of the space, not against the rail. */
+  :is(#sessionRoot, #planRoot, #craftsRoot, #frontierRoot, #cardsRoot) > * {
+    margin-inline: auto;
+  }
+}

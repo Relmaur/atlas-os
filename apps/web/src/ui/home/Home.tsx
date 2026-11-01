@@ -12,6 +12,7 @@ import type { System } from '@atlas/core/systems-model';
 import type { Timer, TimerKind, TimerStatus } from '@atlas/core/timers';
 import { openSystem, openSystemEditor } from '../systems/panel-store.ts';
 import { logVisit, startSession } from '../actions.ts';
+import { useTravellerCard } from '../card/card-data.ts';
 import { useAppState } from '../useAppState.ts';
 import { useNow } from '../useNow.ts';
 import { useClock } from '../session/useClock.ts';
@@ -48,35 +49,61 @@ export function Home() {
       </div>
     );
   return (
-    <div className="flex flex-col gap-section max-w-2xl">
-      <HomeHeader />
-      <WhatsNew emptyLog={false} />
+    <div className="flex flex-col gap-section max-w-2xl lg:max-w-[1200px] lg:mx-auto lg:grid lg:grid-cols-[3fr_2fr] lg:items-start">
+      <div className="contents lg:flex lg:flex-col lg:gap-section lg:col-span-2">
+        <HomeHeader />
+        <WhatsNew emptyLog={false} />
+      </div>
       <Hero system={summary.current} now={now} />
-      {timers.length > 0 && <Timers timers={homeTimers(state.timers, now)} />}
-      <HoldToActivate
-        id="startSession"
-        label="Hold to start session"
-        hint="Counts systems, visits and timers until you stop"
-        onActivate={startSession}
-        done={
-          state.session
-            ? {
-                label: 'Session live',
-                hint: (
-                  <>
-                    <span className="font-mono tabular-nums">
-                      {formatClock(now - Date.parse(state.session.startedAt))}
-                    </span>{' '}
-                    · tap the bar to stop
-                  </>
-                )
-              }
-            : undefined
-        }
-      />
-      <WarpBack systems={summary.recent} now={now} />
-      {notesPinnedTo(state.notes, 'home').length > 0 && <PinnedNotes place="home" label="Home" hint="" />}
+      {/* The dashboard's right column from lg (design/desktop-direction); on a phone these simply follow the hero. */}
+      <div className="contents lg:flex lg:flex-col lg:gap-section">
+        {timers.length > 0 && <Timers timers={homeTimers(state.timers, now)} />}
+        <HoldToActivate
+          id="startSession"
+          label="Hold to start session"
+          hint="Counts systems, visits and timers until you stop"
+          onActivate={startSession}
+          done={
+            state.session
+              ? {
+                  label: 'Session live',
+                  hint: (
+                    <>
+                      <span className="font-mono tabular-nums">
+                        {formatClock(now - Date.parse(state.session.startedAt))}
+                      </span>{' '}
+                      · tap the bar to stop
+                    </>
+                  )
+                }
+              : undefined
+          }
+        />
+        <WarpBack systems={summary.recent} now={now} />
+        {notesPinnedTo(state.notes, 'home').length > 0 && <PinnedNotes place="home" label="Home" hint="" />}
+        <CardLink />
+      </div>
     </div>
+  );
+}
+
+// The Traveller Card on the dashboard. A phone reaches it from Settings, as design 01 has no place for it.
+function CardLink() {
+  const { card } = useTravellerCard();
+  return (
+    <a
+      href="#card"
+      className="hidden lg:flex items-center gap-3 rounded-card border border-hairline bg-panel p-4 hover:border-control-edge"
+    >
+      <i className="ph-bold ph-identification-card text-xl text-scanner-cyan-pale" aria-hidden="true" />
+      <span className="flex-1 min-w-0">
+        <span className="block text-[15px] font-semibold text-ink-bright">Traveller Card</span>
+        <span className="block text-caption text-ink-muted truncate">
+          Class {card.cls} · {card.rank.title}
+        </span>
+      </span>
+      <i className="ph-bold ph-caret-right text-ink-label" aria-hidden="true" />
+    </a>
   );
 }
 

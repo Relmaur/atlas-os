@@ -42,9 +42,10 @@ test('a system opens on its own screen; planets added there persist across a rel
 test('the Favourites filter shows only favourite systems', async ({ page }) => {
   await page.goto('./#systems');
   await page.locator('#systemList').getByText('Hesper Drift').click();
-  await page.getByRole('button', { name: 'Favourite' }).click();
-  await expect(page.getByRole('button', { name: 'Favourite' })).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: 'Back' }).click();
+  const details = page.locator('#sec-system');
+  await details.getByRole('button', { name: 'Favourite' }).click();
+  await expect(details.getByRole('button', { name: 'Favourite' })).toHaveAttribute('aria-pressed', 'true');
+  await details.getByRole('button', { name: 'Back' }).click();
   await page.locator('#systemFavFilter').click();
   await expect(page.locator('#systemFavFilter')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#systemList')).toContainText('Hesper Drift');
@@ -81,4 +82,28 @@ test('on a phone, dragging the sheet’s bar down closes it', async ({ page, bro
   for (let step = 1; step <= 10; step++) await touch('touchMove', [{ x, y: y + step * 25 }]);
   await touch('touchEnd', []);
   await expect(page.locator('#systemPanel')).toHaveAttribute('aria-hidden', 'true');
+});
+
+test('from lg a system opens beside its list, marked there; a phone keeps one screen at a time', async ({
+  page
+}, testInfo) => {
+  await page.goto('./#systems');
+  const list = page.locator('#sec-systems');
+  const details = page.locator('#sec-system');
+  await list.locator('#systemList').getByText('Hesper Drift').click();
+  await expect(details).toContainText('Hesper Drift');
+  if (testInfo.project.name === 'phone') {
+    await expect(list).toBeHidden();
+    return;
+  }
+  await expect(list).toBeVisible();
+  expect((await list.boundingBox()).x + 380).toBeLessThanOrEqual((await details.boundingBox()).x);
+  await expect(list.locator('[aria-current="true"]')).toHaveText('Hesper Drift');
+  await expect(list.getByRole('link', { name: 'Systems' })).toHaveAttribute('aria-current', 'page');
+  await list.locator('#systemList').getByText('Ekwa Nexus').click();
+  await expect(details).toContainText('Ekwa Nexus');
+  await page.goto('./#systems');
+  await expect(page.locator('#panePlaceholder')).toBeVisible();
+  await expect(details).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

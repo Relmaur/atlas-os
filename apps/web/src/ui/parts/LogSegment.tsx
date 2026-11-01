@@ -2,6 +2,8 @@
 // open segment takes the scanner cyan of the active tab (with aria-current), not the emerald of a selected segment.
 import { useSection } from '../shell/section-store.ts';
 
+// A detail screen keeps its list's segment lit: from lg they sit side by side.
+const PARENT: Record<string, string> = { system: 'systems', ship: 'gear', note: 'notes' };
 const SEGMENTS = [
   { section: 'systems', label: 'Systems' },
   { section: 'map', label: 'Map' },
@@ -10,19 +12,20 @@ const SEGMENTS = [
 ] as const;
 
 export function LogSegment() {
-  const open = useSection();
+  const section = useSection();
+  const open = PARENT[section] ?? section;
   return (
     <nav
       aria-label="Log sections"
       className="flex gap-1 p-1 rounded-control bg-slate-ground border border-hairline max-w-xl"
     >
-      {SEGMENTS.map(({ section, label }) => (
+      {SEGMENTS.map(({ section: segment, label }) => (
         <a
-          key={section}
-          href={`#${section}`}
-          aria-current={open === section ? 'page' : undefined}
+          key={segment}
+          href={`#${segment}`}
+          aria-current={open === segment ? 'page' : undefined}
           className={`flex-1 h-[34px] rounded-segment border flex items-center justify-center text-control transition-colors duration-[var(--duration-micro)] ${
-            open === section
+            open === segment
               ? 'bg-scanner-cyan-tint border-scanner-cyan-edge text-scanner-cyan-text'
               : 'border-transparent text-ink-muted hover:text-ink'
           }`}
