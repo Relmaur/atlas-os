@@ -185,11 +185,11 @@ export function ShareShell({
         aria-labelledby={titleId}
         aria-hidden={!open}
         inert={!open}
-        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${open ? '' : 'lg:translate-x-full'}`}
+        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[min(880px,calc(100vw-4rem))] lg:max-h-[88dvh] lg:rounded-card lg:border lg:overflow-hidden ${open ? '' : 'lg:invisible'}`}
       >
         <PanelGrab onClose={onClose} label="Close sharing" />
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] flex flex-col gap-4">
-          <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 pb-1 bg-slate-deep">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-x-6 lg:pl-8 lg:pb-6">
+          <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 pb-1 bg-slate-deep lg:col-span-2">
             <SheetGrab onClose={onClose} label="Close sharing" />
             <div className="flex items-baseline justify-between gap-3">
               <h2
@@ -215,35 +215,38 @@ export function ShareShell({
             aria-label={label}
             width={size.width}
             height={size.height}
-            className="block mx-auto max-w-full max-h-[42dvh] w-auto h-auto rounded-card"
+            className="block mx-auto max-w-full max-h-[42dvh] lg:max-h-[70dvh] w-auto h-auto rounded-card"
           />
-          {children}
-          {phone ? (
-            <Button variant="primary" icon="ph-download-simple" onClick={share}>
-              Save to Photos
-            </Button>
-          ) : (
-            <Button variant="primary" icon="ph-download-simple" onClick={save}>
-              Save picture
-            </Button>
-          )}
-          {(sharing || copy) && (
-            <div className={`grid gap-2 ${sharing && copy ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              {sharing && (
-                <Button icon="ph-link-simple" onClick={share}>
-                  Share…
-                </Button>
-              )}
-              {copy && (
-                <Button icon="ph-file-text" onClick={copy}>
-                  Copy as text
-                </Button>
-              )}
-            </div>
-          )}
-          <p className="text-caption text-ink-muted text-center">
-            Made on this device, nothing uploaded. The picture carries a small ATLAS mark.
-          </p>
+          {/* Beside the preview from lg (design/desktop-direction); on a phone these simply follow it. */}
+          <div className="contents lg:flex lg:flex-col lg:gap-4">
+            {children}
+            {phone ? (
+              <Button variant="primary" icon="ph-download-simple" onClick={share}>
+                Save to Photos
+              </Button>
+            ) : (
+              <Button variant="primary" icon="ph-download-simple" onClick={save}>
+                Save picture
+              </Button>
+            )}
+            {(sharing || copy) && (
+              <div className={`grid gap-2 ${sharing && copy ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {sharing && (
+                  <Button icon="ph-link-simple" onClick={share}>
+                    Share…
+                  </Button>
+                )}
+                {copy && (
+                  <Button icon="ph-file-text" onClick={copy}>
+                    Copy as text
+                  </Button>
+                )}
+              </div>
+            )}
+            <p className="text-caption text-ink-muted text-center">
+              Made on this device, nothing uploaded. The picture carries a small ATLAS mark.
+            </p>
+          </div>
         </div>
       </div>
     </>

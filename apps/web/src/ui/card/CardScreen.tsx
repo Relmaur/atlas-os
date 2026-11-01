@@ -1,11 +1,13 @@
 // The Traveller Card's own screen (#card; Home tab): the card large, tilt to inspect, tap or Flip for its back, and full
 // screen for the card alone. Tilt follows the pointer or the phone's motion and turns the whole card. iOS
 // shows motion only after a permission prompt, which must come from a tap, so the first tap on the card asks. Reduced
-// motion: no tilt, no pulses, and the flip is instant.
+// motion: no tilt, no pulses, and the flip is instant. From xl there's room for both faces, so nothing needs flipping,
+// except in full screen, which is still the one card.
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { goBack, useSection } from '../shell/section-store.ts';
 import { shareFileName } from '@atlas/core/share';
 import { Button } from '../parts/Button.tsx';
+import { useMedia } from '../parts/useMedia.ts';
 import { ShareShell } from '../share/ShareSheet.tsx';
 import { CARD_EXPORT, drawTravellerExport } from '../share/draw.ts';
 import { CardBack, CardFront } from './TravellerCard.tsx';
@@ -37,8 +39,11 @@ const LINK =
 // -0.5 … 0.5 across the card, as CSS variables, so a pointer move doesn't re-render the card.
 function setTilt(stage: HTMLElement | null, x: number, y: number) {
   const clamp = (v: number) => Math.max(-0.5, Math.min(0.5, v));
-  stage?.style.setProperty('--tilt-x', clamp(x).toFixed(3));
-  stage?.style.setProperty('--tilt-y', clamp(y).toFixed(3));
+  // Side by side there are two cards inside the stage, and each .card-stage sets its own variables: they don't inherit.
+  for (const card of stage ? [stage, ...stage.querySelectorAll<HTMLElement>('.card-stage')] : []) {
+    card.style.setProperty('--tilt-x', clamp(x).toFixed(3));
+    card.style.setProperty('--tilt-y', clamp(y).toFixed(3));
+  }
 }
 
 export function CardScreen() {
@@ -54,7 +59,7 @@ export function CardScreen() {
         lines: art.lines,
         eyes: art.eyes,
         title: card.rank.title,
-        sub: `${String(card.systems)} systems · ${String(card.galaxies)} galaxies`,
+        sub: `${String(card.systems)} ${card.systems === 1 ? 'system' : 'systems'} · ${String(card.galaxies)} ${card.galaxies === 1 ? 'galaxy' : 'galaxies'}`,
         rarity: `CLASS ${card.cls}`
       });
     },
@@ -63,6 +68,8 @@ export function CardScreen() {
   const [still, setStill] = useState(() => matchMedia(STILL).matches);
   const [motionOn, setMotionOn] = useState(() => !motionPrompt());
   const [full, setFull] = useState(false);
+  const roomForBoth = useMedia('(min-width: 1280px)');
+  const both = roomForBoth && !full;
   const [scale, setScale] = useState(1);
   const asked = useRef(false);
   const stage = useRef<HTMLDivElement>(null);
@@ -162,7 +169,9 @@ export function CardScreen() {
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (still) return;
-    const rect = event.currentTarget.getBoundingClientRect();
+    // Side by side, each card tilts from where the pointer is on the card under it.
+    const under = event.target instanceof Element ? event.target.closest('.card-stage') : null;
+    const rect = (under ?? event.currentTarget).getBoundingClientRect();
     setTilt(
       stage.current,
       (event.clientX - rect.left) / rect.width - 0.5,
@@ -232,7 +241,7 @@ export function CardScreen() {
             askMotion();
             if (press.current?.moved) return; // a drag to tilt, not a tap
             // A tap on the card flips it; its own controls (the back's tabs) don't.
-            if (!(event.target instanceof Element) || !event.target.closest('button')) setFlipped(!flipped);
+            if (!both && (!(event.target instanceof Element) || !event.target.closest('button'))) setFlipped(!flipped);
           }}
           style={
             full
@@ -245,48 +254,73 @@ export function CardScreen() {
                 }
               : undefined
           }
-          className={`card-stage cursor-pointer select-none ${full ? '' : 'w-full max-w-[380px] aspect-[9/16]'}`}
+          className={
+            both
+              ? 'flex justify-center gap-6 w-full'
+              : `card-stage cursor-pointer select-none ${full ? '' : 'w-full max-w-[380px] aspect-[9/16]'}`
+          }
         >
-          <div className="card-tilt relative w-full h-full">
-            <div className={`card-flip relative w-full h-full ${flipped ? 'is-flipped' : ''}`}>
-              <section
-                aria-label="Traveller Card, front"
-                aria-hidden={flipped}
-                inert={flipped}
-                className="card-side absolute inset-0"
-              >
-                <CardFront
-                  card={card}
-                  art={art}
-                  lyPerRegion={lyPerRegion}
-                  game={game}
-                  animate={shown && !still && !flipped}
-                />
-              </section>
-              <section
-                aria-label="Traveller Card, back"
-                aria-hidden={!flipped}
-                inert={!flipped}
-                className="card-side card-side-back absolute inset-0"
-              >
-                <CardBack card={card} art={art} />
-              </section>
+          {both ? (
+            <>
+              <div className="card-stage w-[380px] aspect-[9/16] shrink-0 select-none">
+                <div className="card-tilt relative w-full h-full">
+                  <section aria-label="Traveller Card, front" className="absolute inset-0">
+                    <CardFront card={card} art={art} lyPerRegion={lyPerRegion} game={game} animate={shown && !still} />
+                  </section>
+                </div>
+              </div>
+              <div className="card-stage w-[380px] aspect-[9/16] shrink-0 select-none">
+                <div className="card-tilt relative w-full h-full">
+                  <section aria-label="Traveller Card, back" className="absolute inset-0">
+                    <CardBack card={card} art={art} />
+                  </section>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="card-tilt relative w-full h-full">
+              <div className={`card-flip relative w-full h-full ${flipped ? 'is-flipped' : ''}`}>
+                <section
+                  aria-label="Traveller Card, front"
+                  aria-hidden={flipped}
+                  inert={flipped}
+                  className="card-side absolute inset-0"
+                >
+                  <CardFront
+                    card={card}
+                    art={art}
+                    lyPerRegion={lyPerRegion}
+                    game={game}
+                    animate={shown && !still && !flipped}
+                  />
+                </section>
+                <section
+                  aria-label="Traveller Card, back"
+                  aria-hidden={!flipped}
+                  inert={!flipped}
+                  className="card-side card-side-back absolute inset-0"
+                >
+                  <CardBack card={card} art={art} />
+                </section>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       <div inert={full} className="contents">
-        <p className="text-caption text-ink-muted">Tilt to inspect · tap to flip</p>
-        <div className="w-full max-w-[380px] grid grid-cols-2 gap-2">
-          <Button
-            icon="ph-arrows-clockwise"
-            onClick={() => {
-              setFlipped(!flipped);
-            }}
-          >
-            {flipped ? 'Show the front' : 'Flip'}
-          </Button>
+        <p className="text-caption text-ink-muted">{both ? 'Tilt to inspect' : 'Tilt to inspect · tap to flip'}</p>
+        <div className={`w-full max-w-[380px] grid gap-2 ${both ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {!both && (
+            <Button
+              icon="ph-arrows-clockwise"
+              onClick={() => {
+                setFlipped(!flipped);
+              }}
+            >
+              {flipped ? 'Show the front' : 'Flip'}
+            </Button>
+          )}
           <Button
             icon="ph-download-simple"
             onClick={() => {

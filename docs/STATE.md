@@ -191,7 +191,8 @@ CI runs typecheck + lint + unit tests only (owner's decision: browser tests run 
   - Judgement calls: the bar closes on a click, not a drag; New article stays a centred dialog with its ✕; the planner's peek is a side panel at every wide size, not a third column at 1280.
 - **Stage 4, the Codex, built (3.23.0):** the rail on the Codex page, an open article beside the search and results from 1024, reading width 720px, and On this page as a column from 1280 (a sheet below that). Axe and no-sideways-scroll run at 768 and 1280 on the main screens, on top of the 390 and 1440 runs.
   - Judgement calls: the Codex shows browsing at full width until an article opens; the header's logo is gone, since the rail goes back to the app.
-  - **Not built, for the owner's canvas review:** the card's front and back side by side (it still flips); Share as a centred dialog with the preview beside the picker (it's a side panel); Write and Preview side by side at 1280; dragging a panel's bar; shortcut hints on hover.
+- **Stage 5, the rest of the direction, built (owner, 2026-11-01; 3.24.0):** from 1280 the card's front and back side by side (full screen is still one card that flips), and a note's text beside its live preview; from 1024 Share as a centred dialog with the preview beside the choices; a panel's bar closes on a drag past 120px as well as a click; hover hints for the shortcuts on the rail, New note and the bar.
+  - Judgement calls: both faces tilt together with the pointer; the note editor's Write/Preview switch is hidden from 1280, and a note opens ready to edit there; the Codex page's rail has no shortcut hints, because `g` and `n` work only on the main page; the owner still reviews the desktop on the canvas.
 
 **3.14.0, getting ready to share with the NMS community** (owner, 2026-10-27; ADR-0007). The owner is still the only user; nothing has been shared yet:
 - The app holds nobody's save: the starter data and Books II, III and V are general.

@@ -32,6 +32,7 @@ export function Notes() {
               newNote();
             }}
             aria-label="New note"
+            title="New note (n)"
             className="w-11 h-11 rounded-control border border-ready-emerald-edge bg-ready-emerald-tint grid place-items-center text-ready-emerald-text hover:bg-ready-emerald-tint-hover"
           >
             <i className="ph-bold ph-plus text-xl" aria-hidden="true" />

@@ -140,7 +140,7 @@ test('a new note from a book starts pinned there; search finds it', async ({ pag
     .getByRole('option', { name: /Outlaw loop timing/ })
     .click();
   await expect(page).toHaveURL(/#note\/note-/);
-  await expect(page.locator('#noteTitle')).toHaveText('Outlaw loop timing');
+  await expect(page.locator('#sec-note')).toContainText('Go back after 24 h');
 });
 
 test('Markdown files import as notes', async ({ page }) => {
@@ -162,7 +162,9 @@ test('a note opens on its own screen and the toolbar formats what is selected', 
     .click();
   await expect(page).toHaveURL(/#note\/note-grid$/);
   await expect(page.locator('#notePreview table')).toContainText('Best scanner');
-  await page.locator('#sec-note').getByRole('radio', { name: 'Write' }).click();
+  // From xl it's already beside the preview.
+  if ((page.viewportSize()?.width ?? 0) < 1280)
+    await page.locator('#sec-note').getByRole('radio', { name: 'Write' }).click();
   const body = page.locator('#noteBody');
   await body.evaluate(area => {
     area.setSelectionRange(area.value.indexOf('Best'), area.value.indexOf('Best') + 4);
@@ -173,4 +175,14 @@ test('a note opens on its own screen and the toolbar formats what is selected', 
   await expect
     .poll(async () => (await storedState(page)).notes.find(note => note.id === 'note-grid').body)
     .toContain('**Best** scanner');
+});
+
+test('from xl a note is written beside its live preview', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'wide screens');
+  await page.goto('./#note/note-grid');
+  await page.locator('#noteBody').fill('A **bold** claim');
+  await expect(page.locator('#notePreview strong')).toHaveText('bold');
+  const text = await page.locator('#noteBody').boundingBox();
+  const preview = await page.getByRole('region', { name: 'Preview' }).boundingBox();
+  expect(preview.x).toBeGreaterThanOrEqual(text.x + text.width);
 });

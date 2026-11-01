@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from './fixtures.mjs';
 
-test('the Traveller Card from Settings: the front, then its back, both accessible', async ({ page }) => {
+test('the Traveller Card from Settings: the front, then its back, both accessible', async ({ page }, testInfo) => {
   await page.goto('./#more');
   await page.getByRole('link', { name: /Traveller Card/ }).click();
   await expect(page).toHaveURL(/#card$/);
@@ -11,7 +11,8 @@ test('the Traveller Card from Settings: the front, then its back, both accessibl
   let { violations } = await new AxeBuilder({ page }).include('#sec-card').analyze();
   expect(violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
 
-  await page.locator('#travellerCard').click({ position: { x: 60, y: 300 } }); // a tap on the card flips it
+  // A tap on the card flips it; from xl both faces already show.
+  if (testInfo.project.name === 'phone') await page.locator('#travellerCard').click({ position: { x: 60, y: 300 } });
   const back = page.getByRole('region', { name: 'Traveller Card, back' });
   await expect(back.getByRole('tab', { name: 'Reading this card' })).toHaveAttribute('aria-selected', 'true');
   await expect(back).toContainText('Vortices');
@@ -41,7 +42,7 @@ test('on an iPhone, after the prompt, tilt turns the whole card and holds', asyn
   await expect.poll(() => page.evaluate(() => window.motionAsked)).toBe(true);
   await expect(page.getByRole('region', { name: 'Traveller Card, front' })).toBeVisible();
 
-  const card = page.locator('.card-tilt');
+  const card = page.locator('.card-tilt').first();
   const turn = () => card.evaluate(el => Math.abs(new DOMMatrix(getComputedStyle(el).transform).m13));
   const orient = gamma =>
     page.evaluate(g => {
@@ -95,4 +96,21 @@ test('full screen: the card alone, clear of the notch, flips on a tap and closes
   await page.getByRole('button', { name: 'Close full screen' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
+});
+
+test('from xl both faces show side by side, and full screen is still the one card that flips', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'wide screens');
+  await page.goto('./#card');
+  const front = await page.getByRole('region', { name: 'Traveller Card, front' }).boundingBox();
+  const back = await page.getByRole('region', { name: 'Traveller Card, back' }).boundingBox();
+  expect(back.x).toBeGreaterThanOrEqual(front.x + front.width);
+  expect(back.y).toBeCloseTo(front.y, 0);
+  await expect(page.getByRole('button', { name: 'Flip', exact: true })).toHaveCount(0);
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await expect(page.getByRole('button', { name: 'Flip', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole('button', { name: 'Full screen' }).click();
+  await expect(page.locator('#travellerCard .card-flip')).toBeVisible();
 });

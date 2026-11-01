@@ -44,7 +44,13 @@ export function PrimaryTabs({ settingsApart = false }: { settingsApart?: boolean
   // `mark` is the dot on the icon: the live dot (the bar's only glow) when a run needs you, or a plain amber dot when
   // Settings needs you (sync can't continue on its own). Either way the tab's name says it to a screen reader.
   const tab = (key: string, href: string, icon: string, label: string, mark?: 'live' | 'alert', note?: string) => (
-    <a href={href} data-tab={key} aria-current={at === key ? 'page' : undefined} className="tab-item">
+    <a
+      href={href}
+      data-tab={key}
+      aria-current={at === key ? 'page' : undefined}
+      title={settingsApart ? `${label} (g then ${label[0]?.toLowerCase() ?? ''})` : undefined}
+      className="tab-item"
+    >
       <span className="tab-icon">
         <i className={`ph-bold ${icon}`} aria-hidden="true" />
         {mark && <span className={mark === 'live' ? 'tab-live' : 'tab-alert'} aria-hidden="true" />}

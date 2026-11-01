@@ -6,6 +6,11 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.24.0] - 2026-11-01
+### Changed
+- On wide screens the Traveller Card shows its front and back side by side, a note is written beside its live preview, and sharing is a centred dialog with the picture beside the choices.
+- A wide-screen panel also closes by dragging its bar to the right, and the rail shows its shortcuts on hover.
+
 ## [3.23.0] - 2026-10-31
 ### Changed
 - On wide screens the app has a left rail: search, Home, Log, Runs, Codex and Settings. On tablets the phone layout sits centred. Search opens from the key everywhere, and from `/` or ⌘K.

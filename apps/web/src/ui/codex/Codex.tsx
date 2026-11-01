@@ -1,16 +1,8 @@
 // The Codex page (wiki/index.html): browsing (design 15) or an article (16), with the quick look and the New article
 // sheet. The search field sits at the top of browsing; from lg a slim header sits beside the rail. Keyboard: / or ⌘K searches; on results ↑/↓ (or j/k) select, Space peeks, Enter opens.
 import { CodexLoading } from '../parts/Loading.tsx';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type KeyboardEvent,
-  type RefObject
-} from 'react';
+import { useMedia } from '../parts/useMedia.ts';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { DEFAULTS, articleHref, browse, browseHref, isLanding, pageOf } from '@atlas/core/codex';
 import { isOld } from '@atlas/core/search';
 import { Article } from './Article.tsx';
@@ -20,19 +12,9 @@ import { NewArticle } from './NewArticle.tsx';
 import { QuickLook } from './QuickLook.tsx';
 import { currentRoute, navigate, setParams, useRoute } from './route.ts';
 
-// From lg an article sits beside the search and results (design/desktop-direction).
-const WIDE = '(min-width: 1024px)';
-function subscribeWide(listener: () => void): () => void {
-  const media = matchMedia(WIDE);
-  media.addEventListener('change', listener);
-  return () => {
-    media.removeEventListener('change', listener);
-  };
-}
-const isWide = (): boolean => matchMedia(WIDE).matches;
-
 export function Codex() {
-  const wide = useSyncExternalStore(subscribeWide, isWide);
+  // From lg an article sits beside the search and results (design/desktop-direction).
+  const wide = useMedia('(min-width: 1024px)');
   const data = useCodex();
   const route = useRoute();
   const { params } = route;

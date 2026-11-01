@@ -131,3 +131,33 @@ test('keyboard shortcuts: g then a letter, and n in Log, and they are listed in 
   await page.goto('./#more');
   await expect(page.getByRole('region', { name: 'Keyboard' })).toContainText('Go to Runs');
 });
+
+test('a panel closes by a drag on its bar past the threshold, and springs back short of it', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'panels are from lg');
+  await page.goto('./#session');
+  await page
+    .locator('#sec-session')
+    .getByRole('button', { name: /Refiner/ })
+    .first()
+    .click();
+  const sheet = page.locator('#timerSheet');
+  await expect(sheet).toHaveAttribute('aria-hidden', 'false');
+  await expect.poll(() => sheet.evaluate(panel => panel.getAnimations().length)).toBe(0);
+  const bar = sheet.getByRole('button', { name: 'Close timer' }).locator('visible=true');
+  const box = await bar.boundingBox();
+  const y = box.y + box.height / 2;
+  await page.mouse.move(box.x + 4, y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 60, y);
+  await page.mouse.up();
+  await expect(sheet).toHaveAttribute('aria-hidden', 'false');
+  await expect.poll(() => sheet.evaluate(panel => panel.getAnimations().length)).toBe(0); // it has sprung back
+  await page.mouse.move(box.x + 4, y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 200, y);
+  await page.mouse.up();
+  await expect(sheet).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.getByRole('link', { name: /^Runs/ })).toHaveAttribute('title', 'Runs (g then r)');
+});

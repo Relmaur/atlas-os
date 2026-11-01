@@ -57,3 +57,19 @@ test('a ship has a Fleet card', async ({ page }) => {
   const { violations } = await new AxeBuilder({ page }).include('#shareSheet').analyze();
   expect(violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
 });
+
+test('from lg sharing is a centred dialog, with the preview beside the choices', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'wide screens');
+  await page.goto('./#card');
+  await page.getByRole('button', { name: 'Share' }).click();
+  const dialog = page.locator('#shareSheet');
+  await expect(dialog).toBeVisible();
+  await expect.poll(() => dialog.evaluate(panel => panel.getAnimations().length)).toBe(0);
+  const box = await dialog.boundingBox();
+  expect(box.x + box.width / 2).toBeCloseTo(1440 / 2, 0);
+  const preview = await page.locator('#sharePreview').boundingBox();
+  const save = await dialog.getByRole('button', { name: 'Save picture' }).boundingBox();
+  expect(save.x).toBeGreaterThanOrEqual(preview.x + preview.width);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#shareSheet')).toHaveCount(0);
+});

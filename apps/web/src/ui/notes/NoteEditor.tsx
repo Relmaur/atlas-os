@@ -9,6 +9,7 @@ import { useAppState } from '../useAppState.ts';
 import { goBack, useSection, useSectionParam } from '../shell/section-store.ts';
 import { Button, buttonClass } from '../parts/Button.tsx';
 import { ArmButton } from '../parts/Gesture.tsx';
+import { useMedia } from '../parts/useMedia.ts';
 import { FIELD, Segments, TagEditor } from '../systems/editor-parts.tsx';
 import { KINDS } from '../gear/kinds.ts';
 import { renderNote } from './NoteCard.tsx';
@@ -79,7 +80,10 @@ function NoteEditor({
     const now = new Date().toISOString();
     return { id, title: '', body, pins, tags: [], createdAt: now, updatedAt: now };
   });
-  const [mode, setMode] = useState(existing ? 'preview' : 'write');
+  const [chosenMode, setMode] = useState(existing ? 'preview' : 'write');
+  // From xl there's room for both, so the text and its preview sit side by side, live.
+  const sideBySide = useMedia('(min-width: 1280px)');
+  const mode = sideBySide ? 'write' : chosenMode;
   const [typed, setTyped] = useState('');
   const [showPins, setShowPins] = useState(false);
   const [findSystem, setFindSystem] = useState('');
@@ -138,7 +142,10 @@ function NoteEditor({
       area.current?.setSelectionRange(edit.start, edit.end);
     });
   };
-  const html = useMemo(() => (mode === 'preview' ? renderNote(draft.body) : ''), [mode, draft.body]);
+  const html = useMemo(
+    () => (mode === 'preview' || sideBySide ? renderNote(draft.body) : ''),
+    [mode, sideBySide, draft.body]
+  );
   const places = [
     ...PIN_PLACES,
     ...gear.map(item => ({ key: gearPin(item.id), label: item.name || KINDS[item.kind].label })),
@@ -153,7 +160,7 @@ function NoteEditor({
   ];
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl pt-[env(safe-area-inset-top)] pb-20 lg:pb-0">
+    <div className="flex flex-col gap-4 max-w-2xl xl:max-w-none pt-[env(safe-area-inset-top)] pb-20 lg:pb-0">
       <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
         <button
           type="button"
@@ -165,7 +172,7 @@ function NoteEditor({
         >
           <i className="ph-bold ph-caret-left text-lg" aria-hidden="true" />
         </button>
-        <div className="justify-self-center w-[180px]">
+        <div className="justify-self-center w-[180px] xl:invisible">
           <Segments
             label="Write or preview"
             hideLabel
@@ -282,21 +289,39 @@ function NoteEditor({
             className="w-full bg-transparent font-display font-extrabold text-[22px] leading-tight text-ink-bright placeholder:text-ink-disabled focus:outline-hidden"
           />
           <PinPills note={draft} gear={gear} systems={systems} />
-          <textarea
-            id="noteBody"
-            ref={area}
-            aria-label="Note"
-            rows={14}
-            maxLength={MAX_NOTE_CHARS}
-            value={draft.body}
-            onChange={event => {
-              set({ body: event.target.value });
-            }}
-            placeholder={
-              'Markdown works: **bold**, - lists, | tables |.\nLink a Codex page with [[Infra-Knife Accelerator]].'
-            }
-            className={`${FIELD} h-auto min-h-[40dvh] py-3 font-mono leading-relaxed resize-y`}
-          />
+          <div className="xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
+            <textarea
+              id="noteBody"
+              ref={area}
+              aria-label="Note"
+              rows={14}
+              maxLength={MAX_NOTE_CHARS}
+              value={draft.body}
+              onChange={event => {
+                set({ body: event.target.value });
+              }}
+              placeholder={
+                'Markdown works: **bold**, - lists, | tables |.\nLink a Codex page with [[Infra-Knife Accelerator]].'
+              }
+              className={`${FIELD} h-auto min-h-[40dvh] py-3 font-mono leading-relaxed resize-y`}
+            />
+            {sideBySide && (
+              <section
+                aria-label="Preview"
+                className="rounded-card border border-hairline bg-panel-glass p-4 min-h-[40dvh]"
+              >
+                {draft.body.trim() ? (
+                  <div
+                    id="notePreview"
+                    className="md-body text-[15px] text-ink"
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                ) : (
+                  <p className="text-sub text-ink-muted">Your note’s preview shows here as you write.</p>
+                )}
+              </section>
+            )}
+          </div>
           <TagEditor tags={draft.tags} onTags={setTags} typed={typed} onTyped={setTyped} max={MAX_NOTE_TAGS} />
           {stored && (
             <ArmButton

@@ -23,7 +23,11 @@ const openIndex = async page => {
   if (await button.isVisible()) await button.click();
 };
 const openGearEditor = page => page.locator('#sec-ship').getByRole('button', { name: 'Edit Starship' }).click();
-const writeNote = page => page.locator('#sec-note').getByRole('radio', { name: 'Write' }).click();
+// From xl Write and Preview are side by side, so there's nothing to switch.
+const writeNote = async page => {
+  if ((page.viewportSize()?.width ?? 0) < 1280)
+    await page.locator('#sec-note').getByRole('radio', { name: 'Write' }).click();
+};
 const openCamp = page => page.getByRole('tab', { name: 'Registers' }).click();
 const liveSession = async page => {
   await holdToStartSession(page);

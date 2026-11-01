@@ -48,6 +48,7 @@ export function Sidebar() {
         type="button"
         onClick={toggleSearch}
         aria-label="Search and quick actions"
+        title="Search (/ or ⌘K)"
         aria-expanded={searching}
         className="search-key"
       >

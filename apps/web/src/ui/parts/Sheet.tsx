@@ -1,9 +1,11 @@
 // Bottom sheets below lg: the grab bar is the only close control (no ✕). Dragging the sheet's header down past a
 // threshold, or a quick flick, dismisses it; tapping the bar does too, so keyboard and screen-reader users keep a close
 // button. From lg the same panels are right-hand panels, and PanelGrab takes the bar's place.
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 const PHONE = '(max-width: 1023px)';
+const DRAG_SLOP_PX = 4;
+const PANEL_CLOSE_PX = 120;
 
 // `close` decides for itself whether it may close (an editor with unsaved changes refuses and says why); if it
 // doesn't, the sheet springs back.
@@ -73,16 +75,52 @@ export function SheetGrab({ onClose, label = 'Close' }: { onClose: SheetClose; l
   );
 }
 
-// From lg a sheet is a right-hand panel, and the same rule holds: no ✕, a slim bar down its left edge (with Esc).
+// From lg a sheet is a right-hand panel, and the same rule holds: no ✕, a slim bar down its left edge. A click on the
+// bar closes it, a drag to the right past the threshold does too (short of it the panel springs back), and so does Esc.
 export function PanelGrab({ onClose, label = 'Close' }: { onClose: SheetClose; label?: string }) {
+  const drag = useRef<{ x: number; dx: number; panel: HTMLElement } | null>(null);
+  const moved = useRef(false);
   return (
     <button
       type="button"
+      title={`${label} (Esc)`}
+      onPointerDown={event => {
+        const panel = event.currentTarget.parentElement;
+        if (!panel) return;
+        event.currentTarget.setPointerCapture(event.pointerId);
+        drag.current = { x: event.clientX, dx: 0, panel };
+        moved.current = false;
+        panel.style.transition = 'none';
+      }}
+      onPointerMove={event => {
+        const now = drag.current;
+        if (!now) return;
+        now.dx = Math.max(0, event.clientX - now.x);
+        if (now.dx > DRAG_SLOP_PX) moved.current = true;
+        now.panel.style.transform = `translateX(${String(now.dx)}px)`;
+      }}
+      onPointerUp={() => {
+        const now = drag.current;
+        drag.current = null;
+        if (!now) return;
+        now.panel.style.transition = '';
+        now.panel.style.transform = '';
+        if (now.dx > PANEL_CLOSE_PX) onClose();
+      }}
+      onPointerCancel={() => {
+        if (drag.current) {
+          drag.current.panel.style.transition = '';
+          drag.current.panel.style.transform = '';
+        }
+        drag.current = null;
+      }}
       onClick={() => {
-        onClose();
+        if (moved.current)
+          moved.current = false; // the end of a drag, already handled
+        else onClose();
       }}
       aria-label={label}
-      className="hidden lg:flex absolute z-20 left-0 inset-y-0 w-4 items-center justify-center hover:bg-slate-ground"
+      className="hidden lg:flex absolute z-20 left-0 inset-y-0 w-4 touch-none cursor-ew-resize items-center justify-center hover:bg-slate-ground"
     >
       <span className="w-1 h-10 rounded-full bg-slate-600" />
     </button>
