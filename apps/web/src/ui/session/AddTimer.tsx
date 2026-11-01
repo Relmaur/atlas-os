@@ -1,6 +1,7 @@
 // The add-timer forms, one per kind (the Session screen's + Refiner, + Crop, + Custom open them in a sheet): a refiner run (its time is the wiki's refining time × whole batches), a crop (your harvest time,
 // remembered per crop) or anything else (your time).
 import { useMemo, useState } from 'react';
+import { refineItemAsked } from './sheet-store.ts';
 import { formatCountdown } from '@atlas/core/format';
 import {
   MAX_TIMER_MS,
@@ -28,7 +29,7 @@ function start(kind: TimerKind, label: string, ms: number): void {
 export function RefineForm({ onStarted }: { onStarted: () => void }) {
   const data = useGameData();
   const options = useMemo(() => (data.status === 'ready' ? refineOptions(data.catalog.byTitle.values()) : []), [data]);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(refineItemAsked);
   const [pick, setPick] = useState(0);
   const [amount, setAmount] = useState('250');
   const option = options.find(item => item.title.toLowerCase() === name.trim().toLowerCase());

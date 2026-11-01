@@ -1,6 +1,6 @@
 # AGENTS.md — ATLAS:OS
 
-Local-first No Man's Sky companion (TypeScript, pnpm workspace, Vite): Systems log, Outlaw Run, calculators on a verified wiki mirror, the Codex, a six-book guide, opt-in encrypted sync through a small Cloudflare Worker (`apps/sync`), and a local, read-only MCP server for AI assistants (`apps/mcp`). Installable PWA at https://atlas-os.cloud/app/ (Cloudflare, ADR-0010; GitHub Pages still serves https://relmaur.github.io/nms-os/ until the move is done)
+Local-first No Man's Sky companion (TypeScript, pnpm workspace, Vite): Systems log, Outlaw Run, calculators on a verified wiki mirror, the Codex, a six-book guide, opt-in encrypted sync through a small Cloudflare Worker (`apps/sync`), and a local, read-only MCP server for AI assistants (`apps/mcp`). Installable PWA at https://atlas-os.cloud/app/ (Cloudflare, ADR-0010; https://relmaur.github.io/atlas-os/ is the old copy, kept so a log saved there can be exported)
 
 ## Read first
 - `docs/STATE.md`: current work, blockers, open decisions, next steps. Update it before ending any non-trivial task.

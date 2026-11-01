@@ -11,7 +11,8 @@ import { getFact } from '@atlas/core/facts';
 import { useAppState } from '../useAppState.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
-import { buttonClass } from '../parts/Button.tsx';
+import { Button, buttonClass } from '../parts/Button.tsx';
+import { newNoteAbout } from '../notes/note-nav.ts';
 import type { RecipeSwitch } from './plan-bits.ts';
 
 const KIND: Record<SourceKind, string> = {
@@ -204,10 +205,22 @@ export function CodexPeek({
             </button>
           )}
 
-          <a href={codex} className={`${buttonClass('jump', 'L')} w-full`}>
-            <i className="ph-bold ph-book-open" aria-hidden="true" />
-            Open in Codex
-          </a>
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <a href={codex} className={`${buttonClass('jump', 'L')} w-full`}>
+              <i className="ph-bold ph-book-open" aria-hidden="true" />
+              Open in Codex
+            </a>
+            <Button
+              size="L"
+              icon="ph-push-pin"
+              onClick={() => {
+                onClose();
+                newNoteAbout(title);
+              }}
+            >
+              Pin it
+            </Button>
+          </div>
           <p className="font-mono text-[10.5px] text-ink-label">
             NMS wiki · CC BY-NC-SA 3.0 · the full entry is in the Codex
           </p>

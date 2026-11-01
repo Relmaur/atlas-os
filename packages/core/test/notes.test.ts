@@ -4,6 +4,7 @@ import {
   filterNotes,
   gearPin,
   linkNotes,
+  notesForSystem,
   noteChips,
   noteExcerpt,
   noteFromMarkdown,
@@ -94,6 +95,19 @@ test('a note links to a ship through a gear pin; linking sets exactly the chosen
     [['home'], [], ['gear:ship-1']]
   );
   assert.equal(linked[1], notes[1]); // untouched notes stay the same object
+});
+
+test('a note links to a system through a system pin, listed newest first on its screen', () => {
+  const notes = normalizeNotes([
+    note('a', ['system:sys-1', 'system:bad id!'], '2026-10-01T00:00:00Z'),
+    note('b', ['system:sys-1'], '2026-10-02T00:00:00Z'),
+    note('c', ['home'], '2026-10-03T00:00:00Z')
+  ]);
+  assert.deepEqual(notes[0]?.pins, ['system:sys-1']); // not a safe id: dropped
+  assert.deepEqual(
+    notesForSystem(notes, 'sys-1').map(item => item.id),
+    ['b', 'a']
+  );
 });
 
 test('tags are slugs, merge as a set, and drive the list’s chips and filter', () => {

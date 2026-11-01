@@ -28,6 +28,7 @@ import { BOOKS } from '@atlas/core/guides';
 import { Header } from './shell/Header.tsx';
 import { Sidebar } from './shell/Sidebar.tsx';
 import { TabBar } from './shell/TabBar.tsx';
+import { MovedBanner } from './shell/MovedBanner.tsx';
 import { StorageBanner } from './shell/StorageBanner.tsx';
 import { CapacityBanner } from './shell/CapacityBanner.tsx';
 import { SessionBar } from './session/SessionBar.tsx';
@@ -41,6 +42,7 @@ const FRAME: [string, ReactNode][] = [
   [
     'storageBannerRoot',
     <>
+      <MovedBanner />
       <StorageBanner />
       <CapacityBanner />
     </>

@@ -48,6 +48,7 @@ test('an article reads as section cards, with On this page in a sheet and the pa
   render(<Codex />);
   at(`#/a/${encodeURIComponent('wiki/resources/Oxygen.md')}`);
   expect(screen.getByRole('heading', { level: 1, name: 'Oxygen' })).toBeTruthy();
+  expect(screen.queryByRole('link', { name: 'Start a refiner timer' })).toBeNull();
   const body = document.getElementById('articleBody')!;
   expect(within(body).getByRole('region', { name: 'Quick Facts' }).textContent).toContain('Breathe.');
   expect(within(body).getByRole('region', { name: /Used in/ }).textContent).toContain('Life Support Gel');
@@ -98,6 +99,9 @@ test('Quick Facts read as pairs and recipe lines as a table', () => {
   });
   render(<Codex />);
   at(`#/a/${encodeURIComponent('wiki/resources/Chromatic_Metal.md')}`);
+  expect(screen.getByRole('link', { name: 'Start a refiner timer' }).getAttribute('href')).toBe(
+    `../#refine-timer/${encodeURIComponent('Chromatic Metal')}`
+  );
   const facts = screen.getByRole('region', { name: 'Quick Facts' });
   expect(within(facts).getByText('Value').nextElementSibling?.textContent).toBe('88');
   const table = within(screen.getByRole('region', { name: 'Source' })).getByRole('table');

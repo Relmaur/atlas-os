@@ -278,6 +278,10 @@ if (!reduce) {
   }
 
   // The big card follows the pointer, and sways gently when left alone. It rests while it's off screen.
+  const PHONE_IN_HAND = '(pointer: coarse) and (max-width: 767px)';
+  const MOTION_DEG = 15; // a turn of the wrist this far is the full tilt, as in the app
+  const MOTION_REST_MS = 10_000;
+  type AskingOrientation = { requestPermission?: () => Promise<'granted' | 'denied'> };
   const frameEl = document.getElementById('cardframe');
   const box = frameEl?.parentElement;
   if (frameEl && box) {
@@ -298,9 +302,10 @@ if (!reduce) {
       setCardLight(0, 0);
     });
     let swaying = false;
+    let following = false;
     const sway = (now: number) => {
       if (!swaying) return;
-      if (!box.matches(':hover')) {
+      if (!following && !box.matches(':hover')) {
         const t = now / 1000;
         frameEl.style.transform = `rotateY(${(Math.sin(t * 0.6) * 7).toFixed(2)}deg) rotateX(${(Math.cos(t * 0.5) * 4).toFixed(2)}deg)`;
         setCardLight(Math.sin(t * 0.6) * 0.45, -Math.cos(t * 0.5) * 0.35);
@@ -312,6 +317,50 @@ if (!reduce) {
       swaying = entry?.isIntersecting ?? false;
       if (swaying && !was) requestAnimationFrame(sway);
     }).observe(box);
+
+    // On a phone it answers the phone's motion too, as the app's card does: measured from how it's held, with level
+    // drifting slowly after the hand. The line saying so shows only where that's true. iOS offers motion only after a
+    // prompt, which must come from a tap, so there the first tap on the card asks.
+    const followMotion = () => {
+      let rest: { beta: number; gamma: number; at: number } | null = null;
+      window.addEventListener('deviceorientation', event => {
+        if (!swaying || event.beta === null || event.gamma === null) return;
+        following = true;
+        rest ??= { beta: event.beta, gamma: event.gamma, at: event.timeStamp };
+        const drift = Math.min(1, (event.timeStamp - rest.at) / MOTION_REST_MS);
+        rest.at = event.timeStamp;
+        rest.beta += (event.beta - rest.beta) * drift;
+        rest.gamma += (event.gamma - rest.gamma) * drift;
+        const clamp = (v: number) => Math.max(-0.5, Math.min(0.5, v));
+        const x = clamp(((event.gamma - rest.gamma) / MOTION_DEG) * 0.5);
+        const y = clamp(((event.beta - rest.beta) / MOTION_DEG) * 0.5);
+        frameEl.style.transform = `rotateY(${(x * 24).toFixed(2)}deg) rotateX(${(-y * 24).toFixed(2)}deg)`;
+        setCardLight(x, y);
+      });
+    };
+    const tiltLine = document.getElementById('tilt-line');
+    if (tiltLine && matchMedia(PHONE_IN_HAND).matches && typeof DeviceOrientationEvent !== 'undefined') {
+      tiltLine.hidden = false;
+      // iOS only, so it isn't in TypeScript's DOM types; the check below is what proves it's callable.
+      const ask = (DeviceOrientationEvent as unknown as AskingOrientation).requestPermission;
+      if (ask) {
+        tiltLine.textContent = 'Tap the card and tilt your phone: it catches the light.';
+        box.addEventListener(
+          'click',
+          () => {
+            ask
+              .call(DeviceOrientationEvent)
+              .then(answer => {
+                if (answer === 'granted') followMotion();
+              })
+              .catch(() => undefined);
+          },
+          { once: true }
+        );
+      } else {
+        followMotion();
+      }
+    }
   }
 }
 

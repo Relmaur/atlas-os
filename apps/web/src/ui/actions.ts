@@ -7,7 +7,7 @@ import { MAX_TIMER_MS, type Timer, type TimerKind } from '@atlas/core/timers';
 import type { ParsedOutlawSystem } from '@atlas/core/systems-list';
 import { normalizeGear, type GearItem } from '@atlas/core/gear';
 import { normalizeRuns, type PlayerRun } from '@atlas/core/runs';
-import { MAX_NOTE_CHARS, linkNotes, noteFromMarkdown, normalizeNotes, type Note } from '@atlas/core/notes';
+import { MAX_NOTE_CHARS, linkNotes, noteFromMarkdown, normalizeNotes, systemPin, type Note } from '@atlas/core/notes';
 import { appState, saveAppState } from '../app/store.ts';
 import { showToast, haptic } from '../app/ui.ts';
 
@@ -42,6 +42,11 @@ export function saveSystem(system: System, { arrived = false } = {}): void {
 export function deleteSystem(id: string): void {
   const system = find(id);
   appState.systems = appState.systems.filter(item => item.id !== id);
+  // Its linked notes stay, unlinked: they're the player's writing, not part of the system.
+  const pin = systemPin(id);
+  appState.notes = appState.notes.map(note =>
+    note.pins.includes(pin) ? { ...note, pins: note.pins.filter(item => item !== pin) } : note
+  );
   saveAppState();
   showToast(`Deleted ${system?.name ?? 'system'}.`);
 }

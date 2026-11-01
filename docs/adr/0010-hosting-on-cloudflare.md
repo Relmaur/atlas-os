@@ -26,3 +26,6 @@ The site has been on GitHub Pages at `https://relmaur.github.io/nms-os/`. That o
   - a new `nms-atlas-mcp` is published, since published versions download game data from `relmaur.github.io/nms-os/wiki/` and use the workers.dev relay, so the last Pages build must keep serving those files;
   - the "moved" build: a banner with Export, and no redirect before the player has had the chance to export. Then `github.io` leaves `ALLOWED_ORIGINS`.
 - **Still to come:** the Codex bundles on R2 at `dl.atlas-os.cloud` arrive with the full Codex, `/api/wiki` after it, and `hello@atlas-os.cloud` through Email Routing.
+
+## Update (2026-10-31): the repo's rename
+The owner renamed the repo to `Relmaur/atlas-os` and chose not to keep the old address alive. `relmaur.github.io/nms-os/` now returns 404, so published `nms-atlas-mcp` versions before 3.22.0 can't refresh game data from it, though their cached copy keeps working. The "moved" build runs at `relmaur.github.io/atlas-os/`: it shares the old origin's storage, so a log saved there can still be exported. `github.io` stays in `ALLOWED_ORIGINS` while that copy runs.

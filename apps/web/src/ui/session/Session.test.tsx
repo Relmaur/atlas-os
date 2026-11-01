@@ -9,7 +9,7 @@ import { markAlerted, resumeSession } from '../actions.ts';
 import { Session } from './Session.tsx';
 import { SessionBar } from './SessionBar.tsx';
 import { SessionSheet } from './SessionSheet.tsx';
-import { clearRecap, closeAddTimer } from './sheet-store.ts';
+import { clearRecap, closeAddTimer, takeRefineTimer } from './sheet-store.ts';
 import subset from '../../../../../tests/fixtures/game-data-subset.json';
 
 // The trimmed wiki subset goes straight to makeCatalog (see Calculators.test.tsx).
@@ -59,6 +59,16 @@ test('a session starts on the screen with a hold, shows its clock and tallies, a
   expect(document.getElementById('sessionRecap')?.textContent).toContain('Visits0 · 0 systems');
   await userEvent.click(screen.getByRole('button', { name: 'Done' }));
   expect(screen.queryByRole('heading', { name: 'Session recap' })).toBeNull();
+});
+
+test('Start a refiner timer from a Codex article opens the sheet with that item chosen', () => {
+  location.hash = `#refine-timer/${encodeURIComponent('Enriched Carbon')}`;
+  takeRefineTimer();
+  expect(location.hash).toBe('#session');
+  screenWithSheet();
+  expect(sheet().getAttribute('aria-hidden')).toBe('false');
+  expect(within(sheet()).getByLabelText<HTMLInputElement>('What it makes').value).toBe('Enriched Carbon');
+  act(closeAddTimer);
 });
 
 test('a refiner timer takes the wiki’s time for whole batches', async () => {

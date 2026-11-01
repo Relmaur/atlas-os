@@ -9,9 +9,10 @@ CI runs typecheck + lint + unit tests only (owner's decision: browser tests run 
 ## In progress
 **One home on Cloudflare, atlas-os.cloud** (owner, 2026-10-31; ADR-0010). Site at `/`, app at `/app/`, relay at `/api/sync`. What would trip Workers Paid is in `docs/deploy.md`. Still open:
 - The owner's log still has to make the trip (Export → Import, or pair).
-- **The owner's yes first:** the old site's "moved" build, raising HSTS past a day or preloading, anything paid.
-- Publishing `nms-atlas-mcp` with the new addresses. Published versions keep using workers.dev and the Pages wiki files, so those must stay up.
-- After that: `github.io` leaves `ALLOWED_ORIGINS`.
+- **The owner's yes first:** raising HSTS past a day or preloading, anything paid.
+- **Repo renamed to `Relmaur/atlas-os` (owner, 2026-10-31).** The owner chose to let `relmaur.github.io/nms-os/` go dark, knowing older `nms-atlas-mcp` versions lose fresh game data and nobody there is told. Old GitHub links forward as long as no new repo takes the name. The npm name stays until the owner says otherwise. Check on the next push that Cloudflare's Git build still fires; if not, reconnect the repo in Workers & Pages → atlas-os → Settings → Build.
+- The "moved" build (`--mode pages`) runs at `relmaur.github.io/atlas-os/`, where a log from the old origin can be exported. `github.io` leaves `ALLOWED_ORIGINS` when that copy is retired.
+- **Waiting on the owner:** publish `nms-atlas-mcp` 3.22.0 (passkey; see `docs/mcp.md`, `pnpm pack`, then `npm publish` of the tarball).
 - **Loading and failure states** (owner, 2026-10-31, after trying airplane mode; `ui/parts/Loading.tsx`, `boot.ts`). No design draws them, so they're the builder's, from the brief's "every state" rule: a start-up screen in each page's HTML, placeholders in the shape of what's coming (Codex, planner, Best crafts), and a failure card with Try again. The service worker's network-first files wait 2 s, not 5.
 - Sync can't run on a dev server's LAN address (`http://<LAN>:5173`): browsers give only HTTPS and localhost `crypto.subtle`. Sync now says so. To test sync locally, use localhost or the live site.
 - The redesign is merged into `main` and live (owner, 2026-10-31), so its screens are public; the Pages build carries them too. Before the merge CI still synced from the wiki's API, so a few pages (Updates 7.11 and 7.12 among them) are newer than the 29 Oct dump that `wiki/verification.json` records. The next dump sync settles them.
@@ -175,7 +176,13 @@ CI runs typecheck + lint + unit tests only (owner's decision: browser tests run 
 
 - **The Traveller Card has a full screen** (owner, 2026-10-31; no design): the card alone on black, scaled as one piece, with a faint × and a hint that fades. Tap flips, a finger tilts, a quick flick down closes. On iOS the first tap on the card asks for motion, once, and tilt is measured from how the phone is held. Motion readings stay on the device. iOS only offers motion on HTTPS, so test it on the live site, not the LAN address.
 
-**Next:** the design's screens and the product page are all built. Remaining: the open owner decisions below.
+**Owner's calls (2026-10-31), built in 3.22.0:**
+- **Delete system** sits at the foot of the system editor, tap to arm. Linked notes stay, unlinked.
+- **Notes pin to systems** (`system:<id>`, additive; docs/state-schema.md). The Pin picker lists pinned systems and a search, since a log can hold hundreds. System detail lists linked notes and has New note. Deviation: design 03 draws no such section.
+- **Pin it** in the peek starts a note linking the item, like Pin to a note. **Start a refiner timer** shows in an article's Source section when it has Refiner recipes, and opens the sheet with the item chosen (`#refine-timer/<title>`).
+- The product page's "Tilt your phone" shows only where the page's card answers motion: a phone (coarse pointer, under 768px), with script and without reduced motion. The card follows motion there. Where the browser has a permission call (iOS, and Chromium too), the line reads "Tap the card and tilt your phone".
+
+**Next: the wide-screen app, in stages (owner, 2026-10-31).** `design/desktop-direction.md` in the private folder is the brief: the 88px rail, list/detail panes and side panels from 1024px, tested at 390, 768, 1280 and 1440. Every judgement call gets listed for the owner's canvas review.
 
 **3.14.0, getting ready to share with the NMS community** (owner, 2026-10-27; ADR-0007). The owner is still the only user; nothing has been shared yet:
 - The app holds nobody's save: the starter data and Books II, III and V are general.
@@ -221,9 +228,7 @@ None.
 
 ## Open decisions
 - **Systems without a portal address** seed their orbit angles from the system's id instead of galaxy + address, so they don't all draw alike. The layout then changes once an address is logged. Recommendation: keep it.
-- **Wide screens (1024px and up):** the screens are drawn at 390px only. Recommendation: ask the designer for a desktop frame; until then keep the four-tab pill centred at a max width, with content capped as today. Owner's call.
-- **Delete `docs/process/prompt-graph.xml`?** `build-prompt.md` v2.0 supersedes it and nothing points at it any more. Deleting a committed file is a Destructive gate. Recommendation: delete it in the build prompt commit; the owner's kit keeps the old version.
-- **Public rename to ATLAS:OS:** done in the app and the PWA manifest (owner, 2026-10-28). Still open: the repo, the Pages URL (a bookmarked-URL break, so a MAJOR release unless the old path redirects), and the npm package. Owner's call; a plan comes before any change.
+- **Public rename to ATLAS:OS:** the app, the PWA manifest and the repo are done. The npm package `nms-atlas-mcp` keeps its name for now; changing it means a new package and deprecating the old one. Owner's call.
 - **Relay rate limits fail open:** if a `[[ratelimits]]` binding is missing, `apps/sync/src/index.ts` allows every request without a warning. Production has all three bindings. Recommendation: log one `[atlas]` warning when a binding is missing. Not fixed in the docs-only task.
 - **MCP answers aren't redacted:** the player's notes and system names go to their AI client in full, by design (ADR-0008, `docs/mcp.md`). Recommendation: keep it, since the player chose the client. Revisit if ATLAS ever calls a model itself.
 - **Refining time unit:** the wiki's refining `seconds` is read as per unit made (as the Codex shows it, and the data fits: higher-yield recipes have lower times), so 300 Chromatic Metal by Stellar Fusion (30 per batch, 4.8 s) times 24 minutes. Worth timing one multi-output run in-game to confirm.

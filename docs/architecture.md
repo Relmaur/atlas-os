@@ -4,7 +4,7 @@ ATLAS:OS is a static web app built by Vite: two HTML pages plus bundled modules,
 
 ## Layout
 ```text
-nms-os/                          pnpm workspace
+atlas-os/                        pnpm workspace
 ├── packages/
 │   ├── core/                    @atlas/core: pure TypeScript (no DOM, no Node APIs), imported as @atlas/core/<module>
 │   │   ├── src/util.ts / format.ts   escapeHtml, isPlainObject, text coercion; durations and dates
@@ -48,7 +48,7 @@ nms-os/                          pnpm workspace
 │   ├── src/sw/sw.ts             Service worker (Workbox), built to dist/sw.js
 │   ├── src/styles.css / codex.css   Each page's stylesheet: fonts.css, theme.css (+ codex-page.css), tailwind.css (+ tokens.css)
 │   ├── public/                  Copied into the build as-is: icons, manifest, nms_state.json, wiki → ../../../wiki
-│   └── vite.config.ts           Two pages, relative base (the site lives under /nms-os/), PWA plugin
+│   └── vite.config.ts           Two pages, relative base (the app lives under /app/), PWA plugin
 ├── apps/sync/                   @atlas/sync: the relay, a Cloudflare Worker + D1: sync vaults (handler.ts) and timer pushes with a minute cron (push.ts); tested without Cloudflare; wrangler.toml; migrations/
 ├── apps/mcp/                    @atlas/mcp: the local, read-only MCP server for AI assistants (ADR-0008, docs/mcp.md): wiki.ts (the mirror's indexes), wiki-remote.ts (the published package's cached download from the live site), log.ts (sync code or exported file), tools.ts; vite.config.ts bundles it for npm (nms-atlas-mcp)
 ├── wiki/<category>/*.md         Mirrored wiki pages (committed) + aliases.json; derived indexes are git-ignored

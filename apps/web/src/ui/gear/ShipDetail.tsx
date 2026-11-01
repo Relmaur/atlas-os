@@ -3,10 +3,10 @@
 // the notes linked to it.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { rulesSummary, slotGrid, slotRules, type GearItem } from '@atlas/core/gear';
-import { noteExcerpt, notesForGear, type Note } from '@atlas/core/notes';
+import { notesForGear, type Note } from '@atlas/core/notes';
 import { useAppState } from '../useAppState.ts';
 import { openGearEditor } from '../parts/editor-store.ts';
-import { openNote } from '../notes/note-nav.ts';
+import { LinkedNoteRows } from '../notes/note-bits.tsx';
 import { Button } from '../parts/Button.tsx';
 import { renderNote } from '../notes/NoteCard.tsx';
 import { ShareShipSheet } from '../share/ShareSheet.tsx';
@@ -203,28 +203,7 @@ function Ship({ item, linked }: { item: GearItem; linked: Note[] }) {
 
       {linked.length > 0 && (
         <section aria-label="Linked notes">
-          <ul className="rounded-card bg-panel-glass border border-hairline divide-y divide-hairline overflow-hidden">
-            {linked.map(note => (
-              <li key={note.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    openNote(note.id);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-ground"
-                >
-                  <i className="ph-bold ph-file-text text-lg text-scanner-cyan-pale shrink-0" aria-hidden="true" />
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-[15px] font-semibold text-ink-bright truncate">{note.title}</span>
-                    <span className="block text-caption text-ink-muted truncate">
-                      Linked note{noteExcerpt(note, 60) ? ` · ${noteExcerpt(note, 60)}` : ''}
-                    </span>
-                  </span>
-                  <i className="ph-bold ph-caret-right text-ink-label shrink-0" aria-hidden="true" />
-                </button>
-              </li>
-            ))}
-          </ul>
+          <LinkedNoteRows notes={linked} />
         </section>
       )}
 

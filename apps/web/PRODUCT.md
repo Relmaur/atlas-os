@@ -21,7 +21,7 @@ Every game fact comes from a verified mirror of the No Man's Sky wiki (`wiki/gam
 - Offline after one online visit (service worker precache).
 
 ## Capabilities and Constraints
-- Static PWA on GitHub Pages under `/nms-os/`; React + TypeScript + Vite; Tailwind compiled at build time; no CDNs at run time (docs/architecture.md, ADR-0004).
+- Static PWA on Cloudflare under `/app/`; React + TypeScript + Vite; Tailwind compiled at build time; no CDNs at run time (docs/architecture.md, ADR-0004).
 - Calculators may only show wiki data, arithmetic on it, or player inputs (docs/calculators.md). The planner expands crafting and cooking recipes to items with no such recipe, rounds up multi-output crafts to whole batches, and lets the player switch alternative recipes per item.
 - Saved state shape is a compatibility contract (docs/state-schema.md); changes are additive.
 - Session mode (3.9.0): a session bar with a recap, and timers saved in the log. A refiner's time is the wiki's refining time; a crop's or a custom timer's is the player's input. Alerts are local (toast, vibration, a service-worker notification) while the browser runs the app. With "Alerts when the app is asleep" on (3.12.0, ADR-0006), the relay pushes them too; it sees timer ids and end times, never names.

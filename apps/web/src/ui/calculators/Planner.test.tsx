@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest';
+import { freshNote } from '../notes/note-nav.ts';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { makeCatalog } from '@atlas/core/planner';
@@ -136,6 +137,17 @@ test('a name opens the Codex peek: the wiki’s Source, closest for you, what th
   expect(within(peek).getByText('300')).toBeTruthy();
   expect(within(peek).getByRole('link', { name: 'Open in Codex' }).getAttribute('href')).toMatch(/^wiki\/#\/a\//);
   await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+test('Pin it in the peek starts a note linking the item', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Frost Crystal: open in Codex' }));
+  await userEvent.click(
+    within(screen.getByRole('dialog', { name: 'Frost Crystal' })).getByRole('button', { name: 'Pin it' })
+  );
+  const id = decodeURIComponent(location.hash.replace('#note/', ''));
+  expect(freshNote(id)?.body).toBe('[[Frost Crystal]]\n\n');
   expect(screen.queryByRole('dialog')).toBeNull();
 });
 

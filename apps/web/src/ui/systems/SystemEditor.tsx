@@ -3,11 +3,13 @@
 import { useEffect, useId, useState, type SubmitEvent } from 'react';
 import { groupGlyphs } from '@atlas/core/location';
 import { CONFLICT_LEVELS, STAR_CLASSES, newId, normalizeSystem, tagSlug, type System } from '@atlas/core/systems-model';
-import { saveSystem } from '../actions.ts';
+import { deleteSystem, saveSystem } from '../actions.ts';
 import { showToast } from '../../app/ui.ts';
 import { closeSystemPanel, dismissSystemPanel, openSystem, setCloseGuard, type EditorPreset } from './panel-store.ts';
 import { SheetGrab } from '../parts/Sheet.tsx';
 import { Button } from '../parts/Button.tsx';
+import { ArmButton } from '../parts/Gesture.tsx';
+import { goBack } from '../shell/section-store.ts';
 import { LocationBlock, locationGlyphs, type Location } from './LocationBlock.tsx';
 import { FIELD, LABEL_FIELD, Segments, TagEditor, type Option } from './editor-parts.tsx';
 
@@ -254,6 +256,17 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
             />
             I'm here now (log a visit)
           </label>
+        )}
+        {existing && (
+          <ArmButton
+            label="Delete system"
+            armedLabel="Tap again to delete"
+            onConfirm={() => {
+              deleteSystem(existing.id);
+              closeSystemPanel();
+              if (window.location.hash.startsWith('#system/')) goBack('systems');
+            }}
+          />
         )}
       </div>
 

@@ -490,7 +490,7 @@ function CodeCard({ onHide }: { onHide: () => void }) {
       <p className="text-caption text-ink-muted">
         AI assistants can read this log too, through{' '}
         <a
-          href="https://github.com/Relmaur/nms-os/blob/main/docs/mcp.md"
+          href="https://github.com/Relmaur/atlas-os/blob/main/docs/mcp.md"
           target="_blank"
           rel="noopener"
           className="text-scanner-cyan-pale hover:text-quantity-cyan underline"

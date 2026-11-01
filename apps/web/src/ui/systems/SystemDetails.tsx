@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type SubmitEvent } from 'react';
 import { biomeFamily } from '@atlas/core/facts';
 import { homeSummary } from '@atlas/core/home';
+import { notesForSystem, systemPin } from '@atlas/core/notes';
 import { systemOrbit } from '@atlas/core/orbit';
 import { CONFLICT_LEVELS, RACES, STAR_CLASSES, lastVisit, type Planet, type System } from '@atlas/core/systems-model';
 import { deletePlanet, logVisit, savePlanet, toggleFavorite } from '../actions.ts';
@@ -17,6 +18,8 @@ import { ArmButton } from '../parts/Gesture.tsx';
 import { SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
 import { OrbitDiagram, PlanetMarker } from '../parts/StarChart.tsx';
 import { copyText, ShareSystemSheet } from '../share/ShareSheet.tsx';
+import { LinkedNoteRows } from '../notes/note-bits.tsx';
+import { newNote } from '../notes/note-nav.ts';
 import { openSystemEditor } from './panel-store.ts';
 
 const HERO_BUTTON =
@@ -61,6 +64,7 @@ export function SystemDetails() {
   const here = current?.id === system.id && lastVisit(system) !== undefined;
   const orbit = systemOrbit(system, biome => biomeFamily(facts, biome));
   const place = [system.region, system.galaxy].filter(Boolean).join(' · ');
+  const linked = notesForSystem(state.notes, system.id);
   const openPlanet = (planetId: string | null) => {
     setPlanetSheet(sheet => ({ open: true, planetId, session: sheet.session + 1 }));
   };
@@ -196,6 +200,21 @@ export function SystemDetails() {
           Share
         </Button>
       </div>
+
+      <section aria-labelledby="linkedNotesTitle" className="flex flex-col gap-2">
+        <h2 id="linkedNotesTitle" className={SECTION_TITLE}>
+          Linked notes
+        </h2>
+        {linked.length > 0 && <LinkedNoteRows notes={linked} />}
+        <Button
+          icon="ph-note-pencil"
+          onClick={() => {
+            newNote([systemPin(system.id)]);
+          }}
+        >
+          New note
+        </Button>
+      </section>
 
       <ShareSystemSheet system={system} open={sharing} onClose={closeShare} />
       <PlanetSheet

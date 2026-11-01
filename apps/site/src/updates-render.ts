@@ -4,8 +4,8 @@ import { escapeHtml as e } from '@atlas/core/util';
 import { type Update } from '@atlas/core/updates';
 
 export const SITE = 'https://atlas-os.cloud';
-const CHANGELOG = 'https://github.com/Relmaur/nms-os/blob/main/CHANGELOG.md';
-const REPO = 'https://github.com/Relmaur/nms-os';
+const CHANGELOG = 'https://github.com/Relmaur/atlas-os/blob/main/CHANGELOG.md';
+const REPO = 'https://github.com/Relmaur/atlas-os';
 const ICONS: Record<Update['highlights'][number]['icon'], string> = {
   map: '◎',
   card: '✦',

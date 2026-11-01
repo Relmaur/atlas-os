@@ -9,7 +9,7 @@ import { SystemPanel } from './SystemPanel.tsx';
 import { setGalaxiesForTests } from './galaxies-store.ts';
 import { closeSystemPanel, getPanel, openSystemEditor, setSystemFilter } from './panel-store.ts';
 
-vi.mock('../shell/section-store.ts', () => ({ showSection: vi.fn() }));
+vi.mock('../shell/section-store.ts', () => ({ showSection: vi.fn(), goBack: vi.fn() }));
 
 const system = (id: string) => appState.systems.find(item => item.id === id);
 
@@ -212,4 +212,37 @@ test('race, wealth and conflict clear when their segment is tapped again', async
   await userEvent.click(screen.getByRole('radio', { name: 'Low' }));
   await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
   expect(system('sys-den')).toMatchObject({ race: 'korvax', wealth: 2, conflict: '' });
+});
+
+test('Delete system takes two taps at the foot of the editor, and its notes stay, unlinked', async () => {
+  act(() => {
+    appState.notes = [
+      {
+        id: 'n1',
+        title: 'Trade route',
+        body: 'x',
+        pins: ['home', 'system:sys-a'],
+        tags: [],
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    openSystemEditor('sys-a');
+  });
+  render(<SystemPanel />);
+  const remove = screen.getByRole('button', { name: 'Delete system' });
+  await userEvent.click(remove);
+  expect(system('sys-a')).toBeTruthy(); // one tap only arms it
+  await userEvent.click(screen.getByRole('button', { name: 'Tap again to delete' }));
+  expect(system('sys-a')).toBeUndefined();
+  expect(getPanel().open).toBe(false);
+  expect(appState.notes[0]?.pins).toEqual(['home']);
+});
+
+test('a new system has nothing to delete', () => {
+  act(() => {
+    openSystemEditor();
+  });
+  render(<SystemPanel />);
+  expect(screen.queryByRole('button', { name: 'Delete system' })).toBeNull();
 });

@@ -9,6 +9,7 @@ import { quickFacts, recipeRows, sectionSize, splitSections, type RecipeRow } fr
 import type { PreparedEntry } from '@atlas/core/search';
 import { showToast } from '../../app/ui.ts';
 import { WikiSearch } from '../../app/wiki-data.js';
+import { buttonClass } from '../parts/Button.tsx';
 import { SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
 import { categoryIcon, categoryLabel, formatDate } from './bits.tsx';
 import { loadCodex } from './codex-data.ts';
@@ -268,6 +269,7 @@ export function Article({
               key={ids[i]}
               id={ids[i] ?? ''}
               title={section.title}
+              article={entry.title}
               markdown={section.markdown}
               index={index}
               q={q}
@@ -387,7 +389,14 @@ function Markdown({ markdown, index, q, prefix }: { markdown: string; index: Cod
   return <div data-md className="md-body" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function Section(props: { id: string; title: string; markdown: string; index: CodexIndex; q: string }) {
+function Section(props: {
+  id: string;
+  title: string;
+  article: string;
+  markdown: string;
+  index: CodexIndex;
+  q: string;
+}) {
   const { index, q } = props;
   const facts = useMemo(() => quickFacts(props.markdown), [props.markdown]);
   const { rows, rest } = useMemo(() => recipeRows(props.markdown), [props.markdown]);
@@ -421,6 +430,15 @@ function Section(props: { id: string; title: string; markdown: string; index: Co
         <>
           {rest ? <Markdown markdown={rest} index={index} q={q} prefix={`${props.id}-`} /> : null}
           {rows.length > 0 && <Recipes rows={rows} index={index} q={q} />}
+          {props.title.toLowerCase() === 'source' && rows.some(row => row.machine === 'Refiner') && (
+            <a
+              href={`../#refine-timer/${encodeURIComponent(props.article)}`}
+              className={`${buttonClass('secondary', 'M')} w-full`}
+            >
+              <i className="ph-bold ph-timer" aria-hidden="true" />
+              Start a refiner timer
+            </a>
+          )}
         </>
       )}
     </section>

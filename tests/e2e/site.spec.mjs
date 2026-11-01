@@ -113,6 +113,49 @@ test("the live cards are the app's own, at each stage, and the page never touche
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual(['nms_master_os_state']);
 });
 
+test('"Tilt your phone" shows on phones only, where the card really answers it', async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    window.DeviceOrientationEvent = class extends Event {}; // a browser that gives motion without asking
+  });
+  await page.goto('./');
+  const line = page.locator('#tilt-line');
+  if (testInfo.project.name !== 'site-phone') {
+    await expect(line).toBeHidden();
+    return;
+  }
+  await expect(line).toHaveText('Tilt your phone and it catches the light.');
+  await page.locator('#card').scrollIntoViewIfNeeded();
+  const frame = page.locator('#cardframe');
+  await expect.poll(() => frame.evaluate(el => el.style.transform)).not.toBe('');
+  const orient = gamma =>
+    page.evaluate(g => {
+      const event = new Event('deviceorientation');
+      event.beta = 50;
+      event.gamma = g;
+      window.dispatchEvent(event);
+    }, gamma);
+  await orient(0); // how it's held is level
+  await orient(15);
+  await expect.poll(() => frame.evaluate(el => el.style.getPropertyValue('--tilt-x'))).toMatch(/^0\.[45]/);
+});
+
+test('on an iPhone the line says to tap first, and the tap asks for motion', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'site-phone', 'phones only');
+  await page.addInitScript(() => {
+    window.DeviceOrientationEvent = class extends Event {
+      static requestPermission() {
+        window.motionAsked = true;
+        return Promise.resolve('granted');
+      }
+    };
+  });
+  await page.goto('./');
+  await expect(page.locator('#tilt-line')).toHaveText('Tap the card and tilt your phone: it catches the light.');
+  expect(await page.evaluate(() => window.motionAsked)).toBeUndefined(); // never on load: iOS would refuse
+  await page.locator('#cardframe').click();
+  await expect.poll(() => page.evaluate(() => window.motionAsked)).toBe(true);
+});
+
 test('the phones show real screens, sized by the screenshots', async ({ page }) => {
   await page.goto('./');
   const visible = page.locator('.screen-img:visible').first();

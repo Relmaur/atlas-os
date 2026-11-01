@@ -5,13 +5,22 @@ All notable changes to ATLAS:OS (called ATLAS // MASTER OS up to 3.20.0). The fo
 Versions up to 2.6.0 were reconstructed from git history when the changelog was introduced.
 
 ## [Unreleased]
+
+## [3.22.0] - 2026-10-31
 ### Added
+- **Delete a system:** at the foot of the system editor, two taps. Its linked notes stay, unlinked.
+- **Link notes to a system:** from a note's Pin picker, or New note on the system's screen, which lists its linked notes.
+- **Start a refiner timer from the Codex:** an article's Source section opens the timer with that item chosen.
+- **Pin it** in the recipe planner's Codex peek starts a note linking the item.
+- The old GitHub Pages copy of the app says ATLAS has moved, and offers an Export first. Nobody is redirected.
 - **The Updates page** at https://atlas-os.cloud/updates/: named updates in plain words, starting with First Light and Where it started, each with its own page and a share picture, and an RSS feed. This changelog stays the developer record.
 - **What's new in the app:** after an update arrives, one card on Home says so and links to it. Once per update, never on a first install, and never in the way. Settings › About links to the Updates page too.
 - **The product page** at https://atlas-os.cloud: what ATLAS is, with the app's own screens and cards, how to install it, and what it costs. The app stays at /app/. It's free of analytics and third-party requests, like the app.
 - Settings › About has a contact address: hello@atlas-os.cloud.
 
 ### Changed
+- **The repository is now `Relmaur/atlas-os`.** The old `relmaur.github.io/nms-os` address no longer works: that copy is at `relmaur.github.io/atlas-os`, and the app lives at https://atlas-os.cloud/app/. `nms-atlas-mcp` reads game data and sync from atlas-os.cloud.
+- The product page's "Tilt your phone" shows on phones only, and the page's card now answers the phone's motion.
 - The Traveller Card now tilts as a whole, with its art and class badge floating above it and a light sweeping across.
 - Exports are named for the app and the moment: `atlas_os_2026-10-31_17-05-36.json`. Older `nms_state.json` files still import.
 

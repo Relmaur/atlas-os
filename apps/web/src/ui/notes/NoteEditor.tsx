@@ -2,7 +2,7 @@
 // toolbar floating above the tab bar. It saves as the player writes, since the design has no Save button: a pause
 // stores it, and so does leaving. Pin also shows it on Home, a Guide book or a ship's screen.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MAX_NOTE_CHARS, MAX_NOTE_TAGS, PIN_PLACES, gearPin, type Note } from '@atlas/core/notes';
+import { MAX_NOTE_CHARS, MAX_NOTE_TAGS, PIN_PLACES, gearPin, systemPin, type Note } from '@atlas/core/notes';
 import { applyMarkdown, type MarkdownFormat } from '@atlas/core/markdown-edit';
 import { deleteNote, saveNote } from '../actions.ts';
 import { useAppState } from '../useAppState.ts';
@@ -16,6 +16,7 @@ import { freshNote } from './note-nav.ts';
 import { PinPills, TOP_BUTTON, shortDate } from './note-bits.tsx';
 
 const SAVE_DELAY_MS = 600;
+const SYSTEMS_LISTED = 12;
 const TOOLS: [MarkdownFormat, string, string][] = [
   ['heading', 'Heading', '#'],
   ['bold', 'Bold', 'B'],
@@ -72,7 +73,7 @@ function NoteEditor({
   pins: string[];
   body: string;
 }) {
-  const { gear } = useAppState();
+  const { gear, systems } = useAppState();
   const [draft, setDraft] = useState<Note>(() => {
     if (existing) return structuredClone(existing);
     const now = new Date().toISOString();
@@ -81,6 +82,7 @@ function NoteEditor({
   const [mode, setMode] = useState(existing ? 'preview' : 'write');
   const [typed, setTyped] = useState('');
   const [showPins, setShowPins] = useState(false);
+  const [findSystem, setFindSystem] = useState('');
   const [stored, setStored] = useState(Boolean(existing));
   const [kept, setKept] = useState(false);
   const [removed, setRemoved] = useState(false);
@@ -139,7 +141,15 @@ function NoteEditor({
   const html = useMemo(() => (mode === 'preview' ? renderNote(draft.body) : ''), [mode, draft.body]);
   const places = [
     ...PIN_PLACES,
-    ...gear.map(item => ({ key: gearPin(item.id), label: item.name || KINDS[item.kind].label }))
+    ...gear.map(item => ({ key: gearPin(item.id), label: item.name || KINDS[item.kind].label })),
+    // A log can hold hundreds of systems, so only those it's pinned to show, plus what the search finds.
+    ...systems
+      .filter(item => {
+        const wanted = findSystem.trim().toLowerCase();
+        return draft.pins.includes(systemPin(item.id)) || (wanted !== '' && item.name.toLowerCase().includes(wanted));
+      })
+      .slice(0, SYSTEMS_LISTED)
+      .map(item => ({ key: systemPin(item.id), label: item.name }))
   ];
 
   return (
@@ -200,6 +210,18 @@ function NoteEditor({
               <span className="truncate">{place.label}</span>
             </label>
           ))}
+          {systems.length > 0 && (
+            <input
+              type="search"
+              aria-label="Find a system to pin"
+              placeholder="Find a system"
+              value={findSystem}
+              onChange={event => {
+                setFindSystem(event.target.value);
+              }}
+              className={`${FIELD} mt-1 mb-2`}
+            />
+          )}
         </fieldset>
       )}
 
@@ -237,7 +259,7 @@ function NoteEditor({
           >
             {draft.title.trim() || 'Untitled note'}
           </h1>
-          <PinPills note={draft} gear={gear} />
+          <PinPills note={draft} gear={gear} systems={systems} />
           {draft.body.trim() ? (
             <div id="notePreview" className="md-body text-[15px] text-ink" dangerouslySetInnerHTML={{ __html: html }} />
           ) : (
@@ -259,7 +281,7 @@ function NoteEditor({
             }}
             className="w-full bg-transparent font-display font-extrabold text-[22px] leading-tight text-ink-bright placeholder:text-ink-disabled focus:outline-hidden"
           />
-          <PinPills note={draft} gear={gear} />
+          <PinPills note={draft} gear={gear} systems={systems} />
           <textarea
             id="noteBody"
             ref={area}

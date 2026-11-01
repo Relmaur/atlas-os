@@ -15,6 +15,15 @@ export function newNote(pins: string[] = [], body = ''): void {
 /** What a just-begun note starts with, or null when `id` isn't one (a reload forgets it: it was never stored). */
 export const freshNote = (id: string): { pins: string[]; body: string } | null => (fresh?.id === id ? fresh : null);
 
+const linkTo = (title: string): string => {
+  const clean = title.replace(/[[\]|]/g, '').trim();
+  return clean ? `[[${clean}]]\n\n` : '';
+};
+/** The planner peek's Pin it: a new note whose text links that item, as Pin to a note does from an article. */
+export function newNoteAbout(title: string): void {
+  newNote([], linkTo(title));
+}
+
 // "Pin to a note" on a Codex article (../#note-about/<title>): a new note whose text links that page. The address is
 // swapped for the note's own, so Back doesn't make another.
 export function takeNoteAbout(): void {
@@ -22,12 +31,10 @@ export function takeNoteAbout(): void {
   if (!match?.[1]) return;
   let title = '';
   try {
-    title = decodeURIComponent(match[1])
-      .replace(/[[\]|]/g, '')
-      .trim();
+    title = decodeURIComponent(match[1]);
   } catch {
     // a mangled address: start the note blank
   }
-  fresh = { id: newId('note'), pins: [], body: title ? `[[${title}]]\n\n` : '' };
+  fresh = { id: newId('note'), pins: [], body: linkTo(title) };
   history.replaceState(null, '', `#note/${encodeURIComponent(fresh.id)}`);
 }

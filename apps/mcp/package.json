@@ -1,15 +1,15 @@
 {
   "name": "nms-atlas-mcp",
-  "version": "3.20.0",
+  "version": "3.22.0",
   "description": "ATLAS for AI assistants: a local, read-only MCP server for No Man's Sky. Answers from a verified mirror of the No Man's Sky Wiki (recipes, values, game rules) and, if you connect it, your own ATLAS log.",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Relmaur/nms-os.git",
+    "url": "git+https://github.com/Relmaur/atlas-os.git",
     "directory": "apps/mcp"
   },
-  "homepage": "https://github.com/Relmaur/nms-os/blob/main/docs/mcp.md",
+  "homepage": "https://github.com/Relmaur/atlas-os/blob/main/docs/mcp.md",
   "keywords": [
     "no-mans-sky",
     "mcp",

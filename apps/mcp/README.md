@@ -56,4 +56,4 @@ On first run the server downloads the wiki data (about 10 MB) from ATLAS's site 
 | `ATLAS_SYNC_URL` | Another sync server (https). |
 
 ## License
-MIT. The wiki text it serves is CC BY-NC-SA 3.0, from the [No Man's Sky Wiki](https://nomanssky.fandom.com) contributors. ATLAS is a fan project, not affiliated with Hello Games. Source and docs: https://github.com/Relmaur/nms-os
+MIT. The wiki text it serves is CC BY-NC-SA 3.0, from the [No Man's Sky Wiki](https://nomanssky.fandom.com) contributors. ATLAS is a fan project, not affiliated with Hello Games. Source and docs: https://github.com/Relmaur/atlas-os

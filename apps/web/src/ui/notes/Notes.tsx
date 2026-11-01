@@ -35,7 +35,7 @@ export function Notes() {
             <i className="ph-bold ph-plus text-xl" aria-hidden="true" />
           </button>
         </div>
-        <p className="text-sub text-ink-muted">Your own Markdown. Pin a note to Home, a ship or a guide.</p>
+        <p className="text-sub text-ink-muted">Your own Markdown. Pin a note to Home, a system, a ship or a guide.</p>
       </header>
       <LogSegment />
 

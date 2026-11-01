@@ -22,5 +22,5 @@ What leaves the device today, each opt-in or player-started (`AGENTS.md`, Invari
 - **Destructive action:** deleting committed files outside the wiki mirror's own sync, dropping user-state keys, or rewriting git history needs explicit approval. The wiki sync may rewrite mirrored `.md` files; it never deletes them (removed pages are flagged).
 - **Major release:** anything that breaks a saved `nms_state.json`, an exported file, a URL users bookmark (`#section`, `wiki/#/a/<path>`), or a supported way of running the app is a MAJOR bump and needs approval.
 - **Data privacy:** any change to where user state is stored or sent (sync, push, the MCP server's answers, accounts, analytics) halts for review and gets an ADR.
-- **Public surface:** renaming the product, the npm package (`nms-atlas-mcp`), the URL (`relmaur.github.io/nms-os/`) or the PWA identity (manifest name and id), and publishing a package, need the owner's yes.
+- **Public surface:** renaming the product, the npm package (`nms-atlas-mcp`), the URL (`atlas-os.cloud`) or the PWA identity (manifest name and id), and publishing a package, need the owner's yes.
 - **Firewall:** nothing from the owner's private notes enters the repo, commits, issues, PRs or ADRs.

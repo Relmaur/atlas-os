@@ -19,7 +19,7 @@ The package's page (`apps/mcp/README.md`) has the short version: add `npx -y nms
      "mcpServers": {
        "atlas": {
          "command": "node",
-         "args": ["/path/to/nms-os/apps/mcp/src/main.ts"],
+         "args": ["/path/to/atlas-os/apps/mcp/src/main.ts"],
          "env": { "ATLAS_SYNC_CODE": "your sync code" }
        }
      }
@@ -28,7 +28,7 @@ The package's page (`apps/mcp/README.md`) has the short version: add `npx -y nms
 
    Use the **full path to Node 24** as the command if you use nvm or have an older Node installed too: desktop apps start with the system's path, where `node` may be an older version that can't run the server. In a terminal where `node --version` says v24, `which node` prints the path.
 
-   For Claude Code: `claude mcp add atlas -e ATLAS_SYNC_CODE=… -- node /path/to/nms-os/apps/mcp/src/main.ts`.
+   For Claude Code: `claude mcp add atlas -e ATLAS_SYNC_CODE=… -- node /path/to/atlas-os/apps/mcp/src/main.ts`.
 4. Restart the client and ask, for example: "Which of my outlaw stations are ready?", "What do I need to craft 3 Warp Cells?", "Does my Multi-Tool's layout match the wiki's rules?"
 
 ## Before you paste the code

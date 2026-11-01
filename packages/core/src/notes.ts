@@ -8,7 +8,7 @@ export interface Note {
   id: string;
   title: string;
   body: string; // Markdown
-  pins: string[]; // where it shows besides the Notes list: 'home', 'book1' … 'book6', or 'gear:<id>' (a ship's screen)
+  pins: string[]; // where it shows besides the Notes list: 'home', 'book1' … 'book6', 'gear:<id>' (a ship's screen) or 'system:<id>' (a system's)
   tags: string[]; // lowercase slugs, like a system's (added in the redesign; missing reads as none)
   createdAt: string;
   updatedAt: string;
@@ -21,7 +21,12 @@ export const PIN_PLACES: { key: string; label: string }[] = [
 const PLACES = new Set(PIN_PLACES.map(place => place.key));
 // A note linked to a ship, Multi-Tool or Exosuit (the redesign's Linked notes) is pinned to `gear:<its id>`.
 export const gearPin = (id: string): string => `gear:${id}`;
-const isPin = (pin: string): boolean => PLACES.has(pin) || (pin.startsWith('gear:') && SAFE_ID.test(pin.slice(5)));
+// A note linked to a system lists on its screen the same way, pinned to `system:<its id>`.
+export const systemPin = (id: string): string => `system:${id}`;
+const isPin = (pin: string): boolean =>
+  PLACES.has(pin) ||
+  (pin.startsWith('gear:') && SAFE_ID.test(pin.slice(5))) ||
+  (pin.startsWith('system:') && SAFE_ID.test(pin.slice(7)));
 export const MAX_NOTE_CHARS = 100_000; // a long guide is ~20k; past this a paste went wrong
 export const MAX_NOTE_TAGS = 12;
 
@@ -63,6 +68,7 @@ export function notesPinnedTo(notes: Note[], place: string): Note[] {
   return notes.filter(note => note.pins.includes(place)).sort(byNewest);
 }
 export const notesForGear = (notes: Note[], id: string): Note[] => notesPinnedTo(notes, gearPin(id));
+export const notesForSystem = (notes: Note[], id: string): Note[] => notesPinnedTo(notes, systemPin(id));
 
 // The notes after linking exactly `ids` to one gear item: others linked to it are unlinked. Only changed notes are new
 // objects, so the caller can tell which to save.

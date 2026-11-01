@@ -6,6 +6,7 @@ import { HOUR_MS } from '@atlas/core/systems-model';
 import { appState, setAppState } from '../../app/store.ts';
 import { setFactsForTests } from '../gear/facts-store.ts';
 import { goBack } from '../shell/section-store.ts';
+import { freshNote } from '../notes/note-nav.ts';
 import { SystemDetails } from './SystemDetails.tsx';
 import { getPanel, closeSystemPanel } from './panel-store.ts';
 
@@ -96,7 +97,9 @@ test('a system with nothing logged says so, and Add opens the editor for its por
   expect(screen.queryByText('You are here')).toBeNull();
   expect(screen.getAllByText('Not logged').length).toBeGreaterThan(4);
   expect(screen.getByText('No visits yet. Log a visit when you’re here.')).toBeTruthy();
-  await userEvent.click(within(screen.getByRole('region', { name: 'Portal address' })).getByRole('button', { name: 'Add' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Portal address' })).getByRole('button', { name: 'Add' })
+  );
   expect(getPanel()).toMatchObject({ open: true, mode: 'edit', systemId: 'sys-b' });
 });
 
@@ -144,4 +147,28 @@ test('a system that isn’t in the log says so', () => {
   param = 'sys-gone';
   render(<SystemDetails />);
   expect(screen.getByRole('heading', { name: 'System not found' })).toBeTruthy();
+});
+
+test('its linked notes list on its screen, and New note starts one pinned to it', async () => {
+  act(() => {
+    appState.notes = [
+      {
+        id: 'n1',
+        title: 'Trade route',
+        body: 'Buy low',
+        pins: ['system:sys-a'],
+        tags: [],
+        createdAt: '',
+        updatedAt: ''
+      },
+      { id: 'n2', title: 'Elsewhere', body: 'x', pins: ['home'], tags: [], createdAt: '', updatedAt: '' }
+    ];
+  });
+  render(<SystemDetails />);
+  const linked = screen.getByRole('region', { name: 'Linked notes' });
+  expect(within(linked).getByRole('button', { name: /Trade route/ })).toBeTruthy();
+  expect(within(linked).queryByRole('button', { name: /Elsewhere/ })).toBeNull();
+  await userEvent.click(within(linked).getByRole('button', { name: 'New note' }));
+  const id = decodeURIComponent(location.hash.replace('#note/', ''));
+  expect(freshNote(id)?.pins).toEqual(['system:sys-a']);
 });
