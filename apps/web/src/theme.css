@@ -1421,3 +1421,20 @@ label.list-row:active {
     margin-inline: auto;
   }
 }
+
+/* The Codex page, from 1024: the same rail, and an article beside the search and results. */
+@media (min-width: 1024px) {
+  #codexRoot {
+    padding-left: 88px;
+  }
+  #codexRoot .codex-list {
+    position: sticky;
+    top: 6rem;
+    max-height: calc(100dvh - 7rem);
+    overflow-y: auto;
+    padding: 2px;
+  }
+  #codexRoot .codex-list nav[aria-label='Groups'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* three to a row would cut their names in this narrow pane */
+  }
+}

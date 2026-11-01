@@ -5,10 +5,13 @@ All notable changes to ATLAS:OS (called ATLAS // MASTER OS up to 3.20.0). The fo
 Versions up to 2.6.0 were reconstructed from git history when the changelog was introduced.
 
 ## [Unreleased]
+
+## [3.23.0] - 2026-10-31
 ### Changed
 - On wide screens the app has a left rail: search, Home, Log, Runs, Codex and Settings. On tablets the phone layout sits centred. Search opens from the key everywhere, and from `/` or ⌘K.
 - On wide screens a system, ship, note, run or book opens beside its list, and Home is a two-column dashboard.
 - On wide screens editors and sheets open as a panel from the right, closed by the bar on its edge or Esc. Tablets keep bottom sheets.
+- The Codex has the same rail on wide screens, and an article opens beside the search and results.
 
 ### Added
 - Keyboard shortcuts: `g` then `h`, `l`, `r` or `c` to jump, and `n` for a new note in Log. They're listed in Settings on wide screens.

@@ -1,7 +1,16 @@
 // The Codex page (wiki/index.html): browsing (design 15) or an article (16), with the quick look and the New article
-// sheet. The search field sits at the top of browsing; from lg a slim header carries the way back to the app. Keyboard: / or ⌘K searches; on results ↑/↓ (or j/k) select, Space peeks, Enter opens.
+// sheet. The search field sits at the top of browsing; from lg a slim header sits beside the rail. Keyboard: / or ⌘K searches; on results ↑/↓ (or j/k) select, Space peeks, Enter opens.
 import { CodexLoading } from '../parts/Loading.tsx';
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type KeyboardEvent,
+  type RefObject
+} from 'react';
 import { DEFAULTS, articleHref, browse, browseHref, isLanding, pageOf } from '@atlas/core/codex';
 import { isOld } from '@atlas/core/search';
 import { Article } from './Article.tsx';
@@ -11,7 +20,19 @@ import { NewArticle } from './NewArticle.tsx';
 import { QuickLook } from './QuickLook.tsx';
 import { currentRoute, navigate, setParams, useRoute } from './route.ts';
 
+// From lg an article sits beside the search and results (design/desktop-direction).
+const WIDE = '(min-width: 1024px)';
+function subscribeWide(listener: () => void): () => void {
+  const media = matchMedia(WIDE);
+  media.addEventListener('change', listener);
+  return () => {
+    media.removeEventListener('change', listener);
+  };
+}
+const isWide = (): boolean => matchMedia(WIDE).matches;
+
 export function Codex() {
+  const wide = useSyncExternalStore(subscribeWide, isWide);
   const data = useCodex();
   const route = useRoute();
   const { params } = route;
@@ -107,6 +128,50 @@ export function Codex() {
   }, [selected]);
 
   const peeked = listed[peek]?.entry ?? null;
+  const article =
+    data.status === 'ready' && route.view === 'article' ? (
+      <Article
+        key={route.path}
+        index={data.index}
+        path={route.path}
+        q={params.q}
+        copyDate={data.verification?.dumpDate}
+      />
+    ) : null;
+  const browsePane =
+    data.status === 'ready' ? (
+      <Browse
+        search={
+          <SearchField
+            q={params.q}
+            ref={search}
+            onDown={() => {
+              if (!listed.length) return false;
+              select(0);
+              return true;
+            }}
+            onEnter={() => {
+              selectFirst.current = true;
+            }}
+          />
+        }
+        onNew={() => {
+          setCreating(true);
+        }}
+        params={params}
+        view={view}
+        entries={entries}
+        verification={data.verification}
+        listed={listed}
+        landing={landing}
+        selected={selected}
+        onPeek={i => {
+          setSelected(i);
+          setPeek(i);
+        }}
+        articleHref={href}
+      />
+    ) : null;
   return (
     <>
       <Header
@@ -121,45 +186,16 @@ export function Codex() {
         {data.status !== 'ready' ? (
           <CodexLoading />
         ) : route.view === 'article' ? (
-          <Article
-            key={route.path}
-            index={data.index}
-            path={route.path}
-            q={params.q}
-            copyDate={data.verification?.dumpDate}
-          />
+          wide ? (
+            <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-8 items-start">
+              <div className="codex-list">{browsePane}</div>
+              {article}
+            </div>
+          ) : (
+            article
+          )
         ) : (
-          <Browse
-            search={
-              <SearchField
-                q={params.q}
-                ref={search}
-                onDown={() => {
-                  if (!listed.length) return false;
-                  select(0);
-                  return true;
-                }}
-                onEnter={() => {
-                  selectFirst.current = true;
-                }}
-              />
-            }
-            onNew={() => {
-              setCreating(true);
-            }}
-            params={params}
-            view={view}
-            entries={entries}
-            verification={data.verification}
-            listed={listed}
-            landing={landing}
-            selected={selected}
-            onPeek={i => {
-              setSelected(i);
-              setPeek(i);
-            }}
-            articleHref={href}
-          />
+          browsePane
         )}
       </main>
       {data.status === 'ready' ? (
@@ -252,17 +288,11 @@ export function SearchField({
   );
 }
 
-// From lg: the way back to the app, the Codex's own name, and New article. Below lg the tab bar does this.
+// From lg, beside the rail: the Codex's own name and New article. Below lg the tab bar and the screens do this.
 function Header({ onNew }: { onNew: () => void }) {
   return (
     <header className="app-header hidden lg:block sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
       <div className="max-w-[1400px] mx-auto h-16 px-6 flex items-center gap-4">
-        <a href="../" title="Back to ATLAS:OS" className="flex items-center gap-2.5 shrink-0 rounded-lg">
-          <i className="ph-bold ph-diamond text-[22px] text-scanner-cyan-glow" aria-hidden="true" />
-          <span className="font-display font-bold tracking-wider text-white">
-            ATLAS<span className="text-scanner-cyan-pale">:OS</span>
-          </span>
-        </a>
         <a href="#/" className="font-display font-bold tracking-wider text-emerald-300 shrink-0 rounded-lg">
           CODEX
         </a>

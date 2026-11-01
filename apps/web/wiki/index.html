@@ -31,6 +31,18 @@
     <!-- Rendered by React (src/ui/codex/Codex.tsx): header search, browse, article, quick look, New article -->
     <div id="codexRoot"></div>
 
+    <!-- Same rail as the main app, from lg (src/ui/shell/Sidebar.tsx) -->
+    <aside id="codexRail" class="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:w-[88px] z-40 flex-col">
+        <nav aria-label="Primary" class="rail">
+            <a href="../#search" aria-label="Search and quick actions" class="search-key"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i></a>
+            <a href="../#home" class="tab-item"><span class="tab-icon"><i class="ph-bold ph-house" aria-hidden="true"></i></span><span>Home</span></a>
+            <a href="../#systems" class="tab-item"><span class="tab-icon"><i class="ph-bold ph-planet" aria-hidden="true"></i></span><span>Log</span></a>
+            <a href="../#runs" class="tab-item"><span class="tab-icon"><i class="ph-bold ph-path" aria-hidden="true"></i></span><span>Runs</span></a>
+            <a href="#/" aria-current="page" class="tab-item"><span class="tab-icon"><i class="ph-bold ph-book-open" aria-hidden="true"></i></span><span>Codex</span></a>
+            <a href="../#more" title="Settings" class="tab-item rail-settings"><span class="tab-icon"><i class="ph-bold ph-gear-six" aria-hidden="true"></i></span><span>Settings</span></a>
+        </nav>
+    </aside>
+
     <!-- Same tab bar and search key as the main app (below lg; src/ui/shell/TabBar.tsx) -->
     <div class="lg:hidden">
         <nav aria-label="Primary" class="tab-bar">

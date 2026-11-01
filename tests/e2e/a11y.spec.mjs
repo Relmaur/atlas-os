@@ -112,3 +112,31 @@ for (const [name, path, ready, region, setup] of [
     if (region) expect(violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
   });
 }
+
+test('the wide layouts pass at every width the direction names', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(120_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const width of [768, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const screen of [
+      './#home',
+      './#systems',
+      './#system/sys-ekwa',
+      './#gear',
+      './#notes',
+      './#runs',
+      './#guides',
+      './#more'
+    ]) {
+      await page.goto(screen);
+      await page.locator('.book-section:not(.hidden)').first().waitFor();
+      const { violations } = await new AxeBuilder({ page }).analyze();
+      expect(violations.map(v => `${String(width)} ${screen} ${v.id}: ${v.help}`)).toEqual([]);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+        `${screen} at ${String(width)}`
+      ).toBe(true);
+    }
+  }
+});

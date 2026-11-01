@@ -186,8 +186,8 @@ export function Article({
   );
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-12">
-      <article className="min-w-0 flex flex-col gap-section max-w-2xl">
+    <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_16rem] xl:gap-12">
+      <article className="min-w-0 flex flex-col gap-section max-w-2xl lg:max-w-[720px]">
         <header ref={header} id="articleHeader" className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
             <BackButton fallback={fallback} />
@@ -199,7 +199,7 @@ export function Article({
                 }}
                 aria-label="On this page"
                 aria-haspopup="dialog"
-                className={`${TOP_BUTTON} lg:hidden`}
+                className={`${TOP_BUTTON} xl:hidden`}
               >
                 <i className="ph-bold ph-list-bullets text-lg" aria-hidden="true" />
               </button>
@@ -242,7 +242,7 @@ export function Article({
           {entry.summary ? <p className="text-[15px] leading-relaxed text-ink">{entry.summary}</p> : null}
           {split.intro ? <Markdown markdown={split.intro} index={index} q={q} prefix="intro-" /> : null}
           {parts.length > 2 && (
-            <nav aria-label="On this page" className="lg:hidden rounded-card border border-hairline px-4 py-3">
+            <nav aria-label="On this page" className="xl:hidden rounded-card border border-hairline px-4 py-3">
               <p className="text-label uppercase text-ink-label">On this page</p>
               <ol className="mt-1.5 flex flex-col">
                 {parts.slice(1).map((part, i) => (
@@ -327,7 +327,7 @@ export function Article({
         ) : null}
       </article>
 
-      <aside aria-label="Article index" className="hidden lg:block">
+      <aside aria-label="Article index" className="hidden xl:block">
         <div
           id="articleRail"
           className="sticky top-24 max-h-[calc(100dvh-7rem)] overflow-y-auto overscroll-contain pb-4"
@@ -758,14 +758,14 @@ function OnThisPage(props: {
   );
 }
 
-// The On this page sheet below lg: the bar closes it (no ✕ on phones).
+// The On this page sheet below xl, where it isn't a column: the bar closes it (no ✕).
 function IndexSheet(props: { open: boolean; onClose: () => void; children: ReactNode }) {
   const sheet = useRef<HTMLDivElement>(null);
   const { open, onClose } = props;
   useSheetDrag(sheet, onClose);
-  useSheetOpen(open, onClose, { layout: '(max-width: 1023px)' });
+  useSheetOpen(open, onClose, { layout: '(max-width: 1279px)' });
   return (
-    <div className="lg:hidden">
+    <div className="xl:hidden">
       <div
         onClick={onClose}
         className={`fixed inset-0 z-50 bg-scrim backdrop-blur-[2px] transition-opacity duration-200 ${open ? '' : 'opacity-0 pointer-events-none'}`}
