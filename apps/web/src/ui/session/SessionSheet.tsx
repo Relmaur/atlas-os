@@ -1,9 +1,9 @@
 // The add-timer sheet the Session screen's + Refiner, + Crop and + Custom open: a bottom sheet on phones (the grab bar
-// closes it), a side panel from md up.
+// closes it), a side panel from lg up.
 import { useEffect, useRef } from 'react';
 import type { TimerKind } from '@atlas/core/timers';
 import { loadGameData } from '../calculators/game-data.ts';
-import { SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
+import { PanelGrab, SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
 import { RefineForm, TimedForm } from './AddTimer.tsx';
 import { closeAddTimer, useAddingTimer } from './sheet-store.ts';
 
@@ -42,10 +42,11 @@ export function SessionSheet() {
         aria-labelledby="timerSheetTitle"
         aria-hidden={!open}
         inert={!open}
-        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:w-[min(28rem,92vw)] md:rounded-none md:border-t-0 md:border-l md:translate-y-0 ${open ? '' : 'md:translate-x-full'}`}
+        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${open ? '' : 'lg:translate-x-full'}`}
       >
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:pb-6 flex flex-col gap-4">
-          <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 md:pt-5 pb-1 bg-slate-deep">
+        <PanelGrab onClose={closeAddTimer} label="Close timer" />
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] lg:pb-6 flex flex-col gap-4">
+          <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 lg:pt-5 pb-1 bg-slate-deep">
             <SheetGrab onClose={closeAddTimer} label="Close timer" />
             <h2
               ref={title}

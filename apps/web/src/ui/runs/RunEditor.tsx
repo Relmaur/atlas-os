@@ -1,4 +1,4 @@
-// The Run editor (design 32): a bottom sheet on phones, a side panel from md up. A run is a name, a line about it,
+// The Run editor (design 32): a bottom sheet below lg, a side panel from lg up. A run is a name, a line about it,
 // what it earns, ordered steps (a verb and a system from the log, a wiki item, or free text), timing, and a live
 // estimate checked against the game data. Runs stay the player's own: sharing between players isn't built.
 import { useCallback, useEffect, useMemo, useRef, useState, type SubmitEvent } from 'react';
@@ -20,7 +20,7 @@ import type { Catalog } from '@atlas/core/planner';
 import { deleteRun, saveRun } from '../actions.ts';
 import { showToast } from '../../app/ui.ts';
 import { useAppState } from '../useAppState.ts';
-import { SheetGrab, useSheetDrag } from '../parts/Sheet.tsx';
+import { PanelGrab, SheetGrab, useSheetDrag } from '../parts/Sheet.tsx';
 import { Button } from '../parts/Button.tsx';
 import { ArmButton } from '../parts/Gesture.tsx';
 import { FIELD, LABEL_FIELD, Segments } from '../systems/editor-parts.tsx';
@@ -160,11 +160,12 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
         role="dialog"
         aria-modal="true"
         aria-labelledby="runEditorTitle"
-        className="fixed z-[61] flex flex-col bg-slate-deep border-control-edge inset-x-0 bottom-0 h-[92dvh] rounded-t-sheet border-t md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:h-full md:w-[min(36rem,92vw)] md:rounded-none md:border-t-0 md:border-l"
+        className="fixed z-[61] flex flex-col bg-slate-deep border-control-edge inset-x-0 bottom-0 h-[92dvh] rounded-t-sheet border-t lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:h-full lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l"
       >
+        <PanelGrab onClose={dismiss} label="Close run editor" />
         <form id="runEditor" onSubmit={submit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            <div data-sheet-grab className="sticky top-0 z-10 bg-slate-deep/95 backdrop-blur px-5 pt-3 md:pt-5 pb-3">
+            <div data-sheet-grab className="sticky top-0 z-10 bg-slate-deep/95 backdrop-blur px-5 pt-3 lg:pt-5 pb-3">
               <SheetGrab onClose={dismiss} label="Close run editor" />
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
@@ -179,14 +180,6 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
                     know when an update changes it.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={closeRunEditor}
-                  aria-label="Cancel"
-                  className="hidden md:flex w-9 h-9 -mr-1.5 shrink-0 rounded-control items-center justify-center text-ink-muted hover:text-ink-bright hover:bg-slate-ground"
-                >
-                  <i className="ph-bold ph-x text-lg" aria-hidden="true" />
-                </button>
               </div>
             </div>
 

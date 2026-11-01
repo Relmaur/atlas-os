@@ -187,6 +187,8 @@ CI runs typecheck + lint + unit tests only (owner's decision: browser tests run 
   - Judgement calls: Home keeps its own header from lg, without the gear, so its timer button has a home; the header's Export and Import (and dropping a file on it) are gone from lg, leaving them in Settings; the Codex page keeps its own slim header until its stage.
 - **Stage 2, panes, built (unreleased):** from 1024 `section-store` sets `body[data-pane]` and a detail sits beside its list: Systems, Fleet, Notes, Runs, Guides. The 380px list keeps its own scroll and marks what's open. Home is the dashboard (hero left, the rest right). Settings and the single-column screens are centred.
   - Judgement calls: an open list with nothing chosen shows a line ("Pick something from the list"), not the first item; Warp back and Home's pinned notes join the dashboard's right column; the Traveller Card shows there as a link row with class and rank, not the card itself; detail screens keep their Back button, which returns to the list.
+- **Stage 3, side panels, built (unreleased):** from 1024 a sheet is a 440px right-hand panel with a slim bar on its left edge and no ✕ (`PanelGrab`, `parts/Sheet.tsx`); Esc and the scrim close it, and an editor with unsaved changes still refuses. 768 to 1023 now keep bottom sheets.
+  - Judgement calls: the bar closes on a click, not a drag; New article stays a centred dialog with its ✕; the planner's peek is a side panel at every wide size, not a third column at 1280.
 
 **3.14.0, getting ready to share with the NMS community** (owner, 2026-10-27; ADR-0007). The owner is still the only user; nothing has been shared yet:
 - The app holds nobody's save: the starter data and Books II, III and V are general.

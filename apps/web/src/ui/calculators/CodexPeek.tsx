@@ -10,7 +10,7 @@ import { formatLightYears } from '@atlas/core/location';
 import { getFact } from '@atlas/core/facts';
 import { useAppState } from '../useAppState.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
-import { SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
+import { PanelGrab, SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
 import { Button, buttonClass } from '../parts/Button.tsx';
 import { newNoteAbout } from '../notes/note-nav.ts';
 import type { RecipeSwitch } from './plan-bits.ts';
@@ -97,10 +97,11 @@ export function CodexPeek({
         role="dialog"
         aria-modal="true"
         aria-labelledby="codexPeekTitle"
-        className="fixed z-[56] inset-x-0 bottom-0 max-h-[85dvh] flex flex-col rounded-t-sheet border-t border-control-edge bg-[#020617] transition-transform duration-300 md:inset-x-auto md:right-0 md:top-0 md:max-h-none md:w-[min(28rem,92vw)] md:rounded-none md:border-t-0 md:border-l"
+        className="fixed z-[56] inset-x-0 bottom-0 max-h-[85dvh] flex flex-col rounded-t-sheet border-t border-control-edge bg-[#020617] transition-transform duration-300 lg:inset-x-auto lg:right-0 lg:top-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l"
       >
-        <div className="flex-1 overflow-y-auto overscroll-contain px-[18px] pb-[calc(1.75rem+env(safe-area-inset-bottom))] md:pt-6 flex flex-col gap-3.5">
-          <div data-sheet-grab className="pt-3 md:hidden">
+        <PanelGrab onClose={onClose} label={`Close ${title}`} />
+        <div className="flex-1 overflow-y-auto overscroll-contain px-[18px] pb-[calc(1.75rem+env(safe-area-inset-bottom))] lg:pt-6 flex flex-col gap-3.5">
+          <div data-sheet-grab className="pt-3 lg:hidden">
             <SheetGrab onClose={onClose} label={`Close ${title}`} />
           </div>
           <div className="flex items-center gap-3.5">

@@ -21,7 +21,7 @@ import { showToast } from '../../app/ui.ts';
 import { useFacts } from '../gear/facts-store.ts';
 import { KINDS } from '../gear/kinds.ts';
 import { Button } from '../parts/Button.tsx';
-import { SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
+import { PanelGrab, SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
 import { useGameVersion } from '../runs/run-bits.tsx';
 import { Segments } from '../systems/editor-parts.tsx';
 import { drawFleetCard, drawPostcard, loadShareFonts, pictureBlob } from './draw.ts';
@@ -185,8 +185,9 @@ export function ShareShell({
         aria-labelledby={titleId}
         aria-hidden={!open}
         inert={!open}
-        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:w-[min(28rem,92vw)] md:rounded-none md:border-t-0 md:border-l md:translate-y-0 ${open ? '' : 'md:translate-x-full'}`}
+        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${open ? '' : 'lg:translate-x-full'}`}
       >
+        <PanelGrab onClose={onClose} label="Close sharing" />
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] flex flex-col gap-4">
           <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 pb-1 bg-slate-deep">
             <SheetGrab onClose={onClose} label="Close sharing" />

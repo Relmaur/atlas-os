@@ -110,7 +110,7 @@ test('editor: sets your rating; Cancel discards changes', async () => {
     openSystemEditor('sys-a');
   });
   await userEvent.type(screen.getByRole('textbox', { name: 'Region' }), ' changed');
-  await userEvent.click(screen.getAllByRole('button', { name: 'Cancel' })[1]!); // the footer one (the header ✕ is the other)
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(system('sys-a')?.region).toBe('Odyalutai');
   expect(getPanel().open).toBe(false);
 });
@@ -147,7 +147,7 @@ test('on a phone the grab bar closes the editor, but refuses while there are uns
   await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Prime');
   await userEvent.click(handle());
   expect(getPanel()).toMatchObject({ open: true, mode: 'edit' });
-  await userEvent.click(screen.getAllByRole('button', { name: 'Cancel' })[1]!); // Cancel still discards
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' })); // Cancel still discards
   expect(getPanel().open).toBe(false);
 });
 

@@ -1,4 +1,4 @@
-// The system editor's panel: a side panel from md up, a bottom sheet below. (A system's own screen is SystemDetails.)
+// The system editor's panel: a side panel from lg up, a bottom sheet below. (A system's own screen is SystemDetails.)
 // It stays mounted so it can slide in and out; while closed it is inert and hidden from assistive tech.
 import { useEffect, useRef } from 'react';
 import { BIOMES, ECONOMIES } from '@atlas/core/systems-model';
@@ -6,6 +6,7 @@ import { closeSystemPanel, dismissSystemPanel, findSystem, takeReturnFocus, useP
 import { useSheetDrag } from '../parts/Sheet.tsx';
 import { useAppState } from '../useAppState.ts';
 import { SystemEditor } from './SystemEditor.tsx';
+import { PanelGrab } from '../parts/Sheet.tsx';
 
 export function SystemPanel() {
   useAppState();
@@ -59,12 +60,13 @@ export function SystemPanel() {
         aria-labelledby="systemPanelTitle"
         aria-hidden={!panel.open}
         inert={!panel.open}
-        className={`fixed z-[56] flex flex-col bg-slate-950 border-slate-700 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.85)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 h-[92dvh] rounded-t-3xl border-t ${panel.open ? '' : 'translate-y-full'} md:inset-x-auto md:right-0 md:top-0 md:h-full md:w-[min(40rem,92vw)] md:rounded-none md:border-t-0 md:border-l md:translate-y-0 ${panel.open ? '' : 'md:translate-x-full'}`}
+        className={`fixed z-[56] flex flex-col bg-slate-950 border-slate-700 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.85)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 h-[92dvh] rounded-t-3xl border-t ${panel.open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:h-full lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${panel.open ? '' : 'lg:translate-x-full'}`}
       >
+        <PanelGrab onClose={dismissSystemPanel} label="Close" />
         <div
           ref={scroller}
           id="systemPanelScroll"
-          className="flex-1 overflow-y-auto overscroll-contain rounded-t-3xl md:rounded-none"
+          className="flex-1 overflow-y-auto overscroll-contain rounded-t-3xl lg:rounded-none"
         >
           <div id="systemPanelBody" className="min-h-full flex flex-col">
             {panel.mode === 'edit' && <SystemEditor key={panel.session} existing={system} preset={panel.preset} />}

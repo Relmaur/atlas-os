@@ -1,7 +1,7 @@
-// Sync as a sheet over Settings (design 21): a bottom sheet on phones (the grab bar closes it), a side panel from md up.
+// Sync as a sheet over Settings (design 21): a bottom sheet below lg (the grab bar closes it), a side panel from lg up.
 // Opened from Settings' Sync row, and by the #sync address, where a pairing link lands.
 import { useEffect, useRef, useSyncExternalStore } from 'react';
-import { SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
+import { PanelGrab, SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
 import { Sync } from './Sync.tsx';
 import { useSection } from '../shell/section-store.ts';
 
@@ -35,7 +35,7 @@ export function SyncSheet() {
     if (section !== 'more') closeSyncSheet();
   }, [section]);
   const sheet = useRef<HTMLDivElement>(null);
-  const top = useRef<HTMLButtonElement>(null);
+  const top = useRef<HTMLDivElement>(null);
   useSheetDrag(sheet, closeSyncSheet);
   useSheetOpen(shown, closeSyncSheet, { layout: ALWAYS, focus: top });
   return (
@@ -52,25 +52,19 @@ export function SyncSheet() {
         aria-label="Sync"
         aria-hidden={!shown}
         inert={!shown}
-        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 top-[max(84px,env(safe-area-inset-top))] rounded-t-sheet border-t ${shown ? '' : 'translate-y-full'} md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:w-[min(28rem,92vw)] md:rounded-none md:border-t-0 md:border-l md:translate-y-0 ${shown ? '' : 'md:translate-x-full'}`}
+        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 top-[max(84px,env(safe-area-inset-top))] rounded-t-sheet border-t ${shown ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${shown ? '' : 'lg:translate-x-full'}`}
       >
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] md:pb-6">
+        <PanelGrab onClose={closeSyncSheet} label="Close sync" />
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] lg:pb-6">
           <div
+            ref={top}
+            tabIndex={-1}
             data-sheet-grab
-            className="sticky top-0 z-10 -mx-5 px-5 pt-3 md:pt-4 pb-1 bg-slate-deep flex justify-end"
+            className="sticky top-0 z-10 -mx-5 px-5 pt-3 lg:pt-4 pb-1 bg-slate-deep flex justify-end"
           >
-            <div className="flex-1 md:hidden">
+            <div className="flex-1 lg:hidden">
               <SheetGrab onClose={closeSyncSheet} label="Close sync" />
             </div>
-            <button
-              ref={top}
-              type="button"
-              onClick={closeSyncSheet}
-              aria-label="Close sync"
-              className="hidden md:grid w-10 h-10 place-items-center rounded-control text-ink-soft hover:text-ink-bright"
-            >
-              <i className="ph-bold ph-x text-lg" aria-hidden="true" />
-            </button>
           </div>
           {shown && <Sync />}
         </div>

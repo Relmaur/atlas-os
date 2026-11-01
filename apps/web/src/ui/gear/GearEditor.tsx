@@ -1,4 +1,4 @@
-// Add or edit a ship, Multi-Tool or Exosuit (design 12): a bottom sheet on phones, a side panel from md up. Supercharged
+// Add or edit a ship, Multi-Tool or Exosuit (design 12): a bottom sheet below lg, a side panel from lg up. Supercharged
 // slots are marked by tapping the technology grid (SlotPicker), which follows the wiki's cited rules for the kind and
 // class; notes can be linked to it, and show on its own screen.
 import { useCallback, useEffect, useRef, useState, type SubmitEvent } from 'react';
@@ -9,7 +9,7 @@ import { deleteGear, linkGearNotes, saveGear } from '../actions.ts';
 import { showToast } from '../../app/ui.ts';
 import { useAppState } from '../useAppState.ts';
 import { closeEditor } from '../parts/editor-store.ts';
-import { SheetGrab, useSheetDrag } from '../parts/Sheet.tsx';
+import { PanelGrab, SheetGrab, useSheetDrag } from '../parts/Sheet.tsx';
 import { Button } from '../parts/Button.tsx';
 import { ArmButton } from '../parts/Gesture.tsx';
 import { FIELD, LABEL_FIELD, Segments } from '../systems/editor-parts.tsx';
@@ -106,11 +106,12 @@ export function GearEditor({ existing, preset }: { existing: GearItem | undefine
         role="dialog"
         aria-modal="true"
         aria-labelledby="gearEditorTitle"
-        className="fixed z-[61] flex flex-col bg-slate-deep border-control-edge inset-x-0 bottom-0 h-[92dvh] rounded-t-sheet border-t md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:h-full md:w-[min(36rem,92vw)] md:rounded-none md:border-t-0 md:border-l"
+        className="fixed z-[61] flex flex-col bg-slate-deep border-control-edge inset-x-0 bottom-0 h-[92dvh] rounded-t-sheet border-t lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:h-full lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l"
       >
+        <PanelGrab onClose={dismiss} label={`Close ${kindLabel.toLowerCase()} editor`} />
         <form id="gearEditor" onSubmit={submit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            <div data-sheet-grab className="sticky top-0 z-10 bg-slate-deep/95 backdrop-blur px-5 pt-3 md:pt-5 pb-3">
+            <div data-sheet-grab className="sticky top-0 z-10 bg-slate-deep/95 backdrop-blur px-5 pt-3 lg:pt-5 pb-3">
               <SheetGrab onClose={dismiss} label={`Close ${kindLabel.toLowerCase()} editor`} />
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
@@ -122,14 +123,6 @@ export function GearEditor({ existing, preset }: { existing: GearItem | undefine
                   </h2>
                   <p className="text-sub text-ink-muted">Mark the supercharged slots once and never forget them.</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={closeEditor}
-                  aria-label="Cancel"
-                  className="hidden md:flex w-9 h-9 -mr-1.5 shrink-0 rounded-control items-center justify-center text-ink-muted hover:text-ink-bright hover:bg-slate-ground"
-                >
-                  <i className="ph-bold ph-x text-lg" aria-hidden="true" />
-                </button>
               </div>
             </div>
 

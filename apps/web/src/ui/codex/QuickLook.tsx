@@ -1,8 +1,8 @@
-// Quick look at a result without leaving the list: a side panel from md, a bottom sheet below (bar and swipe, no ✕).
+// Quick look at a result without leaving the list: a side panel from lg, a bottom sheet below (bar and swipe, no ✕).
 import { useEffect, useMemo, useRef } from 'react';
 import type { CodexIndex } from '@atlas/core/codex';
 import type { PreparedEntry } from '@atlas/core/search';
-import { SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
+import { PanelGrab, SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
 import { SourceBadge, StatusBadge, categoryLabel } from './bits.tsx';
 import { renderMarkdown } from './markdown.ts';
 
@@ -29,14 +29,14 @@ export function QuickLook(props: {
   }, [entry]);
   // On a phone it's a modal sheet over the list: the list stays put, and focus moves into it and back.
   const title = useRef<HTMLHeadingElement>(null);
-  useSheetOpen(entry !== null, onClose, { layout: '(max-width: 767px)', focus: title });
+  useSheetOpen(entry !== null, onClose, { layout: '(max-width: 1023px)', focus: title });
 
   const open = entry !== null;
   return (
     <>
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-50 bg-slate-950/50 md:bg-slate-950/30 transition-opacity duration-200 ${open ? '' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-50 bg-slate-950/50 lg:bg-slate-950/30 transition-opacity duration-200 ${open ? '' : 'opacity-0 pointer-events-none'}`}
       />
       <aside
         ref={panel}
@@ -44,9 +44,10 @@ export function QuickLook(props: {
         aria-labelledby="peekTitle"
         aria-hidden={!open}
         inert={!open}
-        className={`fixed z-50 flex flex-col bg-slate-950 border-slate-700 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.85)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 h-[85dvh] rounded-t-3xl border-t md:inset-x-auto md:right-0 md:top-0 md:h-full md:w-[min(36rem,48vw)] md:rounded-none md:border-t-0 md:border-l md:translate-y-0 ${open ? '' : 'translate-y-full md:translate-x-full'}`}
+        className={`fixed z-50 flex flex-col bg-slate-950 border-slate-700 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.85)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 h-[85dvh] rounded-t-3xl border-t lg:inset-x-auto lg:right-0 lg:top-0 lg:h-full lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${open ? '' : 'translate-y-full lg:translate-x-full'}`}
       >
-        <div data-sheet-grab className="px-5 pt-3 md:pt-4 pb-4 border-b border-slate-800 space-y-3">
+        <PanelGrab onClose={onClose} label="Close quick look" />
+        <div data-sheet-grab className="px-5 pt-3 lg:pt-4 pb-4 border-b border-slate-800 space-y-3">
           <SheetGrab onClose={onClose} label="Close quick look" />
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -68,14 +69,6 @@ export function QuickLook(props: {
                 {entry?.title ?? 'Quick look'}
               </h2>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close quick look"
-              className="hidden md:flex shrink-0 w-9 h-9 -mr-1.5 rounded-xl items-center justify-center text-slate-400 hover:text-white hover:bg-slate-900"
-            >
-              <i className="ph-bold ph-x text-lg" aria-hidden="true" />
-            </button>
           </div>
           <div className="flex items-center gap-2">
             <a
@@ -85,7 +78,7 @@ export function QuickLook(props: {
             >
               Open article <i className="ph-bold ph-arrow-right" aria-hidden="true" />
             </a>
-            <span className="hidden md:inline text-xs text-slate-400 ml-auto">
+            <span className="hidden lg:inline text-xs text-slate-400 ml-auto">
               <kbd className="font-mono border border-slate-700 rounded px-1">↑</kbd>{' '}
               <kbd className="font-mono border border-slate-700 rounded px-1">↓</kbd> browse ·{' '}
               <kbd className="font-mono border border-slate-700 rounded px-1">Enter</kbd> open

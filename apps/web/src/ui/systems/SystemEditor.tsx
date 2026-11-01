@@ -116,14 +116,6 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
               What the game shows, plus your own tags and notes.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={cancel}
-            aria-label="Cancel"
-            className="hidden md:flex w-9 h-9 -mr-1.5 shrink-0 rounded-control items-center justify-center text-ink-muted hover:text-ink-bright hover:bg-slate-ground"
-          >
-            <i className="ph-bold ph-x text-lg" />
-          </button>
         </div>
       </div>
 

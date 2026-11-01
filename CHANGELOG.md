@@ -8,6 +8,7 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 ### Changed
 - On wide screens the app has a left rail: search, Home, Log, Runs, Codex and Settings. On tablets the phone layout sits centred. Search opens from the key everywhere, and from `/` or ⌘K.
 - On wide screens a system, ship, note, run or book opens beside its list, and Home is a two-column dashboard.
+- On wide screens editors and sheets open as a panel from the right, closed by the bar on its edge or Esc. Tablets keep bottom sheets.
 
 ### Added
 - Keyboard shortcuts: `g` then `h`, `l`, `r` or `c` to jump, and `n` for a new note in Log. They're listed in Settings on wide screens.

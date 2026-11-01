@@ -1,9 +1,9 @@
-// Bottom sheets on phones: the grab bar is the only close control (no ✕). Dragging the sheet's header down past a
+// Bottom sheets below lg: the grab bar is the only close control (no ✕). Dragging the sheet's header down past a
 // threshold, or a quick flick, dismisses it; tapping the bar does too, so keyboard and screen-reader users keep a close
-// button. From md up the same panels are side panels or modals with their own ✕, and none of this applies.
+// button. From lg the same panels are right-hand panels, and PanelGrab takes the bar's place.
 import { useEffect, type RefObject } from 'react';
 
-const PHONE = '(max-width: 767px)';
+const PHONE = '(max-width: 1023px)';
 
 // `close` decides for itself whether it may close (an editor with unsaved changes refuses and says why); if it
 // doesn't, the sheet springs back.
@@ -66,9 +66,25 @@ export function SheetGrab({ onClose, label = 'Close' }: { onClose: SheetClose; l
         onClose();
       }}
       aria-label={label}
-      className="md:hidden -mt-3 mb-1 flex h-9 w-full items-center justify-center rounded-t-3xl"
+      className="lg:hidden -mt-3 mb-1 flex h-9 w-full items-center justify-center rounded-t-3xl"
     >
       <span className="w-10 h-1 rounded-full bg-slate-600" />
+    </button>
+  );
+}
+
+// From lg a sheet is a right-hand panel, and the same rule holds: no ✕, a slim bar down its left edge (with Esc).
+export function PanelGrab({ onClose, label = 'Close' }: { onClose: SheetClose; label?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onClose();
+      }}
+      aria-label={label}
+      className="hidden lg:flex absolute z-20 left-0 inset-y-0 w-4 items-center justify-center hover:bg-slate-ground"
+    >
+      <span className="w-1 h-10 rounded-full bg-slate-600" />
     </button>
   );
 }
