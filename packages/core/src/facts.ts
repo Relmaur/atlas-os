@@ -3,6 +3,7 @@
 // archived page, and writes the ones it found to wiki/facts.json. A fact whose quote is gone is left out of that
 // file, so nothing here ever applies a rule the mirror can no longer show.
 import { z } from 'zod';
+import { GlyphTableSchema } from './glyphs.ts';
 
 export const ClassCountsSchema = z.object({ C: z.int(), B: z.int(), A: z.int(), S: z.int() });
 // Technology inventory maximums, in slots, by class; `any` when the wiki gives one number for every class.
@@ -62,7 +63,8 @@ export type GameVersion = z.infer<typeof GameVersionSchema>;
 export const FactsFileSchema = z.object({
   schema: z.literal(1),
   facts: z.record(z.string(), CitedFactSchema),
-  game: GameVersionSchema.optional() // added in the redesign; an older file has none
+  game: GameVersionSchema.optional(), // added in the redesign; an older file has none
+  glyphs: GlyphTableSchema.optional() // the portal glyphs' names; an older file has none
 });
 export type FactsFile = z.infer<typeof FactsFileSchema>;
 

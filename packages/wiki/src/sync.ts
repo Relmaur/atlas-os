@@ -35,6 +35,7 @@ import {
 } from './wikitext.ts';
 import { InvalidDump, followRedirect, scanDump } from './dump.ts';
 import { discover, reportMarkdown } from './discover.ts';
+import { GlyphTableSchema, glyphPageDigit, parseGlyphNames, type Glyph, type GlyphTable } from '@atlas/core/glyphs';
 import { FACTS, checkFacts, currentGameVersion, type FactPage, type UpdatePage } from './facts.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -349,6 +350,7 @@ async function buildIndexes(): Promise<void> {
     });
   }
   const { found, stale } = checkFacts(factPages);
+  const glyphs = glyphTable(articles);
   for (const fact of stale) console.warn(`⚠️  Cited fact ${fact.id} (${fact.page}) left out: ${fact.reason}.`);
   // The game version the runs are checked against: the newest Update page.
   // Every item above was built with a title, category, path, url and fields, which is all an UpdatePage reads.
@@ -356,7 +358,7 @@ async function buildIndexes(): Promise<void> {
   if (!game) console.warn('⚠️  No current Update page: runs can\'t say which game version they were checked against.');
   await fs.writeFile(
     path.join(WIKI_DIR, 'facts.json'),
-    `${JSON.stringify({ schema: 1, facts: found, ...(game ? { game } : {}) }, null, 2)}\n`,
+    `${JSON.stringify({ schema: 1, facts: found, ...(game ? { game } : {}), glyphs }, null, 2)}\n`,
     'utf8'
   );
   console.log(
@@ -365,6 +367,29 @@ async function buildIndexes(): Promise<void> {
 }
 
 // The value after a flag (`--from-dump file`), or null.
+// The portal glyphs' names, read from their 16 pages. The app shows them beside every portal address, so a page that
+// goes missing or stops naming its glyph fails the index (and the build) rather than shipping a gap.
+function glyphTable(articles: { title: string; path?: unknown; source?: unknown; removed?: unknown; revId?: unknown; body?: unknown }[]): GlyphTable {
+  const glyphs: Glyph[] = [];
+  const problems: string[] = [];
+  for (const article of articles) {
+    const digit = glyphPageDigit(article.title);
+    if (!digit || article.source !== 'wiki' || article.removed || typeof article.body !== 'string') continue;
+    const names = parseGlyphNames(article.body);
+    if (names) glyphs.push({ digit, ...names, path: String(article.path), revId: Number(article.revId) });
+    else problems.push(`${article.title} no longer says what the glyph is called`);
+  }
+  const overview = articles.find(article => article.title === 'Glyph' && article.source === 'wiki' && !article.removed);
+  for (const digit of '0123456789ABCDEF') if (!glyphs.some(glyph => glyph.digit === digit)) problems.push(`no page for glyph ${digit}`);
+  if (!overview) problems.push('no Glyph page');
+  if (problems.length || !overview) throw new Error(`Glyph names: ${problems.join('; ')}.`);
+  return GlyphTableSchema.parse({
+    page: overview.title,
+    path: String(overview.path),
+    glyphs: glyphs.sort((a, b) => parseInt(a.digit, 16) - parseInt(b.digit, 16))
+  });
+}
+
 function option(args: string[], flag: string): string | null {
   const at = args.indexOf(flag);
   const value = at === -1 ? undefined : args[at + 1];

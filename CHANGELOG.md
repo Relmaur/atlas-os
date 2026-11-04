@@ -6,6 +6,11 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.25.0] - 2026-11-04
+### Added
+- Portal addresses show each glyph's name, from the wiki: on a system's screen under the address, in dialling order, and in the system editor as the address is typed, so a slip is easy to spot. Screen readers hear the names. No glyph art, only the names.
+- The MCP server's `get_system` returns the same names beside the address.
+
 ## [3.24.0] - 2026-11-01
 ### Changed
 - On wide screens the Traveller Card shows its front and back side by side, a note is written beside its live preview, and sharing is a centred dialog with the picture beside the choices.

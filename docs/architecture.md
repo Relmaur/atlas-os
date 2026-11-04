@@ -16,6 +16,7 @@ atlas-os/                        pnpm workspace
 │   │   ├── src/search.ts        Codex search engine and labels
 │   │   ├── src/game-data.ts     Zod schemas for game-data.json and recipes (shared with the wiki sync)
 │   │   ├── src/facts.ts         Cited facts: value shapes and the facts.json schema (ADR-0003)
+│   │   ├── src/glyphs.ts        Portal glyph names, read from the wiki's glyph pages, per address digit
 │   │   ├── src/gear.ts / notes.ts   Ships, Multi-Tools and Exosuit (slot rules from cited facts); notes and pins
 │   │   ├── src/slug.ts          Article file names (shared with the wiki sync)
 │   │   ├── src/sync.ts / sync-crypto.ts   Three-way merge of two copies; the sync code, key derivation and sealing (Web Crypto)

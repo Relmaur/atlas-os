@@ -22,6 +22,7 @@ const LOG = {
       id: 'sys-1',
       name: 'Vela Drift',
       galaxy: 'Euclid',
+      glyphs: '21A4F03A0E10',
       tags: ['outlaw'],
       visits: [{ at: hoursAgo(30), packets: 15 }],
       planets: [{ id: 'p-1', name: 'Kesh', biome: 'Toxic', tags: [], notes: 'Storm crystals' }]
@@ -161,6 +162,21 @@ test('player answers come from the log, computed as the app computes them', asyn
   expect((await call('list_systems', { tag: 'outlaw' })).json).toMatchObject({ total: 2 });
   expect((await call('list_systems', { query: 'economy' })).json).toMatchObject({ systems: [{ name: 'Quiet Reach' }] });
   expect((await call('get_system', { name: 'vela drift' })).json).toMatchObject({
+    glyphs: '21A4F03A0E10',
+    glyphNames: [
+      'Face',
+      'Bird',
+      'Voxel',
+      'Eclipse',
+      'Atlas',
+      'Sunset',
+      'Diplo',
+      'Voxel',
+      'Sunset',
+      'Tree',
+      'Bird',
+      'Sunset'
+    ],
     planets: [{ name: 'Kesh', notes: 'Storm crystals' }]
   });
 

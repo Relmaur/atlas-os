@@ -2,11 +2,13 @@
 
 Read this before starting work; update it before ending any non-trivial task. Keep it current, not historical: completed work moves to `CHANGELOG.md`.
 
-_Last updated: 2026-10-31_
+_Last updated: 2026-11-04_
 
 CI runs typecheck + lint + unit tests only (owner's decision: browser tests run locally via `pnpm check` before pushing).
 
 ## In progress
+**Glyph names beside portal addresses (3.25.0, 2026-11-04).** A player asked for the portal icons; the icons are the game's art, so each digit gets its glyph's name instead. The indexer reads the names from the 16 `Glyph n / 16` pages into `wiki/facts.json` as `glyphs` (`@atlas/core/glyphs`), and fails if any page is missing or stops naming its glyph. `GlyphPlate` shows them on System detail and in the editor's Location block; `get_system` returns them too (no new MCP release for this alone). Deviations: the editor's credit is plain text, since a link would leave an unsaved form; names longer than eight letters ("Dragonfly") are a size smaller so they never break mid-word; hovering a tile shows the wiki's second name ("Sunset, also called Star Over Water"); the plate is one row of 12 when its card is 40rem or wider, two rows of 6 otherwise.
+
 **One home on Cloudflare, atlas-os.cloud** (owner, 2026-10-31; ADR-0010). Site at `/`, app at `/app/`, relay at `/api/sync`. What would trip Workers Paid is in `docs/deploy.md`. Still open:
 - The owner's log still has to make the trip (Export → Import, or pair).
 - **The owner's yes first:** raising HSTS past a day or preloading, anything paid.

@@ -17,6 +17,7 @@ import { STAR_CLASSES, normalizeGlyphs, type StarClass } from '@atlas/core/syste
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { loadGalaxies, useGalaxies } from './galaxies-store.ts';
 import { FIELD, LABEL_FIELD, Segments } from './editor-parts.tsx';
+import { GlyphPlate } from './GlyphPlate.tsx';
 
 export type AddressFormat = 'portal' | 'galactic';
 export interface Location {
@@ -177,6 +178,11 @@ export function LocationBlock({
             : 'The four groups a signal booster shows, like 046A:0081:0D6D:0038. Its letters in front can stay.'}
         </span>
       </div>
+
+      {/* As it's typed, so a slip ("Bird, Bird, Face…") is easy to spot before the address is whole. */}
+      {(portal ? normalizeGlyphs(value.address) : glyphs) && (
+        <GlyphPlate glyphs={portal ? normalizeGlyphs(value.address).slice(0, 12) : (glyphs ?? '')} credit="text" />
+      )}
 
       {glyphs && voxel && (
         <>

@@ -21,6 +21,7 @@ import { copyText, ShareSystemSheet } from '../share/ShareSheet.tsx';
 import { LinkedNoteRows } from '../notes/note-bits.tsx';
 import { newNote } from '../notes/note-nav.ts';
 import { openSystemEditor } from './panel-store.ts';
+import { GlyphPlate } from './GlyphPlate.tsx';
 
 const HERO_BUTTON =
   'w-10 h-10 rounded-control bg-[rgba(5,8,17,0.7)] border border-hairline grid place-items-center text-ink hover:border-control-edge transition-colors duration-[var(--duration-micro)]';
@@ -283,45 +284,48 @@ function PortalAddress({ system }: { system: System }) {
   return (
     <section
       aria-labelledby="portalTitle"
-      className={`rounded-card px-3.5 py-3 flex items-center justify-between gap-2.5 border ${glyphs ? 'border-hairline bg-panel' : 'border-dashed border-control-edge'}`}
+      className={`rounded-card px-3.5 py-3 flex flex-col gap-3 border ${glyphs ? 'border-hairline bg-panel' : 'border-dashed border-control-edge'}`}
     >
-      <div className="flex flex-col gap-[7px] min-w-0">
-        <h2 id="portalTitle" className={LABEL}>
-          Portal address
-        </h2>
-        <div className="flex gap-[3px]" aria-hidden={!glyphs}>
-          {Array.from({ length: 12 }, (_, i) => (
-            <span
-              key={i}
-              className="w-[14px] h-5 rounded-[4px] bg-slate-ground border border-hairline grid place-items-center font-mono text-[11px] text-quantity-cyan"
-            >
-              {glyphs[i] ?? ''}
-            </span>
-          ))}
+      <div className="flex items-center justify-between gap-2.5">
+        <div className="flex flex-col gap-[7px] min-w-0">
+          <h2 id="portalTitle" className={LABEL}>
+            Portal address
+          </h2>
+          <div className="flex gap-[3px]" aria-hidden={!glyphs}>
+            {Array.from({ length: 12 }, (_, i) => (
+              <span
+                key={i}
+                className="w-[14px] h-5 rounded-[4px] bg-slate-ground border border-hairline grid place-items-center font-mono text-[11px] text-quantity-cyan"
+              >
+                {glyphs[i] ?? ''}
+              </span>
+            ))}
+          </div>
+          {!glyphs && <span className="sr-only">Not logged</span>}
         </div>
-        {!glyphs && <span className="sr-only">Not logged</span>}
+        {glyphs ? (
+          <Button
+            variant="jump"
+            size="S"
+            onClick={() => {
+              copyText(glyphs, `Copied the portal address ${glyphs}.`);
+            }}
+          >
+            Copy
+          </Button>
+        ) : (
+          <Button
+            variant="jump"
+            size="S"
+            onClick={() => {
+              openSystemEditor(system.id);
+            }}
+          >
+            Add
+          </Button>
+        )}
       </div>
-      {glyphs ? (
-        <Button
-          variant="jump"
-          size="S"
-          onClick={() => {
-            copyText(glyphs, `Copied the portal address ${glyphs}.`);
-          }}
-        >
-          Copy
-        </Button>
-      ) : (
-        <Button
-          variant="jump"
-          size="S"
-          onClick={() => {
-            openSystemEditor(system.id);
-          }}
-        >
-          Add
-        </Button>
-      )}
+      {glyphs && <GlyphPlate glyphs={glyphs} />}
     </section>
   );
 }
