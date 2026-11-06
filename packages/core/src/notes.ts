@@ -137,3 +137,13 @@ export function noteExcerpt(note: Note, length = 140): string {
     .trim()
     .slice(0, length);
 }
+
+/** The pages a note links with [[Name]] or [[Name|label]], each once, in the order they're first written. */
+export function noteLinks(body: string): string[] {
+  const seen = new Map<string, string>();
+  for (const match of body.matchAll(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g)) {
+    const target = (match[1] ?? '').trim();
+    if (target && !seen.has(target.toLowerCase())) seen.set(target.toLowerCase(), target);
+  }
+  return [...seen.values()];
+}

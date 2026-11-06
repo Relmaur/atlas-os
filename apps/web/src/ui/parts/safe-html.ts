@@ -11,7 +11,8 @@ import { escapeHtml } from '@atlas/core/util';
 // backstop. (Parsing hostile attributes at all makes the browser report Content Security Policy violations.)
 const KEPT = /^<\/?(?:br|code|pre|blockquote|sub|sup|kbd)\s*\/?>$/i;
 const keepOrEscape = (html: string) => html.replace(/<[^<>]*>?/g, tag => (KEPT.test(tag) ? tag : escapeHtml(tag)));
-const marked = new Marked({ renderer: { html: keepOrEscape } });
+// A checklist's boxes (- [ ] and - [x]) are text, since the allowlist keeps inputs out.
+const marked = new Marked({ renderer: { html: keepOrEscape, checkbox: checked => (checked ? '☑' : '☐') } });
 
 const ALLOWED_TAGS = [
   ...['p', 'br', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code', 'kbd', 'sub', 'sup'],

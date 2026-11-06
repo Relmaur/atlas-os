@@ -1,4 +1,4 @@
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { freshNote } from '../notes/note-nav.ts';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -7,6 +7,7 @@ import { buildState } from '@atlas/core/state';
 import { setAppState } from '../../app/store.ts';
 import { PlanScreen } from './Planner.tsx';
 import { setGameDataForTests } from './game-data.ts';
+import { setWide } from '../test-media.ts';
 import subset from '../../../../../tests/fixtures/game-data-subset.json';
 
 let param = 'Stasis Device';
@@ -38,7 +39,12 @@ title: "Frost Crystal"
 - **Refiner** · *Encourage Growth* · 0.24 s per unit: 2 × [[Dioxite]] + 1 × [[Oxygen]] → 1 × Frost Crystal
 `;
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 beforeEach(() => {
+  setWide(false); // the phone's path; the Workbench's board (d11) is tested at the end
   localStorage.clear();
   param = 'Stasis Device';
   location.hash = '';
@@ -177,4 +183,33 @@ test('an unknown item says so', () => {
   param = 'Nope';
   render(<PlanScreen />);
   expect(screen.getByRole('heading', { name: 'Nothing to plan' })).toBeTruthy();
+});
+
+test('d11: on a computer the path is a board of columns, and the peek stays docked beside it', async () => {
+  setWide(true);
+  render(<PlanScreen />);
+  expect(screen.getByRole('heading', { level: 1, name: 'Stasis Device' })).toBeTruthy();
+  expect(screen.getByText('Recipe planner · 6 steps')).toBeTruthy();
+  expect([...document.querySelectorAll('#planPath > li')].map(li => li.getAttribute('data-step'))).toEqual([
+    'gather',
+    'round',
+    'round',
+    'round',
+    'round',
+    'final'
+  ]);
+  expect(step('gather').getAttribute('aria-current')).toBe('step');
+  // Before anything is picked the peek shows the product, and it's not a dialog.
+  const peek = document.getElementById('codexPeek') as HTMLElement;
+  expect(peek.getAttribute('role')).toBeNull();
+  expect(within(peek).getByRole('heading', { name: 'Stasis Device' })).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: 'Heat Capacitor: open in Codex' }));
+  expect(within(peek).getByRole('heading', { name: 'Heat Capacitor' })).toBeTruthy();
+  expect(within(peek).getByText('This plan needs')).toBeTruthy();
+  await userEvent.click(within(step('round')).getByRole('button', { name: 'Mark crafted' }));
+  expect(within(step('round')).getByRole('button', { name: 'Crafted' }).getAttribute('aria-pressed')).toBe('true');
+  await userEvent.click(screen.getByRole('button', { name: 'One more' }));
+  expect(screen.getByRole<HTMLInputElement>('spinbutton', { name: 'Quantity' }).value).toBe('2');
+  await userEvent.click(screen.getByRole('button', { name: 'Change item' }));
+  expect(screen.getByRole('combobox', { name: 'Item to plan' })).toBeTruthy();
 });

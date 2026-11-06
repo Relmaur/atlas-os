@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from './fixtures.mjs';
 
 // The planner's Gather step: one row per raw material, with its total.
@@ -92,7 +93,10 @@ test('Best crafts ranks the real mirror and opens a pick in the planner', async 
   await page.locator('#craftList [data-craft="Quantum Processor"] a').click();
   await expect(page).toHaveURL(/#plan\/Quantum%20Processor$/);
   await expect(page.locator('#planTitle')).toHaveText('Quantum Processor');
-  await page.locator('#sec-plan').getByRole('button', { name: 'Back' }).click();
+  // Back: the planner's own on a phone; the Workbench's board has none, so the browser's.
+  const back = page.locator('#sec-plan').getByRole('button', { name: 'Back' });
+  if (await back.isVisible()) await back.click();
+  else await page.goBack();
   await expect(page).toHaveURL(/#crafts$/);
   await page.locator('#sec-crafts').getByRole('button', { name: 'Back' }).click();
   await expect(page.locator('#calcPlanSummary')).toContainText('Quantum Processor');
@@ -121,4 +125,31 @@ test('the dock keeps the chosen tool while the app is open', async ({ page }) =>
   });
   await expect(page.locator('#calcAns1')).toHaveText('9');
   await expect(page.locator('#valueTotal')).toBeHidden();
+});
+
+test('d11: the Recipe planner on the Workbench at 1024, 1440 and 1920 has no text out of its box and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./#plan/Stasis%20Device');
+    await expect(page.locator('#planCargo [data-raw]').first()).toBeVisible();
+    await expect(page.locator('#codexPeek #peekSource')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#sec-plan *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
 });

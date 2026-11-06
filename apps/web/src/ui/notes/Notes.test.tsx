@@ -1,4 +1,4 @@
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
@@ -8,6 +8,7 @@ import { goBack } from '../shell/section-store.ts';
 import { Notes } from './Notes.tsx';
 import { NoteScreen } from './NoteEditor.tsx';
 import { renderNote } from './NoteCard.tsx';
+import { setWide } from '../test-media.ts';
 
 let param = '';
 vi.mock('../shell/section-store.ts', () => ({
@@ -24,7 +25,12 @@ const note = {
   createdAt: '2026-10-01T00:00:00Z'
 };
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 beforeEach(() => {
+  setWide(false); // the phone's screens; the Workbench's (d10) are tested at the end
   localStorage.clear();
   param = 'n1';
   location.hash = '';
@@ -161,4 +167,69 @@ test('an unknown id says so instead of opening a blank note', () => {
   param = 'gone';
   render(<NoteScreen />);
   expect(screen.getByRole('heading', { name: 'Not in your notes' })).toBeTruthy();
+});
+
+test('a checklist’s boxes render as text', () => {
+  expect(renderNote('- [ ] water\n- [x] seeds')).toMatch(/☐ water[\s\S]*☑ seeds/);
+});
+
+test('d10: on a computer the list is compact rows, the open one marked, with New and the filters behind a button', async () => {
+  setWide(true);
+  param = 'n1';
+  render(<Notes />);
+  const rows = within(document.getElementById('notesList') as HTMLElement).getAllByRole('link');
+  expect(rows.map(row => row.textContent)).toEqual([
+    expect.stringContaining('Units plan'),
+    expect.stringContaining('Grid')
+  ]);
+  expect(rows[1]?.getAttribute('aria-current')).toBe('true');
+  expect(rows[1]?.textContent).toContain('Pinned');
+  expect(screen.getByRole('button', { name: 'New note' }).getAttribute('aria-keyshortcuts')).toBe('n');
+  expect(screen.queryByRole('group', { name: 'Filters' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
+  await userEvent.click(within(screen.getByRole('group', { name: 'Filters' })).getByRole('button', { name: /units/ }));
+  expect(within(document.getElementById('notesList') as HTMLElement).getAllByRole('link')).toHaveLength(1);
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Search your notes' }), 'zzz');
+  expect(screen.getByText('Nothing matches “zzz”.')).toBeTruthy();
+});
+
+test('d10: a note has its toolbar on top, the inspector says what it links, and a timer starts from it', async () => {
+  setWide(true);
+  act(() => {
+    setAppState({
+      ...appState,
+      systems: buildState({ systems: [{ id: 's1', name: 'Hale 24' }] }).systems
+    });
+  });
+  param = 'n1';
+  render(<NoteScreen />);
+  const tools = within(screen.getByRole('group', { name: 'Formatting' })).getAllByRole('button');
+  expect(tools.map(tool => tool.getAttribute('aria-label'))).toEqual([
+    'Bold',
+    'Italic',
+    'Heading',
+    'List',
+    'Numbered list',
+    'Checklist',
+    'Table',
+    'Link a Codex page'
+  ]);
+  // The column isn't measured here, so it's one at a time: Preview first, as on a phone.
+  await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+  const body = screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Note' });
+  fireEvent.change(body, { target: { value: 'Farm at [[Hale 24]], see [[Frost Crystal]]' } });
+  const linked = within(document.getElementById('noteLinks') as HTMLElement);
+  expect(linked.getByRole('link', { name: 'Hale 24' }).getAttribute('href')).toBe('#system/s1');
+  expect(linked.getByRole('link', { name: 'Frost Crystal (Codex)' }).getAttribute('href')).toBe(
+    'wiki/#/?q=Frost%20Crystal'
+  );
+  expect(linked.getByText('Shows on Book III')).toBeTruthy();
+  body.setSelectionRange(0, 4);
+  fireEvent.keyDown(body, { key: 'b', ctrlKey: true });
+  expect(body.value.startsWith('**Farm**')).toBe(true);
+  await userEvent.click(screen.getByRole('button', { name: 'Crops' }));
+  expect(location.hash).toBe('#session');
+  await userEvent.click(screen.getByRole('button', { name: 'Delete note' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Click again to delete' }));
+  expect(appState.notes.map(item => item.id)).toEqual(['n2']);
 });

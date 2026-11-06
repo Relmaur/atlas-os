@@ -26,6 +26,8 @@ import { FIELD } from '../systems/editor-parts.tsx';
 import { loadGameData, useGameData } from './game-data.ts';
 import { readProgress, writeProgress, type PlanSettings } from './progress.ts';
 import { CodexPeek } from './CodexPeek.tsx';
+import { PlanDesk } from './PlanDesk.tsx';
+import { useMedia } from '../parts/useMedia.ts';
 import { openPlan, rawValue, ratioText, recipeSwitch, type RecipeSwitch } from './plan-bits.ts';
 
 const MAX_QTY = 9999;
@@ -90,6 +92,7 @@ function Planner({ catalog, item }: { catalog: Catalog; item: string }) {
     setPeek(null);
   }, []);
   const plan = useMemo(() => buildPlan(catalog, settings.item, settings.qty, settings.choices), [catalog, settings]);
+  const wide = useMedia('(min-width: 1024px)');
 
   const save = (next: PlanSettings, nextTicked: ReadonlySet<string>) => {
     setSettings(next);
@@ -122,6 +125,42 @@ function Planner({ catalog, item }: { catalog: Catalog; item: string }) {
         replan({ ...settings, choices });
       })
     : null;
+
+  if (wide) {
+    // The docked peek shows the item last picked; before any, the product.
+    const shown = lit ?? plan.product.title;
+    const shownStep =
+      plan.rounds.flat().find(item => item.title === shown) ?? (plan.product.title === shown ? plan.product : null);
+    return (
+      <PlanDesk
+        catalog={catalog}
+        plan={plan}
+        qty={settings.qty}
+        maxQty={MAX_QTY}
+        path={path}
+        ticked={ticked}
+        peek={shown}
+        switcher={
+          shownStep
+            ? recipeSwitch(catalog, settings, plan, shownStep, choices => {
+                replan({ ...settings, choices });
+              })
+            : null
+        }
+        changeItem={<ChangeItem catalog={catalog} current={item} />}
+        choices={Object.keys(settings.choices).length > 0}
+        onQty={setQty}
+        onOpen={open}
+        onToggle={toggle}
+        onRound={round => {
+          save(settings, toggleRound(plan, ticked, round));
+        }}
+        onFinal={() => {
+          toggle(stepKey(plan.product));
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-section max-w-2xl pt-[env(safe-area-inset-top)]">

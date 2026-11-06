@@ -2,13 +2,81 @@
 // card names the next milestone to tick (ticks keep no time, so there's no "latest").
 import { BOOKS, guideProgress, nextMilestone } from '@atlas/core/guides';
 import { useAppState } from '../useAppState.ts';
-import { goBack } from '../shell/section-store.ts';
+import { goBack, useSection } from '../shell/section-store.ts';
+import { useMedia } from '../parts/useMedia.ts';
 import { BOOK_TILE, TOP_BUTTON } from './guide-bits.ts';
 
 export function Guides() {
   const { checklists } = useAppState();
   const progress = guideProgress(checklists);
   const next = nextMilestone(checklists);
+  const section = useSection();
+  const wide = useMedia('(min-width: 1024px)');
+
+  // The Workbench (round 6, d12): the six books as compact rows beside the open one.
+  if (wide)
+    return (
+      <div className="flex flex-col h-full min-h-0">
+        <header className="flex items-baseline justify-between gap-2.5 px-[18px] pt-4 pb-3">
+          <h1 className="font-display font-extrabold text-[22px] leading-none text-ink-bright">Guides</h1>
+          <span id="guidesProgressText" className="font-mono text-[12px] text-ink-muted whitespace-nowrap">
+            {progress.done} / {progress.total} milestones
+          </span>
+        </header>
+        <ol id="guidesList" className="flex-1 min-h-0 overflow-y-auto">
+          {BOOKS.map(book => {
+            const { done, total } = progress.perBook[book.key];
+            const open = section === book.key;
+            return (
+              <li key={book.key}>
+                <a
+                  href={`#${book.key}`}
+                  aria-current={open ? 'page' : undefined}
+                  className={`grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 px-[18px] py-3 border-t border-hairline ${
+                    open
+                      ? 'bg-scanner-cyan-tint shadow-[inset_3px_0_0_var(--color-scanner-cyan-glow)]'
+                      : 'hover:bg-[rgba(148,163,184,0.06)]'
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`font-display font-extrabold text-[17px] ${done ? 'text-scanner-cyan-text' : 'text-[#c4b5fd]'}`}
+                  >
+                    {book.numeral}
+                  </span>
+                  <span className="min-w-0 flex flex-col gap-0.5">
+                    <span title={book.title} className="truncate text-sm font-semibold text-ink-bright">
+                      <span className="sr-only">Book {book.numeral}: </span>
+                      {book.title}
+                    </span>
+                    <span title={book.blurb} className="truncate text-xs text-ink-muted">
+                      {book.blurb}
+                    </span>
+                  </span>
+                  <span className="font-mono text-[12px] text-ink-muted whitespace-nowrap">
+                    <span className="sr-only">ticked </span>
+                    {done}/{total}
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+        {next && (
+          <a
+            id="guidesNext"
+            href={`#${next.book.key}`}
+            className="px-[18px] py-3 border-t border-hairline flex flex-col gap-0.5 hover:bg-[rgba(148,163,184,0.06)]"
+          >
+            <span className="text-label uppercase text-ink-label">Next milestone · Book {next.book.numeral}</span>
+            <span title={next.item.title} className="truncate text-[13px] font-semibold text-ready-emerald-text">
+              {next.item.title}
+            </span>
+          </a>
+        )}
+      </div>
+    );
+
   return (
     <div className="flex flex-col gap-4 max-w-2xl pt-[env(safe-area-inset-top)]">
       <header className="flex flex-col gap-1.5">

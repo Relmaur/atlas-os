@@ -131,7 +131,10 @@ test('a new note from a book starts pinned there; search finds it', async ({ pag
   await expect(page).toHaveURL(/#note\/note-/);
   await page.locator('#noteTitle').fill('Outlaw loop timing');
   await page.locator('#noteBody').fill('Go back after **24 h**. <img src=x onerror=alert(1)>');
-  await page.locator('#sec-note').getByRole('button', { name: 'Back' }).click(); // leaving saves it
+  // Leaving saves it: Back on a phone; on the Workbench the list is beside the note, so the browser's Back.
+  const back = page.locator('#sec-note').getByRole('button', { name: 'Back' });
+  if (await back.isVisible()) await back.click();
+  else await page.goBack();
   const row = page.locator('#sec-book2 [data-player] [data-note]').filter({ hasText: 'Outlaw loop timing' });
   await expect(row).toContainText('Go back after 24 h');
   await expect(row.locator('img')).toHaveCount(0);
@@ -189,6 +192,35 @@ test('from xl a note is written beside its live preview', async ({ page }, testI
   const text = await page.locator('#noteBody').boundingBox();
   const preview = await page.getByRole('region', { name: 'Preview' }).boundingBox();
   expect(preview.x).toBeGreaterThanOrEqual(text.x + text.width);
+});
+
+test('d10: Notes on the Workbench at 1024, 1440 and 1920 has no text out of its box and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./#note/note-grid');
+    await expect(page.locator('#noteTitle')).toBeVisible();
+    await expect(page.locator('#notesList [aria-current="true"]')).toContainText('My scanner layout');
+    // The Markdown sits beside its preview once the note's column has room for both (1440 up).
+    if (width >= 1440) await expect(page.getByRole('region', { name: 'Preview' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#sec-notes *, #sec-note *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
 });
 
 test('d09: Fleet on the Workbench at 1024, 1440 and 1920 has no text out of its box and passes axe', async ({

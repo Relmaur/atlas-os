@@ -1,7 +1,7 @@
 // The note editor's formatting toolbar (design 11): each button rewrites the Markdown around the selection and says
 // where the selection goes next. Wrapping marks toggle (bold on bold text removes it); line marks act on every line the
 // selection touches.
-export type MarkdownFormat = 'heading' | 'bold' | 'italic' | 'list' | 'table' | 'link';
+export type MarkdownFormat = 'heading' | 'bold' | 'italic' | 'list' | 'numbered' | 'task' | 'table' | 'link';
 export interface MarkdownEdit {
   text: string;
   start: number;
@@ -50,6 +50,18 @@ export function applyMarkdown(text: string, start: number, end: number, format: 
   if (format === 'list')
     return lines(text, start, end, all =>
       all.every(line => line.startsWith('- ')) ? all.map(line => line.slice(2)) : all.map(line => `- ${line}`)
+    );
+  if (format === 'numbered')
+    return lines(text, start, end, all =>
+      all.every(line => /^\d+\. /.test(line))
+        ? all.map(line => line.replace(/^\d+\. /, ''))
+        : all.map((line, i) => `${String(i + 1)}. ${line}`)
+    );
+  if (format === 'task')
+    return lines(text, start, end, all =>
+      all.every(line => /^- \[[ x]\] /.test(line))
+        ? all.map(line => line.slice(6))
+        : all.map(line => `- [ ] ${line.replace(/^- /, '')}`)
     );
   // A table goes on its own lines after the selection, its first header selected to type over.
   const before = text.slice(0, end);

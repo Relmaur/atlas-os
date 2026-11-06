@@ -17,6 +17,7 @@ import { goBack } from '../shell/section-store.ts';
 import { SyncSheet, openSyncSheet } from './SyncSheet.tsx';
 import { addAccount, removeAccount } from '../actions.ts';
 import { FIELD } from '../systems/editor-parts.tsx';
+import { useMedia } from '../parts/useMedia.ts';
 
 const TOP_BUTTON =
   'w-11 h-11 rounded-control bg-slate-ground border border-control-edge grid place-items-center text-ink hover:border-control-edge-hover';
@@ -33,6 +34,13 @@ const SHORTCUTS: [keys: string, what: string][] = [
   ['e', 'Edit the open system or planet'],
   ['Esc', 'Close the top panel']
 ];
+// The desktop's left column: each group, by its heading's id (see Group).
+const DESK_GROUPS: [id: string, label: string][] = [
+  ['settings-in-the-game', 'In the game'],
+  ['settings-your-data', 'Your data'],
+  ['settings-this-device', 'This device'],
+  ['aboutTitle', 'About']
+];
 const ROW = 'w-full flex items-center gap-3 min-h-[60px] px-4 py-3 text-left';
 const LINK_ROW = `${ROW} hover:bg-slate-ground`;
 
@@ -44,24 +52,9 @@ export function More() {
   const syncAttention = useSyncAttention();
   const canUndoImport = useImportUndo();
   const [confirmUndo, setConfirmUndo] = useState(false);
-  return (
-    <div className="flex flex-col gap-4 pt-[env(safe-area-inset-top)] lg:max-w-[640px] lg:mx-auto">
-      <header className="flex flex-col gap-1.5">
-        <div className="lg:hidden">
-          <button
-            type="button"
-            onClick={() => {
-              goBack('home');
-            }}
-            aria-label="Back to Home"
-            className={TOP_BUTTON}
-          >
-            <i className="ph-bold ph-caret-left text-lg" aria-hidden="true" />
-          </button>
-        </div>
-        <h1 className="font-display text-screen-title text-ink-bright mt-4 lg:mt-0">Settings</h1>
-      </header>
-
+  const wide = useMedia('(min-width: 1024px)');
+  const data = (
+    <>
       <Group title="Your data">
         {SYNC_URL && (
           <li>
@@ -144,75 +137,64 @@ export function More() {
           ? 'Everything you log stays on this device, plus the encrypted copy sync keeps for your devices.'
           : 'Everything you log stays on this device until you export it or turn on sync.'}
       </p>
-
-      <Accounts accounts={state.accounts} myGlyphs={state.myGlyphs} />
-
-      <section aria-labelledby="keysTitle" className="hidden lg:block">
-        <h2 id="keysTitle" className="text-label uppercase text-ink-label px-1 pb-2">
-          Keyboard
-        </h2>
-        <dl className="rounded-card bg-panel-glass border border-hairline px-4 py-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sub text-ink">
-          {SHORTCUTS.map(([keys, what]) => (
-            <Fragment key={keys}>
-              <dt className="font-mono text-caption text-ink-soft">{keys}</dt>
-              <dd>{what}</dd>
-            </Fragment>
-          ))}
-        </dl>
-      </section>
-
-      <Group title="This device">
-        {device.wakeSupported && (
-          <li className={ROW}>
-            <Tile icon="ph-sun-dim" />
-            <Text title="Keep screen on" id="wakeLabel">
-              While the app is open, so it’s ready next to your screen
-            </Text>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={device.awake}
-              aria-labelledby="wakeLabel"
-              onClick={toggleKeepAwake}
-              className="switch"
-            />
-          </li>
-        )}
-        <Alerts />
-        <li>
-          <a href="wiki/" className={LINK_ROW}>
-            <Tile icon="ph-books" />
-            <Text title="Offline Codex">
-              {wikiCount === null ? 'The wiki’s game pages' : `${wikiCount.toLocaleString()} articles`} · on this device
-            </Text>
-            <Chevron />
-          </a>
-        </li>
-        <li id="installRow" className={ROW}>
-          <Tile icon="ph-device-mobile" />
-          <Text title="App">{installText(device)}</Text>
-          {device.installable && (
-            <button
-              type="button"
-              onClick={() => void promptInstall()}
-              className="h-9 px-3 rounded-control border border-ready-emerald-edge bg-ready-emerald-tint text-caption font-semibold text-ready-emerald-text hover:bg-ready-emerald-tint-hover"
-            >
-              Install
-            </button>
-          )}
-        </li>
+    </>
+  );
+  const accounts = <Accounts accounts={state.accounts} myGlyphs={state.myGlyphs} />;
+  const thisDevice = (
+    <Group title="This device">
+      {device.wakeSupported && (
         <li className={ROW}>
-          <Tile icon="ph-hard-drives" />
-          <Text title="Storage">
-            {device.persisted === null
-              ? 'Checking…'
-              : device.persisted
-                ? 'Protected: the browser won’t clear your log to free up space.'
-                : 'The browser may clear site data when space runs low. Install the app, and export a backup now and then.'}
+          <Tile icon="ph-sun-dim" />
+          <Text title="Keep screen on" id="wakeLabel">
+            While the app is open, so it’s ready next to your screen
           </Text>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={device.awake}
+            aria-labelledby="wakeLabel"
+            onClick={toggleKeepAwake}
+            className="switch"
+          />
         </li>
-      </Group>
-
+      )}
+      <Alerts />
+      <li>
+        <a href="wiki/" className={LINK_ROW}>
+          <Tile icon="ph-books" />
+          <Text title="Offline Codex">
+            {wikiCount === null ? 'The wiki’s game pages' : `${wikiCount.toLocaleString()} articles`} · on this device
+          </Text>
+          <Chevron />
+        </a>
+      </li>
+      <li id="installRow" className={ROW}>
+        <Tile icon="ph-device-mobile" />
+        <Text title="App">{installText(device)}</Text>
+        {device.installable && (
+          <button
+            type="button"
+            onClick={() => void promptInstall()}
+            className="h-9 px-3 rounded-control border border-ready-emerald-edge bg-ready-emerald-tint text-caption font-semibold text-ready-emerald-text hover:bg-ready-emerald-tint-hover"
+          >
+            Install
+          </button>
+        )}
+      </li>
+      <li className={ROW}>
+        <Tile icon="ph-hard-drives" />
+        <Text title="Storage">
+          {device.persisted === null
+            ? 'Checking…'
+            : device.persisted
+              ? 'Protected: the browser won’t clear your log to free up space.'
+              : 'The browser may clear site data when space runs low. Install the app, and export a backup now and then.'}
+        </Text>
+      </li>
+    </Group>
+  );
+  const sessions = (
+    <>
       {state.sessions.length > 0 && (
         <Group title="Play sessions">
           {state.sessions
@@ -240,7 +222,10 @@ export function More() {
             })}
         </Group>
       )}
-
+    </>
+  );
+  const support = (
+    <>
       {KOFI_URL && (
         <section aria-labelledby="supportTitle" className="flex flex-col">
           <h2 id="supportTitle" className="text-label uppercase text-ink-label px-1 pb-2">
@@ -269,54 +254,164 @@ export function More() {
           </a>
         </section>
       )}
+    </>
+  );
+  const about = (
+    <section aria-labelledby="aboutTitle" className="flex flex-col">
+      <h2 id="aboutTitle" className="text-label uppercase text-ink-label px-1 pb-2">
+        About
+      </h2>
+      <div className="rounded-card bg-panel-glass border border-hairline p-4 flex flex-col gap-1.5">
+        <p className="font-display font-bold text-[14px] text-ink-bright">ATLAS:OS</p>
+        <p className="font-mono text-caption text-ink-muted">local-first · open source</p>
+        <p id="appVersion" className="font-mono text-caption text-ink-muted">
+          {[
+            `v${import.meta.env.VITE_APP_VERSION ?? 'dev'}`,
+            import.meta.env.VITE_APP_COMMIT,
+            import.meta.env.VITE_APP_BUILT
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+        <p className="text-caption text-ink-muted">
+          Fan-made. Not affiliated with Hello Games. It doesn’t connect to the game or read your save. Codex text from
+          the No Man’s Sky Wiki and its contributors, CC BY-NC-SA 3.0; the code is MIT-licensed.
+        </p>
+        <a
+          href={FEEDBACK_URL}
+          target="_blank"
+          rel="noopener"
+          className="self-start mt-1 inline-flex items-center gap-1.5 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
+        >
+          Feedback and source code
+          <i className="ph-bold ph-arrow-square-out" aria-hidden="true" />
+        </a>
+        <a
+          href={UPDATES_URL}
+          target="_blank"
+          rel="noopener"
+          className="self-start inline-flex items-center gap-1.5 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
+        >
+          What's new
+          <i className="ph-bold ph-arrow-square-out" aria-hidden="true" />
+        </a>
+        <a
+          href="mailto:hello@atlas-os.cloud"
+          className="self-start inline-flex items-center gap-1.5 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
+        >
+          hello@atlas-os.cloud
+          <i className="ph-bold ph-envelope-simple" aria-hidden="true" />
+        </a>
+      </div>
+    </section>
+  );
 
-      <section aria-labelledby="aboutTitle" className="flex flex-col">
-        <h2 id="aboutTitle" className="text-label uppercase text-ink-label px-1 pb-2">
-          About
-        </h2>
-        <div className="rounded-card bg-panel-glass border border-hairline p-4 flex flex-col gap-1.5">
-          <p className="font-display font-bold text-[14px] text-ink-bright">ATLAS:OS</p>
-          <p className="font-mono text-caption text-ink-muted">local-first · open source</p>
-          <p id="appVersion" className="font-mono text-caption text-ink-muted">
-            {[
-              `v${import.meta.env.VITE_APP_VERSION ?? 'dev'}`,
-              import.meta.env.VITE_APP_COMMIT,
-              import.meta.env.VITE_APP_BUILT
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
-          <p className="text-caption text-ink-muted">
-            Fan-made. Not affiliated with Hello Games. It doesn’t connect to the game or read your save. Codex text from
-            the No Man’s Sky Wiki and its contributors, CC BY-NC-SA 3.0; the code is MIT-licensed.
-          </p>
-          <a
-            href={FEEDBACK_URL}
-            target="_blank"
-            rel="noopener"
-            className="self-start mt-1 inline-flex items-center gap-1.5 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
-          >
-            Feedback and source code
-            <i className="ph-bold ph-arrow-square-out" aria-hidden="true" />
-          </a>
-          <a
-            href={UPDATES_URL}
-            target="_blank"
-            rel="noopener"
-            className="self-start inline-flex items-center gap-1.5 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
-          >
-            What's new
-            <i className="ph-bold ph-arrow-square-out" aria-hidden="true" />
-          </a>
-          <a
-            href="mailto:hello@atlas-os.cloud"
-            className="self-start inline-flex items-center gap-1.5 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan"
-          >
-            hello@atlas-os.cloud
-            <i className="ph-bold ph-envelope-simple" aria-hidden="true" />
-          </a>
+  // The Workbench (round 6, d13): where to go on the left, the groups in two columns, the keyboard on the right.
+  if (wide)
+    return (
+      <div className="settings-desk grid h-full grid-cols-[200px_minmax(0,1fr)_minmax(0,clamp(260px,24%,340px))] gap-[var(--spacing-pane-gap)]">
+        <nav
+          aria-labelledby="settingsTitle"
+          className="workbench-panel min-h-0 overflow-y-auto p-2 flex flex-col gap-1"
+        >
+          <h1 id="settingsTitle" className="font-display font-extrabold text-[22px] text-ink-bright px-3 pt-3 pb-3">
+            Settings
+          </h1>
+          {DESK_GROUPS.map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                document.getElementById(id)?.scrollIntoView({ block: 'start' });
+              }}
+              className="h-9 px-2.5 rounded-tag text-left text-sub text-ink-soft hover:text-ink-bright hover:bg-slate-ground"
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="min-w-0 min-h-0 overflow-y-auto @container">
+          <div className="@[44rem]:columns-2 gap-[var(--spacing-pane-gap)] [&>*]:break-inside-avoid [&>*]:mb-6 [&>*]:flex [&>*]:flex-col [&>*]:gap-3">
+            <div>{accounts}</div>
+            <div>{data}</div>
+            <div>{thisDevice}</div>
+            {state.sessions.length > 0 && <div>{sessions}</div>}
+            {KOFI_URL && <div>{support}</div>}
+            <div>{about}</div>
+          </div>
         </div>
+        <aside aria-labelledby="keysTitle" className="workbench-panel min-w-0 min-h-0 overflow-y-auto px-5 py-5">
+          <h2 id="keysTitle" className="font-display font-bold text-[16px] text-ink-bright pb-2">
+            Keyboard
+          </h2>
+          <dl className="flex flex-col">
+            {SHORTCUTS.map(([keys, what]) => (
+              <div key={keys} className="flex items-center justify-between gap-3 py-2.5 border-t border-hairline">
+                <dt className="min-w-0 text-sub text-ink">{what}</dt>
+                <dd className="shrink-0 flex flex-wrap justify-end gap-1">
+                  {keys.split(' ').map((key, i) =>
+                    key === 'or' || key === 'then' ? (
+                      <span key={i} className="text-caption text-ink-muted">
+                        {key}
+                      </span>
+                    ) : (
+                      <kbd key={i} className="nav-kbd">
+                        {key}
+                      </kbd>
+                    )
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </aside>
+        <SyncSheet />
+      </div>
+    );
+
+  return (
+    <div className="flex flex-col gap-4 pt-[env(safe-area-inset-top)] lg:max-w-[640px] lg:mx-auto">
+      <header className="flex flex-col gap-1.5">
+        <div className="lg:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              goBack('home');
+            }}
+            aria-label="Back to Home"
+            className={TOP_BUTTON}
+          >
+            <i className="ph-bold ph-caret-left text-lg" aria-hidden="true" />
+          </button>
+        </div>
+        <h1 className="font-display text-screen-title text-ink-bright mt-4 lg:mt-0">Settings</h1>
+      </header>
+
+      {data}
+
+      {accounts}
+
+      <section aria-labelledby="keysTitle" className="hidden lg:block">
+        <h2 id="keysTitle" className="text-label uppercase text-ink-label px-1 pb-2">
+          Keyboard
+        </h2>
+        <dl className="rounded-card bg-panel-glass border border-hairline px-4 py-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sub text-ink">
+          {SHORTCUTS.map(([keys, what]) => (
+            <Fragment key={keys}>
+              <dt className="font-mono text-caption text-ink-soft">{keys}</dt>
+              <dd>{what}</dd>
+            </Fragment>
+          ))}
+        </dl>
       </section>
+
+      {thisDevice}
+
+      {sessions}
+
+      {support}
+
+      {about}
       <SyncSheet />
     </div>
   );

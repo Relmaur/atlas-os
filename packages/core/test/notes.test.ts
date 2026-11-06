@@ -2,6 +2,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   filterNotes,
+  noteLinks,
   gearPin,
   linkNotes,
   notesForSystem,
@@ -138,4 +139,12 @@ test('tags are slugs, merge as a set, and drive the list’s chips and filter', 
     filterNotes(notes, 'multi', 'all').map(n => n.id),
     ['a']
   ); // tags are searched too
+});
+
+test('a note’s links are each page it names, once, in the order written', () => {
+  assert.deepEqual(noteLinks('[[Hale 24]] then [[Frost Crystal|crystals]], [[hale 24]] and [[ ]]'), [
+    'Hale 24',
+    'Frost Crystal'
+  ]);
+  assert.deepEqual(noteLinks('no links'), []);
 });

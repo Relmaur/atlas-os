@@ -82,7 +82,7 @@ export function Book3() {
           <h2 className="font-display font-bold text-base text-purple-300 border-b border-slate-800 pb-2.5">
             Example: Infra-Knife Grid on Three SC Slots in a Row
           </h2>
-          <div className="grid grid-cols-3 gap-2.5 text-center text-xs font-mono">
+          <div className="grid grid-cols-3 gap-2.5 text-center text-xs font-mono break-words">
             <div className="p-3 rounded-xl bg-slate-900 border border-cyan-500/40">
               <span className="text-[10px] text-slate-400 block">Above, left</span>{' '}
               <strong className="text-cyan-300">S-Class Infra Mod #3</strong>
@@ -122,7 +122,7 @@ export function Book3() {
           <h2 className="font-display font-bold text-base text-cyan-300 border-b border-slate-800 pb-2.5">
             3. Example: Wiring a Scanner & Mining Multi-Tool
           </h2>
-          <div className="grid grid-cols-3 gap-2.5 text-center text-xs font-mono">
+          <div className="grid grid-cols-3 gap-2.5 text-center text-xs font-mono break-words">
             <div className="p-3 rounded-xl bg-slate-900 border border-cyan-500/40">
               <span className="text-[10px] text-slate-400 block">Left of SC</span>{' '}
               <strong className="text-cyan-300">S-Class Scanner Mod</strong>

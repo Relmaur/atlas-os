@@ -2,7 +2,7 @@
 // orbit band leads; under it the main column (name, Log a visit and Share, six facts, the planets as cards, linked
 // notes) and the inspector (portal address, journal), which folds under the main column when the pane is narrower
 // than ~900px. Below lg, System detail is its own screen (SystemDetails.tsx, design 03); `SystemScreen` picks.
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { planetFamily, type FactsFile } from '@atlas/core/facts';
 import { formatAgo } from '@atlas/core/format';
 import { economyType, strengthStars } from '@atlas/core/galaxy-map';
@@ -27,6 +27,7 @@ import { Button } from '../parts/Button.tsx';
 import { SeverityPill } from '../parts/SeverityPill.tsx';
 import { OrbitDiagram, PlanetMarker } from '../parts/StarChart.tsx';
 import { useMedia } from '../parts/useMedia.ts';
+import { useWidth } from '../parts/useWidth.ts';
 import { ShareSystemSheet } from '../share/ShareSheet.tsx';
 import { LinkedNoteRows } from '../notes/note-bits.tsx';
 import { newNote } from '../notes/note-nav.ts';
@@ -46,27 +47,6 @@ const LABEL = 'text-label uppercase text-ink-label';
 /** System detail as the screen size calls for: the Workbench pane from lg, the phone's screen below. */
 export function SystemScreen() {
   return useMedia(WIDE) ? <SystemDesk /> : <SystemDetails />;
-}
-
-// The band's width, so the diagram is drawn for the room it has rather than stretched.
-function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
-  const ref = useRef<T>(null);
-  const [width, setWidth] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const measure = () => {
-      setWidth(Math.round(el.clientWidth));
-    };
-    measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const watch = new ResizeObserver(measure);
-    watch.observe(el);
-    return () => {
-      watch.disconnect();
-    };
-  }, []);
-  return [ref, width];
 }
 
 export function SystemDesk() {

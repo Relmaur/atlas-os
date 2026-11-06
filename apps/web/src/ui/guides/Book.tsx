@@ -17,6 +17,7 @@ import { useAppState } from '../useAppState.ts';
 import { goBack, useSection } from '../shell/section-store.ts';
 import { newNote, openNote } from '../notes/note-nav.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
+import { useMedia } from '../parts/useMedia.ts';
 
 const CONTENT: Record<BookKey, () => ReactNode> = {
   book1: Book1,
@@ -40,6 +41,66 @@ export function Book({ book }: { book: BookKey }) {
   const Content = CONTENT[book];
   const { done, total } = guideProgress(state.checklists).perBook[book];
   const label = `Book ${meta?.numeral ?? ''}`;
+  const wide = useMedia('(min-width: 1024px)');
+
+  // The Workbench (round 6, d12): the chapter in the main column at reading width, its neighbours at the top, and the
+  // milestones, the wiki's rule and the player's notes in the inspector.
+  if (wide) {
+    const pager = (to: (typeof BOOKS)[number] | undefined, dir: 'prev' | 'next') =>
+      to && (
+        <a
+          href={`#${to.key}`}
+          title={`Book ${to.numeral}: ${to.title}`}
+          className="h-10 px-3 rounded-control border border-control-edge bg-slate-ground inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink whitespace-nowrap hover:border-control-edge-hover"
+        >
+          {dir === 'prev' && <i className="ph-bold ph-caret-left" aria-hidden="true" />}
+          <span className="sr-only">{dir === 'prev' ? 'Previous: ' : 'Next: '}</span>Book {to.numeral}
+          {dir === 'next' && <i className="ph-bold ph-caret-right" aria-hidden="true" />}
+        </a>
+      );
+    return (
+      <div className="book-desk detail-pane h-full">
+        <div className="detail-split min-h-full">
+          <article
+            aria-labelledby={`${book}-title`}
+            className="min-w-0 px-[22px] @[56rem]:px-[30px] py-6 flex flex-col gap-5"
+          >
+            <header className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex-1 min-w-[min(100%,18rem)] flex flex-col gap-1.5">
+                <p className="font-mono text-[12px] tracking-[0.16em] uppercase text-scanner-cyan-pale">{label}</p>
+                <h1
+                  id={`${book}-title`}
+                  className="font-display font-extrabold text-[24px] @[48rem]:text-[30px] leading-tight text-ink-bright break-words"
+                >
+                  {meta?.title}
+                </h1>
+                <p className="text-sub text-ink-muted">{meta?.blurb}</p>
+              </div>
+              <nav aria-label="More guides" className="flex gap-2 shrink-0">
+                {pager(prev, 'prev')}
+                {pager(next, 'next')}
+              </nav>
+            </header>
+            <section aria-labelledby={`${book}-chapter`} className="reading flex flex-col gap-6">
+              <h2 id={`${book}-chapter`} className="sr-only">
+                The chapter
+              </h2>
+              <Content />
+            </section>
+          </article>
+          <aside
+            aria-label={`${label}: milestones, the wiki and your notes`}
+            className="detail-side min-w-0 px-[22px] py-[18px] flex flex-col gap-6"
+          >
+            <Milestones book={book} desk />
+            <WikiRule book={book} desk />
+            <PinnedToBook book={book} label={label} desk />
+          </aside>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 max-w-3xl pt-[env(safe-area-inset-top)]">
       <header className="flex flex-col gap-1.5">
@@ -103,7 +164,7 @@ export function Book({ book }: { book: BookKey }) {
 }
 
 // The wiki's own sentence, quoted as the sync checked it against the archived page (ADR-0003), with its revision.
-function WikiRule({ book }: { book: BookKey }) {
+function WikiRule({ book, desk = false }: { book: BookKey; desk?: boolean }) {
   const id = BOOK_FACT[book];
   const open = useSection() === book;
   const facts = useFacts();
@@ -113,7 +174,10 @@ function WikiRule({ book }: { book: BookKey }) {
   const fact = id ? facts?.facts[id] : undefined;
   if (!fact) return null;
   return (
-    <section aria-labelledby={`${book}-wiki`} className={`${CARD} border-scanner-cyan-edge`}>
+    <section
+      aria-labelledby={`${book}-wiki`}
+      className={desk ? 'flex flex-col gap-3' : `${CARD} border-scanner-cyan-edge`}
+    >
       <div className="flex items-center justify-between gap-3">
         <h2 id={`${book}-wiki`} className={H2}>
           <i className="ph-bold ph-book-bookmark text-scanner-cyan-pale" aria-hidden="true" />
@@ -139,10 +203,10 @@ function WikiRule({ book }: { book: BookKey }) {
 
 // The player's notes pinned to the book: marked as theirs and out of the header search's book index (data-player), so
 // their text never reads as the guide's.
-function PinnedToBook({ book, label }: { book: BookKey; label: string }) {
+function PinnedToBook({ book, label, desk = false }: { book: BookKey; label: string; desk?: boolean }) {
   const notes = notesPinnedTo(useAppState().notes, book);
   return (
-    <section data-player aria-labelledby={`pinned-${book}`} className={CARD}>
+    <section data-player aria-labelledby={`pinned-${book}`} className={desk ? 'flex flex-col gap-3' : CARD}>
       <div className="flex items-center justify-between gap-3">
         <h2 id={`pinned-${book}`} className={H2}>
           <i className="ph-bold ph-push-pin text-scanner-cyan-pale" aria-hidden="true" />

@@ -1,12 +1,18 @@
-import { beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
 import { appState, setAppState } from '../../app/store.ts';
 import { More } from './More.tsx';
 import { ImportDialog } from '../shell/ImportDialog.tsx';
+import { setWide } from '../test-media.ts';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 beforeEach(() => {
+  setWide(false); // the phone's column; the Workbench's three panes (d13) are tested at the end
   localStorage.clear();
   setAppState(buildState({ systems: [] }));
 });
@@ -94,4 +100,20 @@ test('your game accounts: added from Settings, once each, and removed with their
   expect(appState.accounts).toEqual(['marck94', 'Marco-PSN']);
   await userEvent.click(screen.getByRole('button', { name: 'Remove marck94' }));
   expect(appState.accounts).toEqual(['Marco-PSN']);
+});
+
+test('d13: on a computer Settings has its groups in the middle, a way to each on the left, and the keys on the right', async () => {
+  setWide(true);
+  const scrolled = vi.fn();
+  Element.prototype.scrollIntoView = scrolled;
+  render(<More />);
+  expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeTruthy();
+  const nav = screen.getByRole('navigation', { name: 'Settings' });
+  await userEvent.click(within(nav).getByRole('button', { name: 'This device' }));
+  expect(scrolled).toHaveBeenCalled();
+  const keys = screen.getByRole('complementary', { name: 'Keyboard' });
+  expect(within(keys).getByText('Open or close the sidebar')).toBeTruthy();
+  expect(within(keys).getAllByText('Ctrl').length).toBeGreaterThan(1);
+  expect(screen.queryByRole('button', { name: 'Back to Home' })).toBeNull();
+  expect(screen.getByRole('region', { name: 'In the game' })).toBeTruthy();
 });

@@ -10,6 +10,8 @@ import { LogSegment } from '../parts/LogSegment.tsx';
 import { FIELD } from '../systems/editor-parts.tsx';
 import { newNote } from './note-nav.ts';
 import { TAG, shortDate } from './note-bits.tsx';
+import { useMedia } from '../parts/useMedia.ts';
+import { useNavOpen } from '../shell/nav-store.ts';
 
 export function Notes() {
   const openId = useSectionParam();
@@ -20,6 +22,170 @@ export function Notes() {
   // A tag whose last note lost it no longer has a chip: show everything rather than an empty list.
   const filter = chips.some(chip => chip.id === chosen) ? chosen : 'all';
   const shown = filterNotes(notes, query, filter);
+  const wide = useMedia('(min-width: 1024px)');
+  const [showFilters, setShowFilters] = useState(false);
+  const navOpen = useNavOpen();
+  const importFiles = (
+    <label className="self-start inline-flex items-center gap-2 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan cursor-pointer focus-within:outline-2 focus-within:outline-scanner-cyan-glow rounded">
+      <i className="ph-bold ph-upload-simple" aria-hidden="true" />
+      Import Markdown files
+      <input
+        type="file"
+        multiple
+        accept=".md,.markdown,.txt,text/markdown,text/plain"
+        onChange={event => {
+          void importNoteFiles([...(event.target.files ?? [])]);
+          event.target.value = ''; // the same files can be picked again
+        }}
+        className="sr-only"
+      />
+    </label>
+  );
+  const chipRail = (
+    <div
+      role="group"
+      aria-label="Filters"
+      className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 [scrollbar-width:none] lg:flex-wrap lg:overflow-visible lg:mx-0 lg:px-0"
+    >
+      {chips.map(chip => (
+        <button
+          key={chip.id}
+          type="button"
+          aria-pressed={filter === chip.id}
+          onClick={() => {
+            setFilter(chip.id);
+          }}
+          className={`relative shrink-0 h-[34px] px-3.5 rounded-full border text-[13px] font-semibold whitespace-nowrap ${
+            filter === chip.id
+              ? 'bg-scanner-cyan-tint border-scanner-cyan-edge text-scanner-cyan-text'
+              : 'bg-slate-ground border-control-edge text-ink-soft hover:text-ink-bright'
+          }`}
+        >
+          {chip.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  // The Workbench (round 6, d10): compact rows, edge to edge, beside the open note.
+  if (wide) {
+    const filtering = filter !== 'all';
+    const control =
+      'h-[38px] rounded-control border border-control-edge bg-slate-ground text-ink inline-flex items-center gap-1.5 px-3 text-[13px] font-semibold hover:border-control-edge-hover';
+    return (
+      <div className="flex flex-col h-full min-h-0">
+        <header className="flex items-center justify-between gap-2.5 px-[18px] pt-4 pb-3">
+          <h1 className="font-display font-extrabold text-[22px] leading-none text-ink-bright">Notes</h1>
+          <button
+            type="button"
+            onClick={() => {
+              newNote();
+            }}
+            aria-keyshortcuts="n"
+            className="h-10 shrink-0 rounded-control border border-scanner-cyan-edge bg-scanner-cyan-tint text-scanner-cyan-text inline-flex items-center gap-1.5 px-3.5 text-[13px] font-semibold whitespace-nowrap hover:border-scanner-cyan-edge-strong"
+          >
+            <i className="ph-bold ph-plus" aria-hidden="true" />
+            {navOpen ? 'New' : 'New note'}
+            <kbd className="nav-kbd ml-1" aria-hidden="true">
+              N
+            </kbd>
+          </button>
+        </header>
+        {notes.length > 0 && (
+          <div className="px-[18px] pb-3 flex flex-col gap-2.5">
+            <div className="flex gap-2">
+              <label className="relative flex-1 min-w-0">
+                <i
+                  className="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
+                  aria-hidden="true"
+                />
+                <input
+                  type="search"
+                  autoComplete="off"
+                  value={query}
+                  onChange={event => {
+                    setQuery(event.target.value);
+                  }}
+                  placeholder={`Filter ${String(notes.length)} note${notes.length === 1 ? '' : 's'}`}
+                  aria-label="Search your notes"
+                  className="w-full h-[38px] rounded-control border border-control-edge focus:border-scanner-cyan-edge-strong bg-slate-ground pl-9 pr-3 text-[13px] text-ink-bright placeholder:text-ink-disabled focus:outline-hidden"
+                />
+              </label>
+              {chips.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowFilters(!showFilters);
+                  }}
+                  aria-expanded={showFilters || filtering}
+                  aria-controls="noteFilters"
+                  aria-label={filtering ? 'Filters (one on)' : 'Filters'}
+                  className={`${control} relative w-[38px] justify-center px-0`}
+                >
+                  <i className="ph-bold ph-funnel" aria-hidden="true" />
+                  {filtering && (
+                    <span
+                      className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-scanner-cyan-glow"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              )}
+            </div>
+            {chips.length > 1 && (showFilters || filtering) && <div id="noteFilters">{chipRail}</div>}
+          </div>
+        )}
+        <ul id="notesList" className="flex-1 min-h-0 overflow-y-auto">
+          {shown.map(note => {
+            const open = openId === note.id;
+            const line = noteExcerpt(note, 90) || shortDate(note.updatedAt);
+            return (
+              <li key={note.id} data-note={note.id}>
+                <a
+                  href={`#note/${encodeURIComponent(note.id)}`}
+                  aria-current={open ? 'true' : undefined}
+                  className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-[18px] h-[58px] border-t border-hairline ${
+                    open
+                      ? 'bg-scanner-cyan-tint shadow-[inset_3px_0_0_var(--color-scanner-cyan-glow)]'
+                      : 'hover:bg-[rgba(148,163,184,0.06)]'
+                  }`}
+                >
+                  <span className="min-w-0 flex flex-col gap-0.5">
+                    <span title={note.title} className="truncate text-sm font-semibold text-ink-bright">
+                      {note.title}
+                    </span>
+                    <span title={line} className="truncate text-xs text-ink-muted">
+                      {line}
+                    </span>
+                  </span>
+                  {note.pins.length > 0 ? (
+                    <span className="h-6 px-2 rounded-tag border border-control-edge inline-flex items-center text-[11px] font-semibold text-ink">
+                      Pinned
+                    </span>
+                  ) : (
+                    <span className="font-mono text-[11px] text-ink-label whitespace-nowrap">
+                      {shortDate(note.updatedAt)}
+                    </span>
+                  )}
+                </a>
+              </li>
+            );
+          })}
+          {!notes.length && (
+            <li className="px-[18px] py-6 text-sub text-ink-muted border-t border-hairline">
+              No notes yet. Write one, or import Markdown files you already keep.
+            </li>
+          )}
+          {notes.length > 0 && !shown.length && (
+            <li className="px-[18px] py-6 text-sub text-ink-muted border-t border-hairline">
+              {query.trim() ? `Nothing matches “${query.trim()}”.` : 'No notes match this filter.'}
+            </li>
+          )}
+        </ul>
+        <div className="px-[18px] py-3 border-t border-hairline">{importFiles}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
@@ -61,31 +227,7 @@ export function Notes() {
         </label>
       )}
 
-      {chips.length > 1 && (
-        <div
-          role="group"
-          aria-label="Filters"
-          className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 [scrollbar-width:none] lg:flex-wrap lg:overflow-visible lg:mx-0 lg:px-0"
-        >
-          {chips.map(chip => (
-            <button
-              key={chip.id}
-              type="button"
-              aria-pressed={filter === chip.id}
-              onClick={() => {
-                setFilter(chip.id);
-              }}
-              className={`relative shrink-0 h-[34px] px-3.5 rounded-full border text-[13px] font-semibold whitespace-nowrap ${
-                filter === chip.id
-                  ? 'bg-scanner-cyan-tint border-scanner-cyan-edge text-scanner-cyan-text'
-                  : 'bg-slate-ground border-control-edge text-ink-soft hover:text-ink-bright'
-              }`}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {chips.length > 1 && chipRail}
 
       {shown.length > 0 && (
         <ul
@@ -138,20 +280,7 @@ export function Notes() {
         </p>
       )}
 
-      <label className="self-start inline-flex items-center gap-2 text-caption font-semibold text-scanner-cyan-pale hover:text-quantity-cyan cursor-pointer focus-within:outline-2 focus-within:outline-scanner-cyan-glow rounded">
-        <i className="ph-bold ph-upload-simple" aria-hidden="true" />
-        Import Markdown files
-        <input
-          type="file"
-          multiple
-          accept=".md,.markdown,.txt,text/markdown,text/plain"
-          onChange={event => {
-            void importNoteFiles([...(event.target.files ?? [])]);
-            event.target.value = ''; // the same files can be picked again
-          }}
-          className="sr-only"
-        />
-      </label>
+      {importFiles}
     </div>
   );
 }

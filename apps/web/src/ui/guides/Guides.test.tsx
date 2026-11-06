@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
@@ -6,8 +6,14 @@ import { appState, setAppState } from '../../app/store.ts';
 import { Guides } from './Guides.tsx';
 import { Book } from './Book.tsx';
 import { setFactsForTests } from '../gear/facts-store.ts';
+import { setWide } from '../test-media.ts';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 beforeEach(() => {
+  setWide(false); // the phone's screens; the Workbench's (d12) are tested at the end
   localStorage.clear();
   // Only the ticks given here.
   const state = buildState();
@@ -95,4 +101,31 @@ test('a book has a way back and links to its neighbours', () => {
       .getByRole('link', { name: /Book IV/ })
       .getAttribute('href')
   ).toBe('#book4');
+});
+
+test('d12: on a computer the books are compact rows, and a book has its chapter beside its milestones', async () => {
+  setWide(true);
+  render(
+    <>
+      <Guides />
+      <Book book="book1" />
+    </>
+  );
+  expect(document.getElementById('guidesProgressText')?.textContent).toBe('1 / 35 milestones');
+  const rows = within(document.getElementById('guidesList')!).getAllByRole('link');
+  expect(rows).toHaveLength(6);
+  expect(rows[0]?.textContent).toContain('1/16');
+  const inspector = screen.getByRole('complementary', { name: 'Book I: milestones, the wiki and your notes' });
+  const milestones = within(inspector).getByRole('region', { name: /^Milestones · 1 of 16/ });
+  await userEvent.click(within(milestones).getByRole('checkbox', { name: /Capital Freighter Claimed/ }));
+  expect(appState.checklists.capitalFreighterClaimed).toBe(true);
+  expect(rows[0]?.textContent).toContain('2/16');
+  expect(within(inspector).getByRole('button', { name: 'Add a note to Book I' })).toBeTruthy();
+  const pager = screen.getByRole('navigation', { name: 'More guides' });
+  expect(
+    within(pager)
+      .getAllByRole('link')
+      .map(link => link.getAttribute('href'))
+  ).toEqual(['#book2']);
+  expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
 });

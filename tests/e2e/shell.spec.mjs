@@ -178,7 +178,7 @@ test('keyboard shortcuts: g then a letter, and n in Log, and they are listed in 
   await page.keyboard.press('n');
   await expect(page).toHaveURL(/#note\//);
   await page.goto('./#more');
-  await expect(page.getByRole('region', { name: 'Keyboard' })).toContainText('Go to Runs');
+  await expect(page.getByRole('complementary', { name: 'Keyboard' })).toContainText('Go to Runs');
 });
 
 test('a panel closes by a drag on its bar past the threshold, and springs back short of it', async ({
@@ -209,4 +209,30 @@ test('a panel closes by a drag on its bar past the threshold, and springs back s
   await page.mouse.up();
   await expect(sheet).toHaveAttribute('aria-hidden', 'true');
   await expect(page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: /^Runs/ })).toBeVisible();
+});
+
+test('d13: Settings on the Workbench at 1024, 1440 and 1920 has no text out of its box and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./#more');
+    await expect(page.locator('#settingsTitle')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#sec-more *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
 });

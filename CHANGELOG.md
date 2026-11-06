@@ -6,6 +6,16 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.33.0] - 2026-11-06
+### Changed
+- Notes on a computer: the list is compact rows beside the open note, with New (N), a filter field and the tag filters behind a button. A note has its formatting toolbar along the top (bold, italic, heading, list, numbered list, checklist, table, Codex link; Ctrl+B and Ctrl+I while writing), the Markdown beside its preview when there's room, and an inspector: what it links (its pinned systems and ships, and each [[name]], opening your system or planet when the name matches one, otherwise the Codex), its tags, where it also shows, and a timer to start.
+- The Recipe planner on a computer is a board: Worth, Quantity and Change item along the top, a bar for where you are, then a column per step (Gather's checklist, each round's crafts, the final craft) with Mark crafted at each foot. The Codex peek stays docked beside it, showing the item last picked (the product before any).
+- Guides on a computer: the six books are compact rows with each one's ticks, and the next milestone at the foot. A book reads at its chapter's width with Book II / Book IV at the top, and its milestones, the wiki's rule and your pinned notes in the inspector. In a narrow pane the chapters keep to one column and wide tables scroll.
+- Settings on a computer: a way to each group on the left, the groups in two columns, and every keyboard shortcut on the right with its keys.
+
+### Added
+- Two Markdown marks for notes: a numbered list and a checklist (- [ ] boxes, shown as ☐ and ☑).
+
 ## [3.32.0] - 2026-11-06
 ### Changed
 - Home on a computer is four panels:

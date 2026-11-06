@@ -31,3 +31,10 @@ test('a table goes on its own lines, with its first header selected', () => {
   assert.equal(edit.text.slice(edit.start, edit.end), 'Column');
   assert.equal(applyMarkdown('', 0, 0, 'table').text.startsWith('| Column'), true);
 });
+
+test('a numbered list counts the lines it touches, and a checklist turns a list into boxes', () => {
+  assert.equal(applyMarkdown('one\ntwo', 0, 7, 'numbered').text, '1. one\n2. two');
+  assert.equal(applyMarkdown('1. one\n2. two', 0, 13, 'numbered').text, 'one\ntwo');
+  assert.equal(applyMarkdown('- one\ntwo', 0, 9, 'task').text, '- [ ] one\n- [ ] two');
+  assert.equal(applyMarkdown('- [ ] one\n- [x] two', 0, 19, 'task').text, 'one\ntwo');
+});

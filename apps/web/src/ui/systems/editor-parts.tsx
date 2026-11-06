@@ -80,13 +80,16 @@ export function TagEditor({
   onTags,
   typed,
   onTyped,
-  max = Infinity
+  max = Infinity,
+  labelClass
 }: {
   tags: string[];
   onTags: (tags: string[]) => void;
   typed: string;
   onTyped: (typed: string) => void;
   max?: number;
+  /** A note's inspector (d10) titles it like its other sections. */
+  labelClass?: string;
 }) {
   const add = (value: string) => {
     const tag = tagSlug(value);
@@ -104,7 +107,9 @@ export function TagEditor({
   };
   return (
     <div className={LABEL_FIELD}>
-      <label htmlFor="tagInput">Tags</label>
+      <label htmlFor="tagInput" className={labelClass}>
+        Tags
+      </label>
       <div
         id="tagEditor"
         className="flex flex-wrap items-center gap-1.5 min-h-11 p-1.5 rounded-control bg-slate-ground border border-control-edge focus-within:border-scanner-cyan-edge-strong"
@@ -113,7 +118,7 @@ export function TagEditor({
         {tags.map(tag => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1.5 h-[30px] pl-2.5 pr-1.5 rounded-full bg-scanner-cyan-tint border border-scanner-cyan-edge text-[13px] font-medium text-[#a5f3fc]"
+            className="inline-flex items-center gap-1.5 h-[30px] pl-2.5 pr-1.5 rounded-full bg-scanner-cyan-tint border border-scanner-cyan-edge text-[13px] font-medium text-[#a5f3fc] lg:border-0 lg:rounded-[calc(var(--radius-control)-6px)]"
           >
             {tag}
             <button

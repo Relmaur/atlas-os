@@ -1721,15 +1721,20 @@ label.list-row:active {
     border-radius: var(--radius-panel);
   }
   /* Screens made of their own panels (Home, d03): the content area is only the room they sit in. */
-  body:is([data-section='home'], [data-section='map']) main.app-main {
+  body:is([data-section='home'], [data-section='map'], [data-section='plan'], [data-section='more']) main.app-main {
     padding: 0;
     background: none;
     border: 0;
     border-radius: 0;
   }
   body[data-section='home'] :is(#sec-home, #homeRoot),
-  body[data-section='map'] :is(#sec-map, #mapRoot) {
+  body[data-section='map'] :is(#sec-map, #mapRoot),
+  body[data-section='plan'] :is(#sec-plan, #planRoot),
+  body[data-section='more'] :is(#sec-more, #moreRoot) {
     height: 100%;
+  }
+  body[data-section='more'] #sec-more {
+    max-width: none;
   }
   /* Single-column screens sit in the middle of the pane. */
   :is(#sessionRoot, #planRoot, #craftsRoot, #frontierRoot, #cardsRoot) > * {
@@ -1819,8 +1824,62 @@ label.list-row:active {
   body[data-pane='systems'] :is(#sec-system, #sec-planet):not(.hidden) {
     padding: 0;
   }
-  #sec-notes li a[aria-current='true'] {
-    background: var(--color-scanner-cyan-tint);
+  /* Notes (d10): the list's rows run edge to edge like Systems; a note's toolbar and its Markdown do too, so its pane
+     has no padding, and the Markdown fills the height. */
+  body[data-pane='notes'] #sec-notes {
+    padding: 0;
+    overflow: hidden;
+  }
+  #sec-notes > #notesRoot,
+  body[data-pane='notes'] #sec-note:not(.hidden) > #noteRoot {
+    height: 100%;
+  }
+  body[data-pane='notes'] #sec-note:not(.hidden) {
+    padding: 0;
+  }
+  /* Guides (d12): the six books' rows run edge to edge; a book's chapter and its inspector fill the pane. The chapter's
+     own cards lose their box there: the pane is the box, so only the cells inside keep theirs. */
+  body[data-pane='guides'] #sec-guides {
+    padding: 0;
+    overflow: hidden;
+  }
+  #sec-guides > #guidesRoot,
+  body[data-pane='guides'] :is(#sec-book1, #sec-book2, #sec-book3, #sec-book4, #sec-book5, #sec-book6) > div {
+    height: 100%;
+  }
+  body[data-pane='guides'] :is(#sec-book1, #sec-book2, #sec-book3, #sec-book4, #sec-book5, #sec-book6):not(.hidden) {
+    padding: 0;
+  }
+  .book-desk .hud-card {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  /* The chapters were written for a phone column and a wide desktop page; in a narrow pane long words wrap and wide
+     tables scroll rather than spill. */
+  .book-desk article {
+    overflow-wrap: break-word;
+  }
+  .book-desk article table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  /* Their columns switch on at the page's md and lg; in a pane narrower than that they stay one column. */
+  @container (max-width: 720px) {
+    .book-desk article :is([class*='md:grid-cols-'], [class*='lg:grid-cols-']) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .book-desk article :is([class*='md:col-span-'], [class*='lg:col-span-']) {
+      grid-column: auto;
+    }
+  }
+  .book-desk .hud-card > h2 {
+    border-bottom: 0;
+    padding-bottom: 0;
   }
 
   /* The detail pane's own primitive: main · inspector side by side, folding the inspector under the main column when

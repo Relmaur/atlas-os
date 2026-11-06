@@ -4,17 +4,28 @@ import { bookChecks, milestoneHint, type BookKey } from '@atlas/core/guides';
 import { toggleChecklist } from '../actions.ts';
 import { useAppState } from '../useAppState.ts';
 
-export function Milestones({ book }: { book: BookKey }) {
+// `desk`: in a book's inspector on the Workbench (d12), which is its box; the title carries the count.
+export function Milestones({ book, desk = false }: { book: BookKey; desk?: boolean }) {
   const { checklists, gear } = useAppState();
   const groups = bookChecks(book);
+  const all = groups.flatMap(group => group.items);
+  const ticked = all.filter(item => checklists[item.id] === true).length;
   return (
-    <section aria-labelledby={`${book}-milestones`} className="rounded-card bg-panel-glass border border-hairline p-4">
+    <section
+      aria-labelledby={`${book}-milestones`}
+      className={desk ? '' : 'rounded-card bg-panel-glass border border-hairline p-4'}
+    >
       <h2
         id={`${book}-milestones`}
         className="font-display font-bold text-[15px] text-ink-bright flex items-center gap-2"
       >
-        <i className="ph-bold ph-flag-banner text-scanner-cyan-pale" aria-hidden="true" />
+        {!desk && <i className="ph-bold ph-flag-banner text-scanner-cyan-pale" aria-hidden="true" />}
         Milestones
+        {desk && (
+          <span className="font-display">
+            · {ticked} of {all.length}
+          </span>
+        )}
       </h2>
       {groups.map(group => (
         <div key={group.key} id={`checklist-${group.key}`} className="mt-3">
