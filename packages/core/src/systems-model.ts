@@ -34,6 +34,8 @@ export interface Planet {
   discoveredOn: string;
   /** The time beside that day (HH:MM, as the game shows it), or ''. Added in 3.27. */
   discoveredTime: string;
+  /** For a moon: the id of the planet it orbits in this system, or ''. Added in 3.28. Read through `moonParent()`. */
+  orbits: string;
 }
 /** What a planet's colour is read from: its biome, and its description for a Reliquary world or an unset biome. */
 export type PlanetLike = Pick<Planet, 'biome' | 'descriptor'>;
@@ -214,8 +216,19 @@ export function normalizePlanetScan(
     discoveredBy: word(planet.discoveredBy),
     discoveredOn: typeof planet.discoveredOn === 'string' && DAY.test(planet.discoveredOn) ? planet.discoveredOn : '',
     discoveredTime:
-      typeof planet.discoveredTime === 'string' && TIME.test(planet.discoveredTime) ? planet.discoveredTime : ''
+      typeof planet.discoveredTime === 'string' && TIME.test(planet.discoveredTime) ? planet.discoveredTime : '',
+    orbits: typeof planet.orbits === 'string' && SAFE_ID.test(planet.orbits) ? planet.orbits : ''
   };
+}
+
+/**
+ * The planet a moon orbits, or null. Only a moon has one, and only a planet of the same system that isn't itself a
+ * moon: a link left pointing at a deleted planet, or at one later logged as a moon, reads as not set (and is kept).
+ */
+export function moonParent(planets: readonly Planet[], planet: Pick<Planet, 'id' | 'body' | 'orbits'>): Planet | null {
+  if (planet.body !== 'moon' || !planet.orbits || planet.orbits === planet.id) return null;
+  const parent = planets.find(other => other.id === planet.orbits);
+  return parent && parent.body !== 'moon' ? parent : null;
 }
 
 export function normalizeSystem(raw: Record<string, unknown>): System {

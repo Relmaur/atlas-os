@@ -29,7 +29,7 @@ export function seedState() {
         name: 'Hesper Drift',
         star: 'green',
         tags: ['to-revisit'],
-        // A scanned planet in danger and one with nothing logged, for the planet view (36) and its states.
+        // A scanned planet in danger and one with nothing logged, for the planet view (36) and its states, and a moon.
         planets: [
           {
             id: 'pl-storm',
@@ -45,7 +45,9 @@ export function seedState() {
             discoveredOn: '2026-11-05',
             discoveredTime: '19:49'
           },
-          { id: 'pl-blank', name: 'Geor Beta', body: 'planet' }
+          { id: 'pl-blank', name: 'Geor Beta', body: 'planet' },
+          // A moon tied to its planet: it circles Storm Rock in the diorama (3.28).
+          { id: 'pl-moon', name: 'Hesper Minor', body: 'moon', biome: 'Frozen', orbits: 'pl-storm' }
         ],
         visits: [{ at: minutesAgo(2 * 24 * 60) }],
         createdAt: '2026-10-21T00:00:00.000Z'

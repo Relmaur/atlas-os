@@ -120,3 +120,15 @@ test('from lg a system opens beside its list, marked there; a phone keeps one sc
   await expect(details).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test('a moon tied to its planet circles it in the diorama and names it on its own view', async ({ page }) => {
+  await page.goto('./#system/sys-hesper');
+  await expect(page.locator('#sec-system svg[role="img"]').first()).toHaveAttribute(
+    'aria-label',
+    /Hesper Minor is a moon of Storm Rock/
+  );
+  await page.goto('./#planet/sys-hesper/pl-moon');
+  await expect(page.locator('#planetTitle')).toHaveText('Hesper Minor');
+  await page.locator('#sec-planet').getByRole('link', { name: 'Storm Rock' }).click();
+  await expect(page).toHaveURL(/#planet\/sys-hesper\/pl-storm$/);
+});

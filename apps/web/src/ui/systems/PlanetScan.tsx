@@ -136,6 +136,7 @@ interface Draft {
   discoveredBy: string;
   discoveredOn: string;
   discoveredTime: string;
+  orbits: string;
 }
 
 const draftOf = (planet: Planet | undefined): Draft => ({
@@ -154,7 +155,10 @@ const draftOf = (planet: Planet | undefined): Draft => ({
   resources: planet?.resources ?? [],
   discoveredBy: planet?.discoveredBy ?? '',
   discoveredOn: planet?.discoveredOn ?? '',
-  discoveredTime: planet?.discoveredTime ?? ''
+  discoveredTime: planet?.discoveredTime ?? '',
+  // Kept as stored, even when it no longer points at a planet: the picker then reads "Not set", and saving
+  // without touching it leaves the link as it was.
+  orbits: planet?.orbits ?? ''
 });
 
 /**
@@ -195,6 +199,8 @@ export function PlanetForm({
   const level = sentinelLevel(wiki, draft.sentinels);
   // The draft's body is one of PLANET_BODIES' keys or '': the segments offer nothing else.
   const kind = planetKind({ descriptor: draft.descriptor, body: draft.body as Planet['body'] });
+  // What a moon can orbit: the system's other planets that aren't moons themselves, in the log's order.
+  const hosts = system.planets.filter(other => other.id !== planet?.id && other.body !== 'moon');
   const subtitle = [kind, own?.name ?? draft.biome].filter(Boolean).join(' · ') || 'Nothing from the scan yet';
   const unlogged = !draft.biome && !draft.descriptor;
 
@@ -301,7 +307,9 @@ export function PlanetForm({
         temperature: draft.temperature,
         discoveredBy: draft.discoveredBy,
         discoveredOn: draft.discoveredOn,
-        discoveredTime: draft.discoveredTime
+        discoveredTime: draft.discoveredTime,
+        // Only a moon orbits a planet; switching back to Planet unties it.
+        orbits: draft.body === 'moon' ? draft.orbits : ''
       }
     });
     onDone(false);
@@ -420,6 +428,37 @@ export function PlanetForm({
             }}
             clearable
           />
+          {draft.body === 'moon' &&
+            (hosts.length ? (
+              <label className={LABEL_FIELD}>
+                Orbits
+                <span className="relative block">
+                  <select
+                    name="orbits"
+                    value={draft.orbits}
+                    onChange={event => {
+                      set({ orbits: event.target.value });
+                    }}
+                    className={`${FIELD} appearance-none pr-9 cursor-pointer`}
+                  >
+                    <option value="">Not set</option>
+                    {hosts.map(host => (
+                      <option key={host.id} value={host.id}>
+                        {host.name}
+                      </option>
+                    ))}
+                  </select>
+                  <i
+                    aria-hidden="true"
+                    className="ph-bold ph-caret-down pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
+                  />
+                </span>
+              </label>
+            ) : (
+              <p className="text-caption text-ink-muted">
+                Log the planet this moon orbits in this system, and you can tie the moon to it here.
+              </p>
+            ))}
           <WordCombobox
             label="Biome"
             name="biome"

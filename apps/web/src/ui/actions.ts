@@ -93,7 +93,8 @@ export interface PlanetFields {
       | 'temperature'
       | 'discoveredBy'
       | 'discoveredOn'
-      | 'discoveredTime',
+      | 'discoveredTime'
+      | 'orbits',
       string
     >
   >;

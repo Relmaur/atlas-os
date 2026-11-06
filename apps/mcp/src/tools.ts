@@ -9,7 +9,7 @@ import { buildPlan, findItem } from '@atlas/core/planner';
 import { haulValue } from '@atlas/core/calc';
 import { rankCrafts, sortCrafts, type RankedCraft } from '@atlas/core/profit';
 import { outlawSummary } from '@atlas/core/outlaw';
-import { lastVisit, searchSystems, systemTags, tagSlug, type System } from '@atlas/core/systems-model';
+import { lastVisit, moonParent, searchSystems, systemTags, tagSlug, type System } from '@atlas/core/systems-model';
 import { searchNotes, noteExcerpt, byNewest, PIN_PLACES } from '@atlas/core/notes';
 import { timerStatus } from '@atlas/core/timers';
 import { slotRules, slotWarnings } from '@atlas/core/gear';
@@ -349,7 +349,7 @@ export function createServer({ loadWiki, loadLog, logSetupError, now = Date.now 
       title: 'One of my systems',
       description:
         'Everything the player logged about one system: planets (with what their scan showed: description, biome, ' +
-        'weather, sentinels, flora, fauna, resources, temperature in °C, discoverer), visits (with packets), tags and notes, and its ' +
+        'weather, sentinels, flora, fauna, resources, temperature in °C, discoverer, and for a moon the planet it orbits), visits (with packets), tags and notes, and its ' +
         'portal address with each glyph’s name from the wiki, in dialling order.',
       inputSchema: { name: z.string().min(1).max(120) },
       annotations: READ_ONLY
@@ -365,7 +365,12 @@ export function createServer({ loadWiki, loadLog, logSetupError, now = Date.now 
         ...system,
         id: undefined,
         glyphNames: named?.map(glyph => glyph.name),
-        planets: system.planets.map(planet => ({ ...planet, id: undefined }))
+        // A moon's link is an id too: the planet's name stands in for it.
+        planets: system.planets.map(planet => ({
+          ...planet,
+          id: undefined,
+          orbits: moonParent(system.planets, planet)?.name
+        }))
       };
     })
   );

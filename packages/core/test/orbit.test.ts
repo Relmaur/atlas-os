@@ -164,3 +164,35 @@ test('an inset at the top keeps every planet below the controls drawn over the f
     });
   }
 });
+
+test('a moon tied to its planet leaves the star’s orbits and circles that planet, inside the frame', () => {
+  const moon = { ...p('Little', 'frozen', 1), moonOf: 0 };
+  for (const size of ['XL', 'L'] as const) {
+    const [width, height] = size === 'XL' ? [390, 300] : [356, 150];
+    const layout = orbitLayout(MAS, [...FIVE, moon], { width, height, size, total: 6 });
+    // The game's count of 6 includes the moon: five orbits, no dashed one for it.
+    expect(layout.orbits).toHaveLength(5);
+    expect(layout.planets).toHaveLength(5);
+    const [circling] = layout.moons;
+    const host = layout.planets[0];
+    expect(circling?.parent).toBe(0);
+    expect(circling && host && Math.hypot(circling.x - host.x, circling.y - host.y)).toBeCloseTo(circling?.ring.r ?? 0);
+    expect((circling?.r ?? 0) < (host?.r ?? 0)).toBe(true);
+    // Wherever it is on its turn, it stays inside the frame.
+    for (const planet of layout.moons) {
+      expect(planet.ring.cy - planet.ring.r - planet.r).toBeGreaterThan(0);
+      expect(planet.ring.cy + planet.ring.r + planet.r).toBeLessThan(height);
+      expect(planet.ring.cx + planet.ring.r + planet.r).toBeLessThan(width);
+    }
+  }
+  // A moon tied to another moon (or to itself) keeps an orbit of its own.
+  const loose = orbitLayout(MAS, [{ ...moon, moonOf: 5 }, p('II', 'hot', 1), { ...moon, name: 'M', moonOf: 0 }], {
+    width: 390,
+    height: 300,
+    size: 'XL'
+  });
+  expect(loose.planets).toHaveLength(2);
+  expect(orbitSentence('Masdalri Junction', 'Yellow', [...FIVE, moon])).toBe(
+    'Masdalri Junction: a yellow star with 6 planets; Little is a moon of Buya 90/K4; your base is on Buya 90/K4.'
+  );
+});

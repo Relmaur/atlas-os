@@ -6,6 +6,13 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.28.0] - 2026-11-06
+### Added
+- A moon can say which planet it orbits: choose Moon in the planet sheet and an Orbits picker lists the system's other planets. In the system's diagram the moon leaves the star's orbits and circles its planet, small, on a faint ring of its own (still under reduced motion). The moon's own page says "orbits" with a link to the planet, the diagram's description for screen readers says it, and an AI assistant connected through the MCP server gets the planet's name.
+
+### Notes
+- Additive: a planet gains `orbits` (the id of the planet a moon circles, '' when not set). Older logs read it as not set; a link to a planet that was deleted, or that is now logged as a moon, is kept as it was and reads as not set.
+
 ## [3.27.1] - 2026-11-06
 ### Changed
 - On a computer, a planet's row in System detail opens the planet panel beside it, and the row says "Editing", as design 37 draws it. On a phone a row still opens the planet's own page; a Ctrl- or ⌘-click opens that page in a new tab on a computer.

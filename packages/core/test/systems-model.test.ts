@@ -8,6 +8,7 @@ import {
   systemHaystack,
   searchSystems,
   HOUR_MS,
+  moonParent,
   type System
 } from '../src/systems-model.ts';
 import { formatDuration, formatAgo, formatCountdown } from '../src/format.ts';
@@ -202,4 +203,28 @@ test('an older log’s system keeps its economy and stars; the galaxy map’s ot
   const logged = normalizeSystem({ name: 'Ekwa', spectralClass: 'F4', water: true, economyStrength: 'Opulent' });
   expect(logged).toMatchObject({ spectralClass: 'F4', water: true, dissonant: false, economyStrength: 'Opulent' });
   expect(normalizeSystem({ name: 'X', water: 'yes' }).water).toBe(false);
+});
+
+test('a moon’s planet: kept as stored, read only when it is a planet of the same system', () => {
+  const { planets } = normalizeSystem({
+    planets: [
+      { id: 'pl-h', name: 'Hogaw', body: 'planet' },
+      { id: 'pl-m', name: 'Little', body: 'moon', orbits: 'pl-h' },
+      { id: 'pl-n', name: 'Lost', body: 'moon', orbits: 'pl-gone' },
+      { id: 'pl-x', name: 'Odd', body: 'planet', orbits: 'pl-h' },
+      { id: 'pl-y', name: 'Twin', body: 'moon', orbits: 'pl-m' }
+    ]
+  });
+  // An older log has no link: it reads as not set.
+  expect(normalizeSystem({ planets: [{ id: 'pl-1', name: 'A' }] }).planets[0]?.orbits).toBe('');
+  const [hogaw, little, lost, odd, twin] = planets;
+  expect(little && moonParent(planets, little)).toBe(hogaw);
+  // A link to a deleted planet, from a planet, or to another moon reads as not set, and is kept as it was.
+  expect(lost && moonParent(planets, lost)).toBeNull();
+  expect(lost?.orbits).toBe('pl-gone');
+  expect(odd && moonParent(planets, odd)).toBeNull();
+  expect(twin && moonParent(planets, twin)).toBeNull();
+  expect(normalizeSystem({ planets: [{ id: 'a', name: 'A', body: 'moon', orbits: '../x' }] }).planets[0]?.orbits).toBe(
+    ''
+  );
 });

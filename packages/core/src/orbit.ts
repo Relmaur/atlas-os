@@ -6,7 +6,10 @@
 // centred on it, and each planet sits on its arc at an angle seeded from the system's galaxy and portal address, so
 // the same system draws the same picture on every device. Order is the planet's position in the system, never
 // sorted. Logged, not imagined: planets the game counts but the player hasn't logged are dashed rings.
-import type { PlanetLike } from './systems-model.ts';
+//
+// A moon the player has tied to its planet leaves the star's orbits and circles that planet instead, small, on a
+// faint ring of its own; a moon without one stays on an orbit of its own, as before.
+import { moonParent, type PlanetLike } from './systems-model.ts';
 import { Rng, seedOf } from './seed.ts';
 import type { System } from './systems-model.ts';
 
@@ -19,6 +22,8 @@ export interface OrbitPlanet {
   /** Relative disc size, 1 when not logged. */
   size: number;
   base: boolean;
+  /** For a moon tied to its planet: that planet's position in the same list. Left out otherwise. */
+  moonOf?: number;
 }
 
 export interface OrbitOptions {
@@ -47,6 +52,15 @@ export interface OrbitLayout {
     | ({ logged: true; x: number; y: number; r: number; index: number } & OrbitPlanet)
     | { logged: false; x: number; y: number; r: number; index: number }
   )[];
+  /** Moons tied to a planet, each with the orbit slot (`index`) of the planet it circles. */
+  moons: (OrbitPlanet & {
+    parent: number;
+    x: number;
+    y: number;
+    r: number;
+    /** The moon's ring around its planet. */
+    ring: { cx: number; cy: number; r: number };
+  })[];
   /** A ring 5px outside each disc the player has a base on. */
   baseRings: { cx: number; cy: number; r: number }[];
   /** Each with the index of the planet it belongs to, so it moves with it. */
@@ -71,10 +85,20 @@ export function orbitLayout(seedParts: [string, string], planets: OrbitPlanet[],
   const { star: R, planet: pr, firstOrbit } = SCALE[size];
   const cy = H / 2;
   const cx = options.starX ?? -R * HIDDEN * 1.2;
-  const total = Math.max(options.total ?? 0, planets.length); // a smaller game count never hides a logged planet
+  // Moons tied to a planet don't take an orbit of their own; the game's count includes them, so they come off it.
+  const isMoon = (planet: OrbitPlanet, i: number) =>
+    planet.moonOf !== undefined && planet.moonOf !== i && planets[planet.moonOf]?.moonOf === undefined;
+  const primaries = planets.filter((planet, i) => !isMoon(planet, i));
+  const tied = planets.length - primaries.length;
+  // A smaller game count never hides a logged planet.
+  const total = Math.max((options.total ?? 0) - tied, primaries.length);
   let r0 = R * firstOrbit;
-  // The rest of the orbits split the width that's left evenly, so the arcs never touch the right edge.
-  const step = total > 1 ? (W - 18 - (cx + r0)) / Math.max(total - 1, 1) : 0;
+  // How far a moon reaches past its planet's centre: its ring, then its own disc.
+  const ringGap = pr * 0.8;
+  const moonR = pr * 0.42;
+  // The rest of the orbits split the width that's left evenly, so the arcs (and any moon) never touch the right edge.
+  const room = tied ? pr + ringGap + moonR : 0;
+  const step = total > 1 ? (W - 18 - room - (cx + r0)) / Math.max(total - 1, 1) : 0;
   if (total === 1) r0 = Math.max(r0, W * 0.38 - cx); // one orbit sits a third of the way across, not crowded left
 
   // Seeded per size too, as in the design: each size is its own composition.
@@ -86,6 +110,7 @@ export function orbitLayout(seedParts: [string, string], planets: OrbitPlanet[],
     orbits: [],
     line: size === 'M' ? { x1: cx + R + 2, x2: W - 8, y: cy } : null,
     planets: [],
+    moons: [],
     baseRings: [],
     labels: []
   };
@@ -103,7 +128,7 @@ export function orbitLayout(seedParts: [string, string], planets: OrbitPlanet[],
       x = cx + r * Math.cos(angle);
       y = cy + r * Math.sin(angle);
     }
-    const planet = planets[i];
+    const planet = primaries[i];
     if (!planet) {
       layout.planets.push({ logged: false, x, y, r: pr * 0.8, index: i });
       continue;
@@ -134,6 +159,28 @@ export function orbitLayout(seedParts: [string, string], planets: OrbitPlanet[],
       });
     }
   }
+
+  // Each planet's moons sit evenly round their ring, from a seeded start; their own seed leaves the planets' angles as
+  // they were before any moon was tied.
+  const moonRng = new Rng(seedOf(seedParts[0], seedParts[1], `${size} moons`));
+  primaries.forEach((parent, slot) => {
+    const own = planets.filter((planet, i) => isMoon(planet, i) && planets[planet.moonOf ?? -1] === parent);
+    const at = layout.planets[slot];
+    if (!own.length || !at) return;
+    const ring = { cx: at.x, cy: at.y, r: at.r + ringGap };
+    const start = moonRng.range(0, Math.PI * 2);
+    own.forEach((moon, k) => {
+      const angle = start + (k * Math.PI * 2) / own.length;
+      layout.moons.push({
+        ...moon,
+        parent: slot,
+        x: ring.cx + ring.r * Math.cos(angle),
+        y: ring.cy + ring.r * Math.sin(angle),
+        r: moonR * moon.size,
+        ring
+      });
+    });
+  });
   return layout;
 }
 
@@ -149,7 +196,11 @@ export function orbitSentence(system: string, starColour: string, planets: Orbit
       ? 'no planets logged'
       : `${String(count)} ${count === 1 ? 'planet' : 'planets'}${planets.length < count ? ` (${String(planets.length)} logged)` : ''}`;
   const base = planets.find(planet => planet.base);
-  return `${system}: ${star} with ${logged}${base ? `; your base is on ${base.name}` : ''}.`;
+  const moons = planets.flatMap(planet => {
+    const parent = planet.moonOf === undefined ? undefined : planets[planet.moonOf];
+    return parent ? [`${planet.name} is a moon of ${parent.name}`] : [];
+  });
+  return `${system}: ${star} with ${logged}${moons.map(moon => `; ${moon}`).join('')}${base ? `; your base is on ${base.name}` : ''}.`;
 }
 
 /**
@@ -163,11 +214,15 @@ export function systemOrbit(
 ): { seed: [string, string]; planets: OrbitPlanet[] } {
   return {
     seed: [system.galaxy, system.glyphs || system.id],
-    planets: system.planets.map(planet => ({
-      name: planet.name,
-      family: familyOf(planet),
-      size: 1, // the log doesn't hold planet sizes
-      base: planet.tags.includes('base')
-    }))
+    planets: system.planets.map(planet => {
+      const parent = moonParent(system.planets, planet);
+      return {
+        name: planet.name,
+        family: familyOf(planet),
+        size: 1, // the log doesn't hold planet sizes
+        base: planet.tags.includes('base'),
+        ...(parent && { moonOf: system.planets.indexOf(parent) })
+      };
+    })
   };
 }

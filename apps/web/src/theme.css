@@ -635,8 +635,19 @@ body[data-section='session'] #sessionBarRoot {
     opacity: 0.7;
   }
 }
+/* A moon tied to its planet circles it once a minute. */
+.moon-orbit {
+  transform-box: view-box;
+  animation: moon-orbit 60s linear infinite;
+}
+@keyframes moon-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .orbit-drift,
+  .moon-orbit,
   .star-corona {
     animation: none !important;
   }

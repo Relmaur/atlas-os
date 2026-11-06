@@ -44,7 +44,7 @@ The package's page (`apps/mcp/README.md`) has the short version: add `npx -y nms
 | `item_value` | Base values from the wiki's infoboxes |
 | `best_crafts` | What to craft for money: value gained over the raw materials' own value, at the wiki's base values |
 | `cited_facts` | Game rules quoted from the wiki's prose (supercharged slots per class, grid sizes) |
-| `list_systems`, `get_system` | Your logged systems, planets, visits and notes; `get_system` adds each glyph's name to the portal address, and each planet carries its scan (description, weather, sentinels, flora, fauna, resources, temperature, discoverer) |
+| `list_systems`, `get_system` | Your logged systems, planets, visits and notes; `get_system` adds each glyph's name to the portal address, and each planet carries its scan (description, weather, sentinels, flora, fauna, resources, temperature, discoverer, and for a moon the name of the planet it orbits) |
 | `outlaw_status` | Which outlaw stations are ready, when the rest restock, the next run's estimate |
 | `list_gear` | Your ships, Multi-Tools and Exosuit, with the wiki's slot rules and any mismatch |
 | `search_notes`, `read_note` | Your Markdown notes |

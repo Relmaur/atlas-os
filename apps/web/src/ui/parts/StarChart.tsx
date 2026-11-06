@@ -302,6 +302,39 @@ export function OrbitDiagram({ name, seed, star, planets, grid = true, ...option
                 strokeWidth={1.5}
               />
             )}
+            {layout.moons
+              .filter(moon => moon.parent === planet.index)
+              .map((moon, k) => (
+                <g key={k}>
+                  <circle
+                    cx={moon.ring.cx}
+                    cy={moon.ring.cy}
+                    r={moon.ring.r}
+                    fill="none"
+                    stroke="var(--color-orbit-line)"
+                    strokeDasharray="1.5 3"
+                  />
+                  {/* A slow turn round its planet, whole moons at a time; stopped under reduced motion. */}
+                  <g
+                    className={moving ? 'moon-orbit' : undefined}
+                    style={
+                      moving ? { transformOrigin: `${String(moon.ring.cx)}px ${String(moon.ring.cy)}px` } : undefined
+                    }
+                  >
+                    <PlanetShape cx={moon.x} cy={moon.y} r={moon.r} family={moon.family} grain={`${id}g`} />
+                    {moon.base && (
+                      <circle
+                        cx={moon.x}
+                        cy={moon.y}
+                        r={moon.r + 3}
+                        fill="none"
+                        stroke="var(--color-scanner-cyan-glow)"
+                        strokeWidth={1.25}
+                      />
+                    )}
+                  </g>
+                </g>
+              ))}
             {labels.map(label => (
               <text
                 key={label.text}

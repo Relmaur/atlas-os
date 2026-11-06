@@ -8,7 +8,7 @@ import { setFactsForTests } from '../gear/facts-store.ts';
 import { SystemDetails } from './SystemDetails.tsx';
 import { PlanetDetails } from './PlanetDetails.tsx';
 import { PlanetSheet } from './PlanetSheet.tsx';
-import { closePlanetSheet, getPlanetSheet } from './planet-sheet-store.ts';
+import { closePlanetSheet, getPlanetSheet, openPlanetSheet } from './planet-sheet-store.ts';
 
 let param = 'sys-a';
 let section = 'system';
@@ -359,4 +359,38 @@ test('37: from lg a planet row opens the panel beside System detail, and the row
   expect(screen.getByRole('link', { name: /^Hogaw 24\/K5/ }).textContent).toContain('Editing');
   expect(location.hash).not.toContain('#planet/'); // the panel opened; the page stayed on System detail
   wide.mockRestore();
+});
+
+test('a moon can be tied to a planet of its system; its view names that planet; a planet again unties it', async () => {
+  render(<PlanetSheet />);
+  act(() => {
+    openPlanetSheet('sys-a', 'pl-l');
+  });
+  const sheet = within(document.getElementById('planetSheet') as HTMLElement);
+  const orbits = sheet.getByRole<HTMLSelectElement>('combobox', { name: 'Orbits' });
+  // The system's other planets, never a moon or the moon itself.
+  expect([...orbits.options].map(option => option.textContent)).toEqual([
+    'Not set',
+    'Hogaw 24/K5',
+    'Geor Beta',
+    'Old one'
+  ]);
+  await userEvent.selectOptions(orbits, 'Hogaw 24/K5');
+  await userEvent.click(sheet.getByRole('button', { name: 'Save planet' }));
+  expect(planet('pl-l')?.orbits).toBe('pl-h');
+  expect(planet('pl-l')?.weather).toBe('Inferno Winds'); // the rest of the moon is as it was
+
+  section = 'planet';
+  param = 'sys-a/pl-l';
+  const view = render(<PlanetDetails />);
+  expect(screen.getByRole('link', { name: 'Hogaw 24/K5' }).getAttribute('href')).toBe('#planet/sys-a/pl-h');
+  view.unmount();
+
+  act(() => {
+    openPlanetSheet('sys-a', 'pl-l');
+  });
+  await userEvent.click(sheet.getByRole('radio', { name: 'Planet' }));
+  expect(sheet.queryByRole('combobox', { name: 'Orbits' })).toBeNull();
+  await userEvent.click(sheet.getByRole('button', { name: 'Save planet' }));
+  expect(planet('pl-l')?.orbits).toBe('');
 });

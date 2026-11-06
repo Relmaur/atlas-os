@@ -5,6 +5,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { planetFamily } from '@atlas/core/facts';
 import { biomeFor, resourceSource, scanLogged } from '@atlas/core/planets';
+import { moonParent } from '@atlas/core/systems-model';
 import { useAppState } from '../useAppState.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { goBack, useSectionParam } from '../shell/section-store.ts';
@@ -12,7 +13,7 @@ import { wikiEntries } from '../shell/wiki-index.ts';
 import { Button } from '../parts/Button.tsx';
 import { PlanetMarker } from '../parts/StarChart.tsx';
 import { SentinelPill, WeatherPill, codexHref, nothingLogged, planetKind } from './PlanetScan.tsx';
-import { openPlanetSheet } from './planet-sheet-store.ts';
+import { openPlanetSheet, planetHref } from './planet-sheet-store.ts';
 
 const HEAD_BUTTON =
   'w-10 h-10 rounded-control bg-[rgba(5,8,17,0.7)] border border-hairline grid place-items-center text-ink hover:border-control-edge transition-colors duration-[var(--duration-micro)]';
@@ -72,6 +73,7 @@ export function PlanetDetails() {
   const logged = scanLogged(planet);
   const biomeName = biomeFor(wiki, planet.biome)?.name ?? planet.biome;
   const kind = planetKind(planet);
+  const parent = moonParent(system.planets, planet);
   const temperature = planet.temperature === null ? '' : `${String(planet.temperature).replace('-', '−')} °C`;
   const missing = [
     !planet.weather && 'weather',
@@ -118,7 +120,17 @@ export function PlanetDetails() {
             {planet.name}
           </h1>
           {(kind || planet.body) && (
-            <p className="text-sub text-ink-soft">{kind || (planet.body === 'moon' ? 'Moon' : 'Planet')}</p>
+            <p className="text-sub text-ink-soft">
+              {kind || (planet.body === 'moon' ? 'Moon' : 'Planet')}
+              {parent && (
+                <>
+                  {' · orbits '}
+                  <a href={planetHref(system.id, parent.id)} className="text-scanner-cyan-pale hover:underline">
+                    {parent.name}
+                  </a>
+                </>
+              )}
+            </p>
           )}
           {planet.tags.length > 0 && (
             <ul className="flex flex-wrap gap-1.5 mt-1" aria-label="Tags">
