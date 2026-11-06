@@ -63,6 +63,67 @@ The names are procedurally generated with certain terms using one of the followi
 
 The sequence is taken from the game file.
 
+### Adjective
+
+1. Eldritch
+1. Abyssal
+1. Nightmarish
+1. Haunted
+1. Lost
+1. Gloaming
+1. Eerie
+1. Chilling
+1. Frozen
+1. Unnerving
+1. Ghastly
+1. Grim
+1. Twisted
+1. Dripping
+1. Twitching
+1. Ominous
+1. Impossible
+1. Inverted
+1. Hopeless
+1. Abandoned
+1. Hypnotic
+1. Timeless
+1. Whispering
+1. Imagined
+1. Forlorn
+1. Woebegotten
+1. Screaming
+1. Crying
+1. Frozen
+1. Deathly
+1. Floppy
+1. Writhing
+1. Prismatic
+1. Dreadful
+1. Twisted
+
+### Noun
+
+1. Core
+1. Eye
+1. Heart
+1. Gem
+1. Orb
+1. Sphere
+1. Globe
+1. Tendril
+1. Jelly
+1. Tentacle
+1. Coils
+1. Gelsack
+1. Bio-Anomaly
+1. Sample
+1. Remains
+1. Organs
+1. Lavae
+1. Spores
+1. Grubs
+1. Worms
+
 ## Additional information
 
 - The game description and the name generation are extracted from the 1.77 version of **NMS_LOC4_ENGLISH.MBIN** game file, while the modifier and value ranges are extracted from the 1.77 version of **PROCEDURALPRODUCTTABLE.MBIN** game file.

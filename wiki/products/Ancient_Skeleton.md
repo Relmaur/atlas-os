@@ -67,12 +67,40 @@ The sequence is taken from the game file.
 
 The following list is valid for **Common** and **Uncommon** rarities.
 
+1. Ancient
+1. Charred
+1. Cracked
+1. Chipped
+1. Yellowed
+1. Aged
+1. Grubby
+1. Curious
+1. Crumbling
+1. Timeworn
+1. Peculiar
+1. Intriguing
+1. Worn
+1. Imperfect
+
 <br>
 The following list is valid for **Rare** rarity.
+
+1. Magnificent
+1. Intact
+1. Finely-preserved
+1. Unique
+1. Bizarre
+1. Rare
+1. Exceptional
 
 ### Noun
 
 The following list is valid for **Common** and **Uncommon** rarities.
+
+1. Bones
+1. Bone Fragments
+1. Partial Skeleton
+1. Skeletal Fragments
 
 <br>
 The following list is valid for **Rare** rarity.

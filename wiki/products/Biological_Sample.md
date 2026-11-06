@@ -81,6 +81,141 @@ The names are procedurally generated with certain terms using one of the followi
 
 The sequence is taken from the game file.
 
+### Container
+
+1. Jar
+1. Box
+1. Packet
+1. Bundle
+1. Collection
+1. Box
+1. Handful
+1. Trunk
+1. Parcel
+1. Trunk
+1. Parcel
+1. Jar
+1. Box
+1. Packet
+1. Bundle
+1. Box
+1. Carton
+1. Pouch
+1. Bundle
+1. Box
+
+### Adjective
+
+1. Humming
+1. Preserved
+1. Ancient
+1. Glowing
+1. Wriggly
+1. Poisonous
+1. Nutritious
+1. Dirty
+1. Beautiful
+1. Congealed
+1. Valuable
+1. Rare
+1. Toxic
+1. Hairy
+1. Glassy
+1. Pungent
+1. Frozen
+1. Parched
+1. Dusty
+1. Synthetic
+1. Artificial
+1. Fragile
+1. Invisible
+1. Crystalline
+1. Neurotoxic
+1. Oily
+1. Delicate
+1. Healing
+1. Hallucogenic
+1. Edible
+1. Caustic
+1. Dormant
+1. Extinct
+1. Astonishing
+1. Astounding
+1. Well-Studied
+1. Gooey
+1. Rotten
+1. Radioactive
+1. Pulsating
+1. Bloody
+1. Undiscovered
+1. Sweet-Smelling
+1. Cloneable
+1. Buzzing
+1. Oozing
+1. Writhing
+1. Hypnotic
+1. Alien
+1. Evolved
+1. Celestial
+1. Fresh
+1. Precious
+
+### Noun
+
+1. Remains
+1. Bones
+1. Sticks
+1. Seeds
+1. Seedpods
+1. Cuttings
+1. Seedlings
+1. Sproutlings
+1. Fruit
+1. Berries
+1. Sprouts
+1. Samples
+1. Worms
+1. Mould
+1. Lichens
+1. Moss
+1. Clippings
+1. Insects
+1. Flowers
+1. Petals
+1. Buds
+1. Twigs
+1. Residue
+1. Skulls
+1. Shells
+1. Herbs
+1. Blossom
+1. Pollen
+1. Organic Matter
+1. Nuts
+1. Bulbs
+1. Tubers
+1. Thistles
+1. Weeds
+1. Leaves
+1. Eggs
+1. Larvae
+1. Roots
+1. Bark
+1. Beans
+1. Kernels
+1. Fingers
+1. Bugs
+1. Beetles
+1. Grubs
+1. Nodules
+1. Soil
+1. Ooze
+1. Grain
+1. Spores
+1. Moths
+1. Hatchlings
+1. Orchids
+
 ## Additional information
 
 - The game description and the name generation are extracted from the 1.77 version of **NMS_UPDATE3_ENGLISH.MBIN** game file, while the modifier and value ranges are extracted from the 1.77 version of **PROCEDURALPRODUCTTABLE.MBIN** game file.

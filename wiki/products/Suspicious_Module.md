@@ -48,6 +48,28 @@ Bypassing nearly every galactic standard for workmanship and safety, this upgrad
 
 Suspicious modules may be found in the following types:
 
+- Blaze Javelin
+- Cyclotron
+- Geology Cannon
+- Hazard Protection
+- Hyperdrive
+- Infra-Knife
+- Launch Thruster
+- Life Support
+- Mining Beam
+- Movement
+- Neutron Cannon
+- Phase Beam
+- Photon Cannon
+- Plasma Launcher
+- Positron
+- Pulse Engine
+- Pulse Spitter
+- Scanner
+- Scatter Blaster
+- Shield
+- Starship Shield
+
 ## Additional information
 
 Suspicious Modules were initially priced at the Scrap Dealer for around **200-400** Tainted Metal. They can be sold to [[Technology Merchant|Technology Merchants]] for more than 500  Nanites which makes them a great source of nanites at all stages of the game.

@@ -87,6 +87,46 @@ The sequence is taken from the game file.
 
 **Note**: The nouns #9 and #10 are actual duplicates in the game files and not an error in the wiki. Therefore, accounting for duplicates, the total number of possible names is 266.
 
+### Adjective
+
+1. Congealed
+1. Humming
+1. Preserved
+1. Oily
+1. Pungent
+1. Hairy
+1. Gooey
+1. Bloody
+1. Writhing
+1. Pulsating
+1. Fresh
+1. Writhing
+1. Gelatinous
+1. Glutinous
+1. Tooth-studded
+1. Jellied
+1. Gummy
+1. Gluey
+1. Viscous
+
+### Noun
+
+1. Remains
+1. Mould
+1. Flesh
+1. Fluids
+1. Worm-Meat
+1. Larva
+1. Nodule
+1. Spores
+1. Lump
+1. Lump
+1. Gelsack
+1. Tentacle
+1. Stalks
+1. Tendril
+1. Matter
+
 ## Additional Information
 
 **ID**: PROC_LUMP

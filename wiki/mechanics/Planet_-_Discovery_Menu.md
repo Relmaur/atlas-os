@@ -87,20 +87,129 @@ A descriptive word indicating the relative frequency of surface flora that can b
 
 The following terms have been observed:
 
+- Absent
+- Abundant
+- Ample
+- Average
+- Barren
+- Between Worlds
+- Bountiful
+- Common
+- Copious
+- Deficient
+- Devoid
+- Diseased
+- Displaced
+- Empty
+- Fair
+- Few
+- Forfeited
+- Frequent
+- From Elsewhere
+- Full
+- Generous
+- High
+- Infected
+- Infrequent
+- Intermittent
+- Invasive
+- Lacking
+- Limited
+- Lost
+- Low
+- Medium
+- Misplaced
+- Moderate
+- None
+- Nonexistent
+- Not Present
+- Numerous
+- Numerous
+- Occasional
+- Ordinary
+- Rare
+- Regular
+- Rich
+- Scarce
+- Screaming
+- Sparse
+- Sporadic
+- Twisted
+- Typical
+- Uncommon
+- Undetected
+- Unusual
+- Uprooted
+- Viral
+
 ### Fauna
 
 A descriptive word indicating the relative frequency of fauna that can be observed in land, air, underground and underwater.
 
 The following terms have been observed:
 
+- Absent
+- Abundant
+- Ample
+- Average
+- Barren
+- Between Worlds
+- Bountiful
+- Common
+- Copious
+- Deficient
+- Devoid
+- Diseased
+- Displaced
+- Empty
+- Fair
+- Few
+- Forfeited
+- Frequent
+- From Elsewhere
+- Full
+- Generous
+- High
+- Infected
+- Infrequent
+- Intermittent
+- Invasive
+- Lacking
+- Limited
+- Lost
+- Low
+- Medium
+- Misplaced
+- Moderate
+- None
+- Nonexistent
+- Not Present
+- Numerous
+- Numerous
+- Occasional
+- Ordinary
+- Rare
+- Regular
+- Rich
+- Scarce
+- Screaming
+- Sparse
+- Sporadic
+- Twisted
+- Typical
+- Uncommon
+- Undetected
+- Unusual
+- Uprooted
+
 ## Resources
 
 Resources are [[biome]] specific.  In general, the following will have three resources:
--
--
--
--
--
+- [[Biome - Dead|Dead]]
+- [[Biome - Exotic|Exotic]]
+- [[Biome - Marsh|Marsh]]
+- [[Biome - Mega Exotic|Mega Exotic]]
+- [[Biome - Volcanic|Volcanic]]
 
 All other biomes will have four resources.
 

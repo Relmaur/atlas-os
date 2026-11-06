@@ -20,7 +20,7 @@ data: {"fields":{},"recipes":[]}
 
 ## Summary
 
-**Riverland Terrain**, refers to a occurrence of [[planet]] surfaces that have no oceans or seas but feature rivers of water the fill shallow or deep ravines. [[Moon|Moons]],  and  [[planet|planets]] will never have riverland terrain.
+**Riverland Terrain**, refers to a occurrence of [[planet]] surfaces that have no oceans or seas but feature rivers of water the fill shallow or deep ravines. [[Moon|Moons]], [[Biome - Exotic|Exotic]] and [[Biome - Dead|Dead]] [[planet|planets]] will never have riverland terrain.
 
 A planet with riverland terrain will feature very limited water.
 

@@ -32,6 +32,45 @@ The higher the conflict level in a system, the more pirate attacks ([[Bounty|Fug
 
 Although the descriptions can change, there is no known difference between systems in the same conflict level tier.
 
+### Low (Level - 1 ★)
+
+- Gentle
+- Low
+- Mild
+- Peaceful
+- Relaxed
+- Stable
+- Tranquil
+- Trivial
+- Unthreatening
+- Untroubled
+
+### Medium (Level - 2 ★★)
+
+- Belligerent
+- Boisterous
+- Fractious
+- Intermittent
+- Medium
+- Rowdy
+- Sporadic
+- Testy
+- Unruly
+- Unstable
+
+### High (Level - 3 ★★★)
+
+- Aggressive
+- Alarming
+- At War
+- Critical
+- Dangerous
+- Destructive
+- Formidable
+- High
+- Lawless
+- Perilous
+
 ### Outlaw systems (Skull)
 
 - Pirate Controlled

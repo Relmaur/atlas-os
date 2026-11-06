@@ -19,3 +19,17 @@ data: {"fields":{},"recipes":[]}
 The primary distinguishing feature of this type of [[multi-tool]] is the sharp angle of the extended muzzle. This appears to be a decorative feature, as the base extends out past the business end of the multi-tool. Several of these tools were encountered among the [[Vy'keen]] systems.
 
 These usually fall into the Rifle category.
+
+- [[77M-F83 Elevated Inspiration]]
+- [[Angle of Nacunicky-Leido]]
+- [[Clarity of Totaguri]]
+- [[Comforting Recoil III]]
+- [[Experiment RA1 KG8]] ‎
+- [[Experiment Y-F15]]
+- [[Gift of Auhetena]]
+- [[Obscured Nalierbah]]
+- [[Reflex Elutisti]]
+- [[Strange Gift IV]]
+- [[The Bawilotag v5.30]]
+- [[The Rossiisk-Yopar P100]]
+- [[Zihurikha Mark IV]]

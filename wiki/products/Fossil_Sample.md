@@ -83,6 +83,105 @@ The names are procedurally generated with certain terms using one of the followi
 
 The sequence is taken from the game file.
 
+### Adjective
+
+1. Preserved
+1. Fossilised
+1. Calcified
+1. Ossified
+1. Petrified
+1. Carbonised
+1. Dessicated
+1. Mummified
+1. Ancient
+1. Preserved
+1. Fossilised
+1. Preserved
+1. Fossilised
+1. Petrified
+1. Twisted
+1. Unusual
+1. Primeval
+1. Primordial
+1. Primitive
+1. Glassy
+
+### Animal
+
+1. Ungulate
+1. Bovine
+1. Trilobite
+1. Shrimp
+1. Ammonite
+1. Animal
+1. Gastropod
+1. Arthropod
+1. Primate
+1. Carnivore
+1. Herbivore
+1. Dinosaur
+1. Pangolin
+1. Cetacean
+1. Ruminant
+1. Canine
+1. Rodent
+1. Feline
+1. Arachnid
+1. Fish
+1. Sauropod
+1. Therapod
+1. Ceratops
+1. Ornthiod
+1. Gek
+1. Vy'keen
+1. Insect
+1. Beetle
+1. Cephalopod
+1. Mollusc
+1. Reptile
+1. Amphibian
+1. Mammal
+1. Crab
+1. Crustacean
+1. Dromedary
+1. Turtle
+1. Crocodile
+1. Snake
+1.
+
+### Part
+
+1. Bones
+1. Feet
+1. Hoof
+1. Prints
+1. Skull
+1. Tissue
+1. Cranium
+1. Antennae
+1. Spine
+1. Vertebrae
+1. Ribcage
+1. Jawbone
+1. Teeth
+1. Exoskeleton
+1. DNA
+1. Blood
+1. Egg
+1. Nest
+1. Feather
+1. Foot
+1. Claw
+1. Organs
+1. Thorax
+1. Abdomen
+1. Sac
+1. Wings
+1. Hair
+1. Horn
+1. Shell
+1. Beak
+
 ## Additional information
 
 - The game descriptions and the name generation are extracted from the 1.77 version of **NMS_UPDATE3_ENGLISH.MBIN** game file, while the modifier and value ranges are extracted from the 1.77 version of **PROCEDURALPRODUCTTABLE.MBIN** game file.

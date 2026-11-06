@@ -61,6 +61,62 @@ The names are procedurally generated with certain terms using one of the followi
 
 The sequence is taken from the game file.
 
+### Adjective
+
+1. Waterlogged
+1. Soggy
+1. Salt-encrusted
+1. Corroded
+1. Briney
+1. Eroded
+1. Perfectly Smooth
+1. Iridescent
+1. Barnacle-encrusted
+1. Softly Glowing
+1. Nacreous
+1. Ice-rimed
+1. Lustrous
+1. Sulphurous
+1. Haunted
+1. Crystalline
+1. Beautiful
+1. Outrageous
+1. Perfect
+1. Flawless
+1. Preserved
+1. Strangely Warm
+1. Curious
+1. Drowned
+1. Mineralised
+
+### Noun
+
+1. Treasure
+1. Curiosity
+1. Bullion
+1. Gemstones
+1. Glass Beads
+1. Pearls
+1. Shark's Teeth
+1. Jewels
+1. Aquamarine Gem
+1. Coral Sculpture
+1. Whalebone Carving
+1. Conch
+1. Crab Skeleton
+1. Bones
+1. Predator Skull
+1. Ocean Gem
+1. Ammonium Crystal
+1. Ultramarine Orb
+1. Cobalt Shell
+1. Crystal
+1. Cephalopod Fossil
+1. Eggs
+1. Jelly
+1. Relic
+1. Ring
+
 ## Additional information
 
 - The game description and the name generation are extracted from the 1.77 version of **NMS_LOC4_ENGLISH.MBIN** game file, while the modifier and value ranges are extracted from the 1.77 version of **PROCEDURALPRODUCTTABLE.MBIN** game file.

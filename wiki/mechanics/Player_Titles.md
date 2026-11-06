@@ -176,7 +176,7 @@ Visit a galaxy to append the galaxy name to player name (only the first 10 galax
 | Pilgrim * | Visit a special system | Visited the [[Galactic Hub Project\|Galactic Hub]] | Visit this system in Euclid: | T_HUB_VISIT |
 | Titan * | ??? | Traced a fallen Traveller | Finish the [[Base Computer Archives]] quest line | T_LORE1 |
 | Vision-Master * | Feel the spirits of the Gek | Learned from the Gek monoliths | Interact with 20 Monoliths in Gek systems | T_LORE2 |
-| *, the Boundary Walker | Discover a strange world | Discovered a strange planet | Discover an  planet | T_LORE3 |
+| *, the Boundary Walker | Discover a strange world | Discovered a strange planet | Discover an [[Biome - Exotic\|Exotic]] planet | T_LORE3 |
 | *, the Singularity | ??? | Met the Atlas | Visit an [[Atlas Interface]] and speak with the Atlas | T_LORE4 |
 | *, Atlas-Speaker | ??? | Saved by the Atlas | Go through the portal in the [[16 / 16]] story mission | T_LORE5 |
 | Oracle * | Feel the judgement of the Echoes | Learned from the Korvax monoliths | Interact with 19 monoliths in Korvax systems | T_LORE6 |

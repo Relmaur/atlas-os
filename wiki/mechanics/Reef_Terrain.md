@@ -20,7 +20,7 @@ data: {"fields":{},"recipes":[]}
 
 ## Summary
 
-**Reef Terrain**, refers to a common occurrence of [[planet]] surfaces that have no land or almost impossible to find land.  It is virtually impossible to land a [[Starship]] on these planets even after searching for land for hours.  Moons,  and  [[planet|planets]] will never be found with reef terrain.
+**Reef Terrain**, refers to a common occurrence of [[planet]] surfaces that have no land or almost impossible to find land.  It is virtually impossible to land a [[Starship]] on these planets even after searching for land for hours.  Moons, [[Biome - Exotic|Exotic]] and [[Biome - Dead|Dead]] [[planet|planets]] will never be found with reef terrain.
 
 A planet with reef terrain will not feature any land masses.
 

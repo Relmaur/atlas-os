@@ -28,7 +28,7 @@ data: {"fields":{"name":"Toxin Suppressor","image":"RENDER.PROTECTTOXIC.png","co
 
 ## Summary
 
-User with a toxin suppressor installed will have some protection from toxic damage that may be inflicted by the atmospheric environment on  [[planet|planets]] or from [[Cave]] [[Hazardous Flora]] which typically distribute toxins.
+User with a toxin suppressor installed will have some protection from toxic damage that may be inflicted by the atmospheric environment on [[Biome - Toxic|Toxic]] [[planet|planets]] or from [[Cave]] [[Hazardous Flora]] which typically distribute toxins.
 
 Reactive compounds within the Suppressor remove toxic liquids that fall on the user, thereby reducing peril and choking hazards.
 

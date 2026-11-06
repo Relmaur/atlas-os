@@ -73,6 +73,42 @@ Every terminal will have these offerings (depending on resource availability set
 
 The following goods will occasionally appear for sale in trade terminals.
 
+- [[Paraffinium]]
+- [[Phosphorus]]
+- [[Uranium]]
+- [[Pyrite]]
+- [[Dioxite]]
+- [[Ammonia]]
+- [[Copper]]
+- [[Chlorine]]
+- [[Salt]]
+- [[Tritium]]
+- [[Silver]]
+- [[Gold]]
+- [[Platinum]]
+- [[Pugneum]]
+- [[Residual Goop]]
+- [[Rusted Metal]]
+- [[Chromatic Metal]]
+- [[Sodium Nitrate]]
+- [[Ionised Cobalt]]
+- [[Pure Ferrite]]
+- [[Magnetised Ferrite]]
+- [[Starship Launch Fuel]] (very overpriced)
+- [[Di-hydrogen Jelly]]
+- [[Hermetic Seal]]
+- [[Carbon Nanotubes]]
+- [[Magnetic Resonator]]
+- [[Quantum Computer]]
+- [[Hydraulic Wiring]]
+- [[Amino Chamber]]
+- [[Aronium]]
+- [[Dirty Bronze]]
+- [[Lemmium]]
+- [[Magno-Gold]]
+- [[Navigation Data]]
+- [[Drop Pod Coordinate Data]]
+
 - Tier 2-5 marketed [[Tradeable|Tradeables]] specific to the economy of the current system
 
 ## Build

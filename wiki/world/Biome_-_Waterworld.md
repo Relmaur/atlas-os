@@ -40,6 +40,15 @@ The biome type is indicated in the information panel when the player exits their
 
 There are exceptions indicated with 1 which do not receive additional text indicating the type of the astronomical body. The sequence is taken from the game file.
 
+1. Waterworld1
+1. Drowning
+1. Oceanic
+1. Tidal
+1. Waterlocked
+1. Aquatic
+1. Endless Seas1
+1. Marine
+
 ## Weather
 
 The following sequence is taken from the game data.

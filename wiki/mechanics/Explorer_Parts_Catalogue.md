@@ -45,6 +45,27 @@ The 5 Auxiliary parts provide the customized appearance of each starship model. 
 
 There are 20 wing or extension styles to the core hull.  These are:
 
+- Ajairu
+- Arc
+- Chick
+- Curved Tie
+- Dagger
+- Dragonfly
+- Glider
+- Janus
+- Lance
+- Nucleo
+- Proteus
+- Solar fins
+- Solar Pod
+- Solar-Tie
+- T3
+- Wingless/Wing cap
+- Wraith
+- X-Wing
+- Xenia
+- Xtara
+
 ## Inventory Sizes
 
 - If a solar pod is present, the ship is T2.

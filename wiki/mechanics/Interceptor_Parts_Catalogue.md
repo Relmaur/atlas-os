@@ -24,11 +24,82 @@ This page contains a list of wing types and parts for the [[Starship Catalogue -
 
 The parts are sorted alphabetically.
 
+## Casings
+
+- I-Fin
+- I-Wing Closed
+- I-Wing Open
+- Pincer
+- U-Wing
+- X-Fin
+- X-Wing
+- X-Wing Closed
+- X-Wing Full
+- X-Wing Rear
+
+## Skirts and Wings
+
+- Booster
+- Elytra
+- Guard
+- Hilt
+- Pointed
+- Pommel
+- Shard
+- Slab
+- Vented
+- Wedge
+
+## Legs & Tails
+
+- Base Part
+- Carriage
+- Long Spine
+- Spine
+- Stinger
+- Tank
+
 ## Heads
 
 - Cylon
 - Narrow
 - Wide
+
+## Eyes
+
+- Asos
+- Delta
+- Lambda
+- Linea
+- Mu
+- Octa Spot
+- Omicron
+- Pi
+- Quadra Dot
+- Quadra Spot
+- Tau
+- Upsilon
+
+## Mouths
+
+- Ant
+- Duct
+- Grill
+- Mantis
+- Plough
+- Scorpion
+- Slope
+- Teeth
+- Widow
+
+## Accessories
+
+- Antenna
+- Downlet
+- Fin
+- Laser
+- Offset X-Wing
+- Pod Fin
 
 ## References
 

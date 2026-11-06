@@ -1,8 +1,18 @@
 // Add or edit a system (design 06). The draft lives here until Save; the stored system changes only through
 // saveSystem().
-import { useEffect, useId, useState, type SubmitEvent } from 'react';
+import { useEffect, useId, useState, type ReactNode, type SubmitEvent } from 'react';
+import { economyNames, economyType, starFromSpectral, strengthStars, strengthWords } from '@atlas/core/galaxy-map';
 import { groupGlyphs } from '@atlas/core/location';
-import { CONFLICT_LEVELS, STAR_CLASSES, newId, normalizeSystem, tagSlug, type System } from '@atlas/core/systems-model';
+import {
+  CONFLICT_LEVELS,
+  ECONOMIES,
+  STAR_CLASSES,
+  newId,
+  normalizeSystem,
+  tagSlug,
+  type System
+} from '@atlas/core/systems-model';
+import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { deleteSystem, saveSystem } from '../actions.ts';
 import { showToast } from '../../app/ui.ts';
 import { closeSystemPanel, dismissSystemPanel, openSystem, setCloseGuard, type EditorPreset } from './panel-store.ts';
@@ -14,7 +24,7 @@ import { LocationBlock, locationGlyphs, type Location } from './LocationBlock.ts
 import { FIELD, LABEL_FIELD, Segments, TagEditor, type Option } from './editor-parts.tsx';
 
 type Draft = Omit<System, 'wealth' | 'planetCount'> & { wealth: string; planetCount: string };
-type TextField = 'name' | 'region' | 'economy' | 'notes';
+type TextField = 'name' | 'region' | 'economy' | 'economyStrength' | 'notes';
 
 // The design's race segments; "Abandoned" joins them only for a system already logged as abandoned.
 const RACE_OPTIONS: Option[] = [
@@ -41,6 +51,15 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
     address: draft.glyphs ? groupGlyphs(draft.glyphs) : '',
     planet: draft.glyphs ? parseInt(draft.glyphs[0] ?? '0', 16) : 0
   }));
+  const facts = useFacts();
+  useEffect(() => {
+    void loadFacts(); // the galaxy map's words, for the spectral class and economy pickers
+  }, []);
+  const map = facts?.galaxyMap ?? null;
+  // The star colour and the wealth stars follow the spectral class and the strength word only while the player
+  // hasn't set them: a value they chose, or one already logged, is never changed for them.
+  const [starFollows, setStarFollows] = useState(!draft.star);
+  const [wealthFollows, setWealthFollows] = useState(draft.wealth === '0');
   const [tags, setTags] = useState(draft.tags);
   const [typed, setTyped] = useState('');
   const [arrived, setArrived] = useState(true);
@@ -155,11 +174,52 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
 
         <LocationBlock value={location} star={draft.star} onChange={setLocation} />
 
+        <GalaxyMapPair
+          label="Star"
+          hint={spectralHint(draft.spectralClass, starFromSpectral(map, draft.spectralClass))}
+        >
+          <label className={`${LABEL_FIELD} flex-1 min-w-0`}>
+            <span className="sr-only">Spectral class</span>
+            <input
+              name="spectralClass"
+              aria-label="Spectral class"
+              maxLength={8}
+              autoComplete="off"
+              autoCapitalize="characters"
+              placeholder="F4"
+              value={draft.spectralClass}
+              onChange={event => {
+                const spectralClass = event.target.value;
+                const star = starFromSpectral(map, spectralClass);
+                set({ spectralClass, ...(starFollows ? { star: star ?? '' } : {}) });
+              }}
+              className={`${FIELD} font-mono uppercase`}
+            />
+          </label>
+          <Slashes />
+          <div className="flex gap-1.5 shrink-0">
+            <Toggle
+              label="Water"
+              on={draft.water}
+              onChange={water => {
+                set({ water });
+              }}
+            />
+            <Toggle
+              label="Dissonant"
+              on={draft.dissonant}
+              onChange={dissonant => {
+                set({ dissonant });
+              }}
+            />
+          </div>
+        </GalaxyMapPair>
         <Segments
           label="Star colour"
           rows={2}
           value={draft.star}
           onChange={star => {
+            setStarFollows(false);
             set({ star: star as Draft['star'] });
           }}
           options={[
@@ -180,22 +240,52 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
           }}
           options={draft.race === 'abandoned' ? [...RACE_OPTIONS, ['abandoned', 'Abandoned']] : RACE_OPTIONS}
         />
-        <label className={LABEL_FIELD}>
-          Economy
+        <GalaxyMapPair
+          label="Economy"
+          hint={economyHint(economyType(map, draft.economy), strengthStars(map, draft.economyStrength))}
+        >
           <input
+            aria-label="Economy"
             list="economyOptions"
             maxLength={40}
-            placeholder="e.g. High Tech"
-            className={FIELD}
+            autoComplete="off"
+            placeholder="Prospecting"
+            className={`${FIELD} flex-1 min-w-0`}
             {...text('economy')}
           />
-        </label>
+          <Slashes />
+          <input
+            aria-label="Economy strength"
+            list="strengthOptions"
+            maxLength={40}
+            autoComplete="off"
+            placeholder="Opulent"
+            className={`${FIELD} flex-1 min-w-0`}
+            {...text('economyStrength')}
+            onChange={event => {
+              const economyStrength = event.target.value;
+              const stars = strengthStars(map, economyStrength);
+              set({ economyStrength, ...(wealthFollows ? { wealth: String(stars ?? 0) } : {}) });
+            }}
+          />
+          <datalist id="economyOptions">
+            {(map ? economyNames(map) : ECONOMIES).map(value => (
+              <option key={value} value={value} />
+            ))}
+          </datalist>
+          <datalist id="strengthOptions">
+            {strengthWords(map).map(value => (
+              <option key={value} value={value} />
+            ))}
+          </datalist>
+        </GalaxyMapPair>
         <div className="grid grid-cols-2 gap-2.5">
           <Segments
             label="Wealth"
             clearable
             value={draft.wealth === '0' ? '' : draft.wealth}
             onChange={wealth => {
+              setWealthFollows(false);
               set({ wealth: wealth || '0' });
             }}
             options={[
@@ -316,3 +406,54 @@ function Rating({ value, onChange }: { value: number; onChange: (value: number) 
     </div>
   );
 }
+
+// Two words the galaxy map shows as "first // second" ("F4 // Water", "Prospecting // Opulent"), side by side.
+function GalaxyMapPair({ label, hint, children }: { label: string; hint: string; children: ReactNode }) {
+  const hintId = useId();
+  return (
+    <div role="group" aria-label={label} aria-describedby={hint ? hintId : undefined} className={LABEL_FIELD}>
+      <span aria-hidden="true">{label}</span>
+      <div className="flex items-center gap-2">{children}</div>
+      {hint && (
+        <span id={hintId} className="text-caption text-ink-muted">
+          {hint}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// The map's separator, for the eye only: the fields are named on their own.
+const Slashes = () => (
+  <span aria-hidden="true" className="font-mono text-sm text-ink-muted shrink-0">
+    //
+  </span>
+);
+
+function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={() => {
+        onChange(!on);
+      }}
+      className={`h-11 px-3 rounded-control border text-[13px] font-semibold transition-colors ${
+        on
+          ? 'bg-[rgba(16,185,129,0.18)] text-[#d1fae5] border-[rgba(52,211,153,0.45)]'
+          : 'bg-slate-ground border-control-edge text-ink-soft hover:text-ink-bright'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+const spectralHint = (code: string, star: keyof typeof STAR_CLASSES | null) =>
+  star
+    ? `Class ${code.trim().charAt(0).toUpperCase()}: a ${STAR_CLASSES[star].label.toLowerCase()} star, by the wiki’s table.`
+    : '';
+
+const economyHint = (type: string | null, stars: 1 | 2 | 3 | null) =>
+  [type && `A ${type} economy`, stars && `${'★'.repeat(stars)} strength`].filter(Boolean).join(', ') +
+  (type || stars ? '.' : '');

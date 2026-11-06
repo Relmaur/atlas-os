@@ -39,7 +39,7 @@ Process in a Nutrient Processor to generate edible products.
 
 This ingredient is an [[Animal Byproduct]] that can be sourced by gathering from blob-type creatures ([[Lok]]) when fed [[Creature Pellets]].
 
-Some plants on  planets have it as a second component.
+Some plants on [[Biome - Barren|Barren]] planets have it as a second component.
 
 ## Additional information
 

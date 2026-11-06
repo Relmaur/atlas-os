@@ -34,6 +34,17 @@ The biome type is indicated in the information panel when the player exits their
 
 The sequence is taken from the game file.
 
+1. Frozen
+1. Icebound
+1. Arctic
+1. Glacial
+1. Sub-zero
+1. Icy
+1. Frostbound
+1. Freezing
+1. Hiemal
+1. Hyperborean
+
 ## Conditions
 
 - [[Hazard protection]] is always on due to frigid temperatures. [[Thermic Layer]] upgrades are recommended, especially on extreme worlds.

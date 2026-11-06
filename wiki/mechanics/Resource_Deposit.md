@@ -54,19 +54,19 @@ The game will select one of these resources apparently at random:
 
 ### Biome
 
-- [[Dioxite]] ()
-- [[Paraffinium]] ()
-- [[Phosphorus]] ()
-- [[Pyrite]] ()
-- [[Uranium]] ()
-- [[Ammonia]] ()
-- [[Rusted Metal]] () [Possible, but not always present]
-- [[Gold]] () [Possible, but not always present]
-- [[Basalt]] ()
-- [[Mordite]] () [Possible, but not always present]
+- [[Dioxite]] ([[Biome - Frozen|Frozen]])
+- [[Paraffinium]] ([[Biome - Lush|Lush]])
+- [[Phosphorus]] ([[Biome - Scorched|Scorched]])
+- [[Pyrite]] ([[Biome - Barren|Barren]])
+- [[Uranium]] ([[Biome - Irradiated|Irradiated]])
+- [[Ammonia]] ([[Biome - Toxic|Toxic]])
+- [[Rusted Metal]] ([[Biome - Dead|Dead]]) [Possible, but not always present]
+- [[Gold]] ([[Biome - Dead|Dead]]) [Possible, but not always present]
+- [[Basalt]] ([[Biome - Volcanic|Volcanic]])
+- [[Mordite]] ([[Biome - Marsh|Marsh]]) [Possible, but not always present]
 - [[Faecium]] (Marsh) [Possible, but not always present]
 - [[Lithium]] ([[Biome Subtype - Underwater|Underwater]])
-- [[Crystallised Helium]] ()
+- [[Crystallised Helium]] ([[Biome - Gas Giant|Gas Giant]])
 
 ### Star
 

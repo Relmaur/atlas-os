@@ -111,6 +111,12 @@ test('inline markup renders to Markdown and plain text', () => {
   assert.equal(plainText('[[Sodium Nitrate|Sodium]]<br>{{link|Gold}} &amp; more'), 'Sodium, Gold & more');
 });
 
+test('column lists keep their items, and a biome reads as a link to its page', () => {
+  const md = renderWikitext('Prefixes:\n{{cols|2|\n# Frozen\n# Frostbound\n}}\n\nOn {{Biome|Dead}} worlds.', { title: 'X' });
+  assert.match(md, /1\. Frozen\n.*Frostbound/);
+  assert.match(md, /On \[\[Biome - Dead\|Dead\]\] worlds\./);
+});
+
 test('frontmatter round-trips strings, numbers, booleans and data objects', () => {
   const meta = { title: 'A "quoted" title', revId: 5, obsolete: false, data: { recipes: [{ type: 'craft' }] } };
   assert.deepEqual(parseFrontmatter(toFrontmatter(meta) + 'body').meta, meta);

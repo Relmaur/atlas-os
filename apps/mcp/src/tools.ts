@@ -348,7 +348,8 @@ export function createServer({ loadWiki, loadLog, logSetupError, now = Date.now 
     {
       title: 'One of my systems',
       description:
-        'Everything the player logged about one system: planets, visits (with packets), tags and notes, and its ' +
+        'Everything the player logged about one system: planets (with what their scan showed: description, biome, ' +
+        'weather, sentinels, flora, fauna, resources, temperature in °C, discoverer), visits (with packets), tags and notes, and its ' +
         'portal address with each glyph’s name from the wiki, in dialling order.',
       inputSchema: { name: z.string().min(1).max(120) },
       annotations: READ_ONLY

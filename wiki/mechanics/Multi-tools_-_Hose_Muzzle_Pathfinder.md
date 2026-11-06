@@ -19,3 +19,15 @@ data: {"fields":{},"recipes":[]}
 One of the distinguishing features of this model of [[multi-tool]] is the hose-like extension of the muzzle, giving the tool the appearance of a Pinocchio-like nose. Most of these tools also carry the [[Multi-tools - Circle Blaze|circular blaze]] pattern.
 
 These usually fall in the Rifle category.
+
+- [[4-4 Unusual Return]]
+- [[A-4 Final Return]]
+- [[Fading Rucadrumm]]
+- [[Pilyusha Mark VI]]
+- [[Prayer of Kaladeela Dedar]]
+- [[Singular Angle XVII]]
+- [[Sukaiwak Exceptional]]
+- [[The Isrankan v6.11]]
+- [[Theory of Yoncoraba Aodi]]
+- [[V/13Q Vivid Theory]]
+- [[Vivid Lusonhistr]]

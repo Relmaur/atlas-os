@@ -106,7 +106,7 @@ export function GearEditor({ existing, preset }: { existing: GearItem | undefine
         role="dialog"
         aria-modal="true"
         aria-labelledby="gearEditorTitle"
-        className="fixed z-[61] flex flex-col bg-slate-deep border-control-edge inset-x-0 bottom-0 h-[92dvh] rounded-t-sheet border-t lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:h-full lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l"
+        className="kb-sheet fixed z-[61] flex flex-col bg-slate-deep border-control-edge inset-x-0 bottom-0 h-[92dvh] rounded-t-sheet border-t lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:h-full lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l"
       >
         <PanelGrab onClose={dismiss} label={`Close ${kindLabel.toLowerCase()} editor`} />
         <form id="gearEditor" onSubmit={submit} className="flex flex-col flex-1 min-h-0">

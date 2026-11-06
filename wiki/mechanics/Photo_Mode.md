@@ -40,6 +40,32 @@ A screenshot can include a [[Portal address]] that helps you identify the planet
   - 0%-100%
 - Screen Filter
 
+- Default Filter
+- Vintage
+- Collapse
+- Emral
+- Chrono
+- Vapour
+- Soft Pulse
+- Synth
+- Revisti
+- Mosaic
+- Frost
+- Aliora
+- Hyper
+- Xeno
+- Deepend
+- Simulation
+- Pikisi
+- Unsleep
+- Haze
+- Phono
+- Scream
+- Oil Rain
+- Inverse
+- Lattice
+- Shimmer
+
 ### Lens
 
 - Field of View

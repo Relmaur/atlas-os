@@ -19,6 +19,7 @@ import { startPush } from './push.ts';
 import { takeNoteAbout } from '../ui/notes/note-nav.ts';
 import { takeRefineTimer } from '../ui/session/sheet-store.ts';
 import { endBoot } from '../ui/parts/boot.ts';
+import { startKeyboardWatch } from '../ui/parts/keyboard.ts';
 
 // First of all: a #pair=<code> link (from the QR code) leaves the address before anything else runs, so nothing that
 // starts below (the service worker, a fetch, an error report) ever sees the code. More then asks before pairing.
@@ -26,6 +27,7 @@ takePairingLink();
 window.addEventListener('hashchange', takePairingLink); // registered before the sections' own listener
 registerServiceWorker();
 startDevice();
+startKeyboardWatch(); // keeps sheets and their focused field above the iOS keyboard
 onStorageStatus(reportStorage);
 onSection('calculators', () => void loadGameData());
 onSection('plan', () => void loadGameData());

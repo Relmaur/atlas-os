@@ -18,9 +18,9 @@ data: {"fields":{},"recipes":[]}
 
 **Infested** is a [[biome]] sub-type that can overlay the normal planetary biome types, creating flora not seen on other planets of the same variants.
 
-These rare modified biomes are characterized by their twisted, infected flora. They come in six different planetary palettes with each seemingly having its own main flora type for each planetary variant. [[Whispering Egg|Whispering Eggs]] dot the landscape and [[Biological Horror|Biological Horrors]] appear with them when broken, similar to  worlds.
+These rare modified biomes are characterized by their twisted, infected flora. They come in six different planetary palettes with each seemingly having its own main flora type for each planetary variant. [[Whispering Egg|Whispering Eggs]] dot the landscape and [[Biological Horror|Biological Horrors]] appear with them when broken, similar to [[Biome - Dead|Dead]] worlds.
 
-Infested Biomes also display chromatic aberration filters as well as glitch music, similar to  and  worlds.
+Infested Biomes also display chromatic aberration filters as well as glitch music, similar to [[Biome - Mega Exotic|Mega Exotic]] and [[Biome - Exotic|Exotic]] worlds.
 
 From space, they look like any other planet and can be found in any star system.
 
@@ -37,7 +37,7 @@ The biome type is indicated in the information panel when the player exits their
 
 ## Weather
 
-The weather can be clear, normal, or extreme and shares the exact biome weather as , , , ,  and . Weather here is posted in exact sequence.
+The weather can be clear, normal, or extreme and shares the exact biome weather as [[Biome - Lush|Lush]], [[Biome - Toxic|Toxic]], [[Biome - Scorched|Scorched]], [[Biome - Irradiated|Irradiated]], [[Biome - Frozen|Frozen]] and [[Biome - Barren|Barren]]. Weather here is posted in exact sequence.
 
 #### Clear
 
@@ -94,7 +94,7 @@ The flora as stated above is unique to this type of biome and does not generate 
 
 #### Floral Abundance Name Generation
 
-Like other planets, Floral and Fauna Abundance is indicated upon exiting the ship. However, like  worlds, the abundance name for Floral Abundance differs, but only sometimes.
+Like other planets, Floral and Fauna Abundance is indicated upon exiting the ship. However, like [[Biome - Exotic|Exotic]] worlds, the abundance name for Floral Abundance differs, but only sometimes.
 - Infected
 - Diseased
 - Twisted

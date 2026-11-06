@@ -1438,3 +1438,12 @@ label.list-row:active {
     grid-template-columns: repeat(2, minmax(0, 1fr)); /* three to a row would cut their names in this narrow pane */
   }
 }
+
+/* Bottom sheets with fields stay above the on-screen keyboard (ui/parts/keyboard.ts sets the variables; 0 and the
+   full height when no keyboard is up). From lg they're side panels the full height of the screen. */
+@media (max-width: 1023.98px) {
+  .kb-sheet {
+    bottom: var(--kb-inset, 0px);
+    max-height: min(92dvh, calc(var(--kb-height, 100dvh) - env(safe-area-inset-top)));
+  }
+}

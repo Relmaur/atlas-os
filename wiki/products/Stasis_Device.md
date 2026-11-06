@@ -50,6 +50,21 @@ The following ingredients are needed to create the three main parts of a Stasis 
 
 Full list:
 
+- 300 Frost Crystal
+- 200 Solanium
+- 100 Cactus Flesh
+- 200 Star Bulb
+- 300 Condensed Carbon
+- 500 Nitrogen
+- 500 Radon
+- 500 Sulphurine
+- 400 Gamma Root
+- 50 Faecium
+- 50 Paraffinium
+- 150 Ionised Cobalt
+- 50 Phosphorus
+- 50 Dioxite
+
 ## Additional information
 
 It is tied with the [[Fusion Ignitor]] for most valuable singular item in the game.

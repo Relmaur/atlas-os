@@ -28,6 +28,17 @@ The biome type is indicated in the information panel when the player exits their
 
 The sequence is taken from the game file.
 
+1. Toxic
+1. Poisonous
+1. Noxious
+1. Corrosive
+1. Acidic
+1. Caustic
+1. Acrid
+1. Blighted
+1. Miasmatic
+1. Rotting
+
 ## Conditions
 
 - [[Hazard protection]] is always on due to high amounts of toxic substances. [[Toxin Suppressor Sigma|Toxin Suppressor]] upgrades are recommended, especially on extreme worlds.

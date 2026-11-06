@@ -67,7 +67,7 @@ Lush worlds do not passively drain hazard protection outside of storms, unlike m
 
 #### Exotified Planet Weather
 
-Some lush planets have different weather descriptors. These planets never have storms, apart from ones with extreme weather, shown by the presence of activated stellar metals. The storms on those planets do not drain hazard protection. Planets with these weather descriptors show signs of exotification, either through bubbles on the surface, or by having minerals or flora that's typical for  planets on their surface. These weather types are also found on  planets.
+Some lush planets have different weather descriptors. These planets never have storms, apart from ones with extreme weather, shown by the presence of activated stellar metals. The storms on those planets do not drain hazard protection. Planets with these weather descriptors show signs of exotification, either through bubbles on the surface, or by having minerals or flora that's typical for [[Biome - Exotic|Exotic]] planets on their surface. These weather types are also found on [[Biome - Mega Exotic|Mega Exotic]] planets.
 
 ### Scorched
 

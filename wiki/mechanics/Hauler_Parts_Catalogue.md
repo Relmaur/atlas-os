@@ -30,9 +30,31 @@ In total, there are 14 wing shapes, six cockpits, and three tails. Depending on 
 
 This provides the general appearance of the starship, known as the silhouette. There are 14 general types:
 
+- V-Wing
+- Aftershock
+- Shield
+- Tie Shield
+- Split Shield
+- E-Wing
+- W-Wing
+- D-flect
+- C-Wing
+- Fan Wing
+- Ball
+- Shielded Ball
+- Box
+- Double Wide
+
 ### Wing Attachments
 
 The wings can be mounted on these six attachments:
+
+- High Wing
+- Serenity
+- 2rpedo
+- Sabre
+- V-Blade
+- Tilt
 
 ## Cockpits
 

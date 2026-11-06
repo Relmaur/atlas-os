@@ -61,7 +61,17 @@ export const MECHANICS = [
   'Exocraft',
   'Freighter',
   'Starship Outfitting Terminal',
-  'Biome' // the biome families the planet marker colours (facts.ts)
+  'Biome', // the biome families the planet marker colours (facts.ts)
+  // What the galaxy map says about a system ("F4 // Water", "Prospecting // Opulent"), for the system editor's pickers.
+  'Spectral class',
+  'Economy',
+  'Trading Economy',
+  'Scientific Economy',
+  'Advanced Materials Economy',
+  'Mining Economy',
+  'Power Generation Economy',
+  'Technology Economy',
+  'Manufacturing Economy'
 ];
 export const FOLDERS = [
   'resources',
@@ -369,7 +379,12 @@ export const INLINE: Record<string, (template: Template, ctx: Context) => string
   ilink: t => `[[${String(t.positional[0])}]]`,
   class: t => `${String(t.positional[0])}-class`,
   pagename: (t, ctx) => ctx.title,
-  '!': () => '|'
+  '!': () => '|',
+  // {{Biome|Frozen}} is a link to "Biome - Frozen" that reads "Frozen".
+  biome: t => `[[Biome - ${String(t.positional[0])}|${String(t.positional[0])}]]`,
+  // {{cols|2|list}} only lays its list out in columns; the list is the content (the biome pages' name prefixes, the
+  // discovery menu's flora and fauna words), so it stays, on lines of its own.
+  cols: t => `\n${t.positional[1] ?? ''}\n`
 };
 
 // Recipe templates. Ingredient lists look like "Name,qty;Name,qty"; refiner and cooking

@@ -28,9 +28,40 @@ In total, there are nine body shapes, 18 auxiliary parts, and three engines. Dep
 
 This provides the general appearance of the starship, known as the silhouette. There are nine general types (in order of size):
 
+- Rasa
+- Jet
+- Snowspeeder
+- Stubby
+- Barrel
+- Alpha
+- Viper
+- Needle
+- Long
+<br>
+
 ## Auxiliary Parts
 
 The 19 Auxiliary parts provide the customized appearance of each starship model. They can be combined in many ways, and most starships will feature multiple items from this list.
+
+- Aftershock
+- Bowie-V
+- Bowie-H
+- Dorsal Fin
+- Droid
+- E-Wing
+- Halo
+- Horizon
+- Mecha 3/5/7
+- Quasar
+- Shockwave
+- Starjumper
+- Starscream
+- Tie
+- Vector
+- Vulture
+- Heavy
+- Serenity
+- Firefly
 
 ## Engines
 

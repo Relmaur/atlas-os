@@ -33,7 +33,7 @@ The Buried Technology Module will reward the player with 2-4 pieces of [[Salvage
 - Sometimes Buried Technology Modules are located below the lowest diggable ground. If this happens there's no possibility to acquire them.
 - Buried Technology Modules may also spawn above the surface in mid-air.
 - Some Buried Technology Modules do not actually need to be dug out of the ground. They are close enough to the surface that they can be acquired simply by standing over them and interacting with them.
-- Buried Technology Modules do not generate on  planets or in [[Uncharted System|Uncharted Systems]].
+- Buried Technology Modules do not generate on [[Biome - Dead|Dead]] planets or in [[Uncharted System|Uncharted Systems]].
 - Buried Technology and [[Damaged Machinery]] usually generate near each other.
 
 ## Release history

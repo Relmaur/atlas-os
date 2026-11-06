@@ -33,6 +33,18 @@ The **Agricultural Terminal** is a [[base building]] [[product]] used for [[Hydr
 
 Seeds/DNA/[[blueprint|blueprints]] for the following items can be acquired at an Agricultural Terminal, based on specific quests from the **Farmer**. The crop produced by each plant follows in parenthesis.
 
+- [[Albumen Pearl Orb]] - ([[Albumen Pearl]])
+- [[Venom Urchin]] - ([[Sac Venom]])
+- [[Mordite Root]] - ([[Mordite]])
+- [[Gutrot Flower]] - ([[Faecium]])
+- [[Echinocactus]] - ([[Cactus Flesh]])
+- [[Gamma Weed]] - ([[Gamma Root]])
+- [[Fungal Cluster]] - ([[Fungal Mould]])
+- [[Gravitino Host]] - ([[Gravitino Ball]])
+- [[NipNip]] - ([[GekNip]])
+- [[Frostwort]] - ([[Frost Crystal]])
+- [[Solar Vine]] - ([[Solanium]])
+
 ## Game description
 
 A research station tailored to the needs of Farmers, and equipped for the analysis and cultivation of farmable crops.

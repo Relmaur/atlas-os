@@ -46,6 +46,142 @@ The bolded texts above are defined in the game file, the sequence is taken from 
 
 Metal Content is data from scanned minerals, and is in a range of percent from zero to hundred.
 
+### Mineral Formation
+
+1. Soil Compaction
+1. Water Transport
+1. Atmospheric Metal
+1. Plant Deposits
+1. Living Stone
+1. Evaporation
+1. Wind Erosion
+1. Gravitational
+1. Volcanic
+1. High-Pressure
+1. Gas Humidity
+1. Sublimation
+1. Calcified Fauna
+1. Salt Bonding
+1. Low Energy Reaction
+1. Magnetic Attraction
+1. Reductive Boiling
+1. Salt Baked
+1. Soil Amalgamation
+1. Ancient Tidal Erosion
+1. Metamorphic
+1. Polymerisation
+1. Coalescence
+1. Slow Drips
+1. Photonic
+1. Ground up Shells
+1. Old Bones
+1. Tectonic
+1. Spontaneous
+1. Calcium Secretion
+1. Hydrothermal
+1. Vented Minerals
+1. Explosive Magma
+1. Pyroclastic
+1. Jet Pressure
+1. Gas Bubbles
+1. Diagenesis
+1. Metal Vapour
+1. Ammonia Groundwater
+1. Lithification
+1. Cementation
+1. Bedrock Expulsion
+1. Petrifaction
+1. Fossilisation
+1. Sedimentation
+1. Celestial
+1. Meteorite Impact
+1. Localised Black Hole
+1. Comet Fragment
+1. Animal Deposits
+
+### Mineral Notes
+
+1. Extreme Salt Content
+1. High Surface Temperature
+1. Audiophobic
+1. Hydrophobic
+1. Liquid Centre
+1. Slow Moving
+1. High Viscosity
+1. Molten Core
+1. Frozen in Time
+1. Fragile Crust
+1. Molten Core
+1. Toxic Dust
+1. Ancient
+1. Slow-Forming
+1. Unnaturally Sculpted
+1. Radioactive
+1. Shatter Resistant
+1. Porous
+1. Unusually Soft
+1. Strong Odour
+1. Sulphurous
+1. Faintly Luminous
+1. Hard Wearing
+1. High Density
+1. Buoyant
+1. Silicate
+1. Extrusive
+1. Abrasive
+1. Pyroclastic
+1. Feldspar
+1. Quasi-Ferrous
+1. Igneous
+1. Exfoliating
+1. High Phosphate
+1. Low Specific Gravity
+1. Superconductive
+1. Quantum Instability
+1. Vacuum Core
+1. Musical When Struck
+1. Inedible
+1. Soft
+1. Unexpectedly Buoyant
+1. Elastic
+1. Biologically Active
+1. Parasite Host
+1. Polyp Colony
+1. Partially Invisible
+1. Quartz Core
+1. Complex Crystals
+1. Electromagnetic
+1. Gravitational Bonds
+1. Potentially Synthetic
+1. Infested
+1. Mimic
+1. Inert
+1. Eroded
+1. Durable
+1. Geode Rich
+1. Conductive
+1. Recently Formed
+1. Industrially Valuable
+1. Bonelike
+1. Water Resistant
+1. Oily Coating
+1. Artificial
+1. Misleading Structure
+1. Potentially Explosive
+1. Multi-Layered
+1. Contains Water
+1. Contains Dark Matter
+1. Contains Organic Matter
+1. Faint Life Signs
+1. Moss Habitat
+1. Frozen Centre
+1. Melts Easily
+1. Powerful Heat Source
+1. Mollusc Habitat
+1. Nutrient Rich
+1. Yeast Colony
+1. Proto Cellular Structure
+
 ### Primary Element
 
 This is the main element that the mineral will give the player when mined. This element is usually Ferrite Dust or Cobalt for underground minerals.

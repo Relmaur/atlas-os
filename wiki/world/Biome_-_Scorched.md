@@ -30,6 +30,17 @@ The biome type is indicated in the information panel when the player exits their
 
 The sequence is taken from the game file.
 
+1. Charred
+1. Arid
+1. Scorched
+1. Hot
+1. Fiery
+1. Boiling
+1. High Temperature
+1. Torrid
+1. Incandescent
+1. Scalding
+
 ## Conditions
 
 - [[Hazard protection]] is always on due to high temperatures. [[Thermal Protection Upgrade (Heat)|Thermal Protection]] upgrades are recommended, especially on extreme worlds.

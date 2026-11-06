@@ -28,6 +28,19 @@ data: {"fields":{"image":"TECH.POWERGLOVE.png","color":"blue","category":"Exosui
 
 **Haz-Mat Gauntlet** [[technology]] allows a player to handle or harvest hazardous plants and other materials..
 
+- [[Albumen Pearl Orb]] - yields [[Albumen Pearl]]
+- [[Hazardous Flora|Cave Plant]] - yields [[Oxygen]] or [[Sodium]]
+- [[Gutrot Flower]] - yields [[Faecium]]
+- [[Frostwort]] - yields [[Frost Crystal]]
+- [[Fungal Cluster]] - yields [[Fungal Mould]]
+- [[Gamma Weed]] - yields [[Gamma Root]]
+- [[Gravitino Host]] - yields [[Gravitino Ball]]
+- [[Mordite Root]] - yields [[Mordite]]
+- [[NipNip]] - yields [[NipNip Buds]]
+- [[Solar Vine]] - yields [[Solanium]]
+- [[Star Bramble]] - yields [[Star Bulb]]
+- [[Venom Urchin]] - yields [[Sac Venom]]
+
 ## Game Description
 
 Upgrades the metallic shielding of the [[Exosuit]]'s gloves.

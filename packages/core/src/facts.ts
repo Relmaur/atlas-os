@@ -4,6 +4,8 @@
 // file, so nothing here ever applies a rule the mirror can no longer show.
 import { z } from 'zod';
 import { GlyphTableSchema } from './glyphs.ts';
+import { PlanetFactsSchema, biomeFor } from './planets.ts';
+import { GalaxyMapFactsSchema } from './galaxy-map.ts';
 
 export const ClassCountsSchema = z.object({ C: z.int(), B: z.int(), A: z.int(), S: z.int() });
 // Technology inventory maximums, in slots, by class; `any` when the wiki gives one number for every class.
@@ -33,6 +35,8 @@ export const FACT_VALUES = {
   'biome-toxic': BiomeFamilySchema,
   'biome-irradiated': BiomeFamilySchema,
   'biome-exotic': BiomeFamilySchema,
+  'biome-mega-exotic': BiomeFamilySchema,
+  'biome-gas-giant': BiomeFamilySchema,
   // Light years per region (one step of a portal address's X, Y or Z): distances from a galaxy's centre.
   'region-light-years': z.int().positive()
 } as const;
@@ -64,7 +68,9 @@ export const FactsFileSchema = z.object({
   schema: z.literal(1),
   facts: z.record(z.string(), CitedFactSchema),
   game: GameVersionSchema.optional(), // added in the redesign; an older file has none
-  glyphs: GlyphTableSchema.optional() // the portal glyphs' names; an older file has none
+  glyphs: GlyphTableSchema.optional(), // the portal glyphs' names; an older file has none
+  planets: PlanetFactsSchema.optional(), // biomes, weather, sentinel and life words for the planet editor
+  galaxyMap: GalaxyMapFactsSchema.optional() // spectral classes and economy words for the system editor
 });
 export type FactsFile = z.infer<typeof FactsFileSchema>;
 
@@ -87,12 +93,15 @@ const BIOME_FACTS = [
   'biome-frozen',
   'biome-toxic',
   'biome-irradiated',
-  'biome-exotic'
+  'biome-exotic',
+  'biome-mega-exotic',
+  'biome-gas-giant'
 ] as const;
 
 /** A biome's colour family ("Scorched" → "hot"), from the cited facts; null when the wiki gives it none. */
 export function biomeFamily(file: FactsFile | null, biome: string): BiomeFamily | null {
-  const wanted = biome.trim().toLowerCase();
+  // A prefix only one biome uses reads as that biome ("Frostbound" → Frozen); the stored text stays as typed.
+  const wanted = (biomeFor(file?.planets ?? null, biome)?.name ?? biome).trim().toLowerCase();
   if (!wanted) return null;
   for (const id of BIOME_FACTS) {
     const value = getFact(file, id)?.value;

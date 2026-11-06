@@ -43,7 +43,7 @@ Nutrient source: unknown.
 Living Slime can be acquired in several ways:
 - Purchased and sold at [[Galactic Trade Terminal|Galactic Trade Terminals]] and NPCs for a profit.
 - Found in alien-infested [[Derelict Freighter|Derelict Freighters]].
-- Sometimes dropped when killing fauna on  planets.
+- Sometimes dropped when killing fauna on [[Biome - Exotic|Exotic]] planets.
 - [[Damaged Machinery]]
 
 - **Refiner** · *Recycle Waste Materials* · 0.6 s per unit: 1 × [[Viscous Fluids]] → 1 × Living Slime

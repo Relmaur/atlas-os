@@ -2,11 +2,18 @@
 
 Read this before starting work; update it before ending any non-trivial task. Keep it current, not historical: completed work moves to `CHANGELOG.md`.
 
-_Last updated: 2026-11-04_
+_Last updated: 2026-11-05_
 
 CI runs typecheck + lint + unit tests only (owner's decision: browser tests run locally via `pnpm check` before pushing).
 
 ## In progress
+**Richer planets and systems (3.26.0, 2026-11-05).** The owner, logging real discoveries, asked for what a scan shows. Done:
+- Mirror: the converter keeps `{{cols}}` lists and `{{Biome|X}}` links (89 pages fuller), and a sync never rolls a page back (newer revisions and pages written after the dump stay; `verification.json` → `newerThanDump`). Re-synced from the 29 Oct dump. Added the Spectral class, Economy and seven `… Economy` pages to `MECHANICS`.
+- `facts.json` gains `planets` (biome prefixes, weather by severity, linked resources, sentinel and life words) and `galaxyMap` (class letter → colour, economy names and strength words); `@atlas/core/planets`, `@atlas/core/galaxy-map`. Cited facts colour Mega Exotic (exotic) and Gas Giant (hot).
+- Planet: description, planet/moon, weather, sentinels, flora, fauna, resources level, resource list, temperature °C, discovered by/on. System: spectral class, Water, Dissonant, economy strength. All additive; `biome` and `economy` keep the player's text. The new AGENTS.md invariant (never destroy a player's log) is tested.
+- iOS keyboard: `ui/parts/keyboard.ts` + `.kb-sheet` keep sheets and their focused field above the keyboard. Needs a check on a real iPhone.
+- Deviations / left open: the planet sheet and the editor's "// pairs" are built from existing parts, not a design (a design round prompt was given to the owner). The scan's "Resources" level and the scan's special finds (Ancient Bones, Storm Crystal) have no wiki list, so they're typed. The hand-typed `BIOMES` and `ECONOMIES` lists remain only as the fallback before facts load. `nms-atlas-mcp` needs a publish for MCP users to see the new fields' description.
+
 **Glyph names beside portal addresses (3.25.0, 2026-11-04).** A player asked for the portal icons; the icons are the game's art, so each digit gets its glyph's name instead. The indexer reads the names from the 16 `Glyph n / 16` pages into `wiki/facts.json` as `glyphs` (`@atlas/core/glyphs`), and fails if any page is missing or stops naming its glyph. `GlyphPlate` shows them on System detail and in the editor's Location block; `get_system` returns them too (no new MCP release for this alone). Deviations: the editor's credit is plain text, since a link would leave an unsaved form; names longer than eight letters ("Dragonfly") are a size smaller so they never break mid-word; hovering a tile shows the wiki's second name ("Sunset, also called Star Over Water"); the plate is one row of 12 when its card is 40rem or wider, two rows of 6 otherwise.
 
 **One home on Cloudflare, atlas-os.cloud** (owner, 2026-10-31; ADR-0010). Site at `/`, app at `/app/`, relay at `/api/sync`. What would trip Workers Paid is in `docs/deploy.md`. Still open:

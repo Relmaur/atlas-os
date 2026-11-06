@@ -203,7 +203,7 @@ Gas Giants harbor no fauna due to their extreme weather, however Sentinels can s
 
 The Infested subtype can overlay the normal planetary biome types, creating twisted, infected flora not seen on other planets of the same variants.
 
-They come in six different planetary pallets with each seemingly having its own main flora type for each planetary variant. [[Whispering Egg|Whispering Eggs]] dot the landscape and [[Biological Horror|Biological Horrors]] appear with them when broken, similar to  worlds.
+They come in six different planetary pallets with each seemingly having its own main flora type for each planetary variant. [[Whispering Egg|Whispering Eggs]] dot the landscape and [[Biological Horror|Biological Horrors]] appear with them when broken, similar to [[Biome - Dead|Dead]] worlds.
 
 Infested planets also display chromatic aberration filters as well as glitch music, similar to Mega Exotic and Exotic worlds.
 

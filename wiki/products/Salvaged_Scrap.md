@@ -92,15 +92,87 @@ The sequence is taken from the game file.
 
 The following list is valid for **Common** and **Uncommon** rarities.
 
+1. Fused
+1. Rusty
+1. Bent
+1. Pitted
+1. Corroded
+1. Sparking
+1. Buzzing
+1. Humming
+1. Blackened
+1. Weathered
+1. Dirty
+1. Damaged
+1. Chewed
+1. Tarnished
+1. Greasy
+1. Crusty
+1. Oily
+1. Water-stained
+1. Unusual
+1. Odd
+1. Repurposed
+
 <br>
 The following list is valid for **Rare** rarity.
+
+1. Extraordinary
+1. Experimental
+1. High-tech
+1. Intact
+1. Well-preserved
+1. Advanced
+1. Intricate
 
 ### Noun
 
 The following list is valid for **Common** and **Uncommon** rarities.
 
+1. Circuits
+1. Valves
+1. Pistons
+1. Sensor
+1. Actuator
+1. Casing
+1. Plating
+1. Storage Unit
+1. Thruster
+1. Heat Pipes
+1. Radiator
+1. Plug
+1. Ballute
+1. Tank
+1. Booster
+1. Bearing
+1. Cog
+1. Connector
+1. Compressor
+1. Crank
+1. Gear
+1. Belt
+1. Inlet
+1. Pinion
+1. Seal
+1. Sprockets
+1. Reservoir
+1. Chip
+1. Board
+1. Display
+1. Pump
+1. Cylinders
+1. Belting
+
 <br>
 The following list is valid for **Rare** rarity.
+
+1. Hydraulics
+1. Gyroscope
+1. Accelerometer
+1. Regulator
+1. Pneumatics
+1. Torquer
+1. Processor
 
 ## Additional information
 

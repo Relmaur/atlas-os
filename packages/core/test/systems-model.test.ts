@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { expect, test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   normalizeSystem,
@@ -152,4 +152,54 @@ test('a countdown shows seconds under an hour and minutes above', () => {
   assert.equal(formatCountdown(999), '0:01');
   assert.equal(formatCountdown(0), '0:00');
   assert.equal(formatCountdown(3_900_000), '1h 05m');
+});
+
+test('an older log’s planets come through untouched, with an empty scan beside them', () => {
+  const old = { id: 'pl-1', name: 'Hogaw 24/K5', biome: 'frostbound, very cold', tags: ['base'], notes: 'Icy' };
+  const [planet] = normalizeSystem({ planets: [old] }).planets;
+  // What the player typed stays exactly as typed: no rewriting the free-text biome into a wiki name.
+  expect(planet).toMatchObject(old);
+  expect(planet).toMatchObject({
+    descriptor: '',
+    body: '',
+    weather: '',
+    resources: [],
+    temperature: null,
+    discoveredOn: ''
+  });
+});
+
+test('a scan round-trips, and damaged scan values read as not logged', () => {
+  const scan = {
+    descriptor: 'Frostbound',
+    body: 'planet',
+    weather: 'Icy Blasts',
+    sentinels: 'Few',
+    flora: 'Uncommon',
+    fauna: 'Abundant',
+    abundance: 'Uncommon',
+    resources: ['Ancient Bones', 'Frost Crystal', 'Copper', 'Dioxite', 'Silver'],
+    temperature: -60.8,
+    discoveredBy: 'marck94zac1',
+    discoveredOn: '2026-11-05'
+  };
+  const [planet] = normalizeSystem({
+    planets: [{ id: 'pl-1', name: 'Hogaw 24/K5', biome: 'Frozen', ...scan }]
+  }).planets;
+  expect(planet).toMatchObject(scan);
+  const [again] = normalizeSystem(JSON.parse(JSON.stringify({ planets: [planet] })) as Record<string, unknown>).planets;
+  expect(again).toEqual(planet);
+  const [bad] = normalizeSystem({
+    planets: [{ name: 'X', body: 'asteroid', temperature: '-60', discoveredOn: '5/11/2026', resources: 'Copper' }]
+  }).planets;
+  expect(bad).toMatchObject({ body: '', temperature: null, discoveredOn: '', resources: [] });
+});
+
+test('an older log’s system keeps its economy and stars; the galaxy map’s other words start empty', () => {
+  const system = normalizeSystem({ name: 'Ekwa', economy: 'High Tech', wealth: 2, star: 'yellow' });
+  expect(system).toMatchObject({ economy: 'High Tech', wealth: 2, star: 'yellow' });
+  expect(system).toMatchObject({ spectralClass: '', water: false, dissonant: false, economyStrength: '' });
+  const logged = normalizeSystem({ name: 'Ekwa', spectralClass: 'F4', water: true, economyStrength: 'Opulent' });
+  expect(logged).toMatchObject({ spectralClass: 'F4', water: true, dissonant: false, economyStrength: 'Opulent' });
+  expect(normalizeSystem({ name: 'X', water: 'yes' }).water).toBe(false);
 });

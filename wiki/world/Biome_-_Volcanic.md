@@ -28,6 +28,21 @@ The biome type is indicated in the information panel when the player exits their
 
 The sequence is taken from the game file.
 
+1. Lava
+1. Magma
+1. Erupting
+1. Volcanic
+1. Ash-Shrouded
+1. Ashen
+1. Tectonic
+1. Unstable
+1. Violent
+1. Molten
+1. Flame-Ruptured
+1. Imminent Core Detonation
+1. Obsidian Bead
+1. Basalt
+
 ## Conditions
 
 - [[Hazard protection]] is always on due to high temperatures. [[Coolant Network Sigma|Coolant Network]] upgrades are recommended, especially on extreme worlds.

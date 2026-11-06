@@ -22,7 +22,7 @@ data: {"fields":{},"recipes":[]}
 
 **Wetland Terrain**, refers to a occurrence of [[planet]] surfaces that have no oceans or seas but feature extensive shallow levels of water across a large portion of the surface.  They may sometimes be confused with [[Archipelago]] worlds.  The distinct usually is the dept of water even when far from dry land.  If the water depth remains shallow across most of the submerged areas, then its best to classify an apparent archipelago world as a wetland.
 
-[[Moon|Moons]],  and  [[planet|planets]] will never have wetland terrain.
+[[Moon|Moons]], [[Biome - Exotic|Exotic]] and [[Biome - Dead|Dead]] [[planet|planets]] will never have wetland terrain.
 
 A planet with wetland terrain will feature very limited large land masses.  Wetland worlds typically have less than 25% of their surface covered with land.
 

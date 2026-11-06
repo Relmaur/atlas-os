@@ -70,6 +70,20 @@ And thank you to /u/ArcturusMint for compiling this collection of screenshots co
 
 It got us talking in the studio about some of the things that have changed in the engine from launch to today… the many subtle features that have contributed to creating prettier worlds.
 
+- Texture streaming
+- High res textures
+- Temporal antialiasing
+- Crepuscular rays
+- New clouds system
+- New water system
+- Tessellation
+- Depth of field
+- Improved lighting
+- Colour grading
+- Ringed planets
+- Ocean and continents
+- New atmospherics system
+
 An awful lot of memory savings to make that list possible… Looking at this made us even more excited for the future. Thank you */u/ArcturusMint*!
 
 ## Development Update

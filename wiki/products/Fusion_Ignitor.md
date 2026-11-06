@@ -52,6 +52,22 @@ The following ingredients are needed to create the three main parts of a Fusion 
 
 Full list:
 
+- 600 Fungal Mould
+- 300 Cactus Flesh
+- 100 Frost Crystal
+- 200 Solanium
+- 200 Star Bulb
+- 25 Mordite
+- 200 Pure Ferrite
+- 50 Ionised Cobalt
+- 50 Ammonia
+- 50 Pyrite
+- 50 Uranium
+- 300 Condensed Carbon
+- 500 Nitrogen
+- 500 Radon
+- 500 Sulphurine
+
 ## Additional information
 
 It is tied with the [[Stasis Device]] for most valuable singular item in the game.

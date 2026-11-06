@@ -81,6 +81,120 @@ The names are procedurally generated with certain terms using one of the followi
 
 The sequence is taken from the game file.
 
+### Adjective
+
+1. Beautiful
+1. Potential
+1. Whittled
+1. Primitive
+1. Fancy
+1. Ornate
+1. Delicate
+1. Prehistoric
+1. Eccentric
+1. Prismatic
+1. Dusty
+1. Damaged
+1. Hewn
+1. Engraved
+1. Clumsy
+1. Sculpted
+1. Chipped
+1. Painted
+1. Decorated
+1. Rotten
+1. Stained
+1. Rusty
+1. Corroded
+1. Crude
+
+### Use
+
+1. Tuning
+1. Hunting
+1. Carving
+1. Fishing
+1. Musical
+1. Flint
+1. Stone
+1. Basalt
+1. Industrial
+1. Binding
+1. Woodworking
+1. Metalworking
+1. Butcher's
+1. Punching
+1. Paint
+1. Mixing
+1. Metal
+1. Bronze
+1. Farming
+1. Agricultural
+1. Horticultural
+1. Artist's
+1. Sacrificial
+1. Sewing
+1. Firemaking
+1. Bonfire
+1. Clockwork
+1. Cleaning
+1. Trapper's
+1. Spinning
+1. Brewer's
+1. Fermenting
+1. Medical
+1. Gardener's
+1. Crab
+1. Cooking
+1. Welder's
+1. Shipwright's
+
+### Noun
+
+1. Stick
+1. Spoon
+1. Fork
+1. Spear
+1. Magnet
+1. Tool
+1. Hook
+1. Knife
+1. Chisel
+1. Instrument
+1. Spade
+1. Trowel
+1. Shears
+1. Blade
+1. Shovel
+1. Harpoon
+1. Peg
+1. Axe
+1. Hammer
+1. Wheel
+1. Anvil
+1. Tongs
+1. Drill
+1. Dauber
+1. Pitchfork
+1. Utensil
+1. Weapon
+1. Gadget
+1. Machine
+1. Device
+1. Abacus
+1. Contraption
+1. Spike
+1. Cleaver
+1. Dish
+1. Mirror
+1. Supplies
+1. Telescope
+1. Canister
+1. Brush
+1. Sponge
+1. Mask
+1. Tube
+
 ## Additional information
 
 - The game descriptions and the name generation are extracted from the 1.77 version of **NMS_UPDATE3_ENGLISH.MBIN** game file, while the modifier and value ranges are extracted from the 1.77 version of **PROCEDURALPRODUCTTABLE.MBIN** game file.

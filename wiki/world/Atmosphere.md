@@ -30,7 +30,7 @@ This is the only element of the atmosphere that is explicitly described in the g
 
 In all biomes (except dead planets/moons), the description provides a breakdown of the primary and secondary elements, their relative percentage in the atmosphere, and a phrase 'Trace Others' to capture all others not listed.
 
-| [[Biome]]<br>Gas |   |   |   |   |   |   |   |   |   |   |   |
+| [[Biome]]<br>Gas | [[Biome - Dead\|Dead]] | [[Biome - Barren\|Barren]] | [[Biome - Exotic\|Exotic]] | [[Biome - Frozen\|Frozen]] | [[Biome - Irradiated\|Irradiated]] | [[Biome - Lush\|Lush]] | [[Biome - Marsh\|Marsh]] | [[Biome - Mega Exotic\|Mega Exotic]] | [[Biome - Scorched\|Scorched]] | [[Biome - Toxic\|Toxic]] | [[Biome - Volcanic\|Volcanic]] |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Argon | - | P | P | P | P | P | P | P | P | P | P |
 | Carbon Dioxide | - | P | P | P | P | P | P | P | P | P | P |

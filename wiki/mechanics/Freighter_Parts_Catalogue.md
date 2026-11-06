@@ -34,6 +34,13 @@ Capital freighters appear only in freighter battles and only after the first suc
 
 This provides the general appearance of the freighter, known as the silhouette and are used as a naming convention by the community. Each type of capital freighter has three subtypes:
 
+- Sentinel
+- Battleship
+- Dreadnought
+- Venator
+- Imperial
+- Resurgent
+
 ## Accessories
 
 Capital freighters subtypes can have different accessories:

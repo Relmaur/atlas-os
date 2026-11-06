@@ -6,6 +6,23 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.26.0] - 2026-11-05
+### Added
+- Planets hold what a scan shows: the description ("Frostbound"), planet or moon, biome, weather, sentinels, flora, fauna, the resources level, the resources it lists, temperature, and who discovered it and when. Every field takes the words the game shows.
+- The planet sheet suggests the wiki's words for each field. A prefix only one biome uses fills in the biome ("Frostbound" → Frozen). Weather reads as clear, normal or extreme, and sentinels as low, high, aggressive or corrupted, from the wiki's tables. A planet's row shows its scan in one line, with a red pill for extreme weather or aggressive sentinels.
+- Mega Exotic planets draw in the exotic colour and Gas Giants in the hot one, as the wiki says they're like those biomes. A biome typed as a prefix ("Frostbound") gets its biome's colour.
+- The planet sheet offers each biome's own resources, from its wiki page, as one-tap chips ("Frozen worlds have: Dioxite, Frost Crystal, Radon"); any other resource is typed, with the Codex's resources suggested.
+- Systems hold the galaxy map's other words, each pair as two fields: the spectral class ("F4"), which sets the star colour from the wiki's table, with Water and Dissonant toggles; and the economy's name ("Prospecting", read as a Mining economy) and strength word ("Opulent"), which sets the wealth stars. A colour or stars already logged are never changed. System detail shows them as the map does: "Prospecting // Opulent".
+- The MCP server's `get_system` returns each planet's scan and the system's galaxy-map words.
+
+### Fixed
+- On a phone, a field in a sheet (the system editor, a planet, gear, a run, a session, sync) stays in view when the keyboard opens, instead of ending up off the top of the screen.
+- The wiki copy kept nothing of the wiki's column lists or its `{{Biome|…}}` links, so the biome pages lost their name prefixes and the planet discovery page its flora and fauna words. 89 pages are fuller now. The Spectral class page, the Economy page and the seven economy types' pages join the copy.
+- A wiki sync never rolls a page back: a page the archive holds at a newer revision than the dump stays as it is, and one written after the dump was taken isn't marked removed.
+
+### Kept
+- Planets logged before this keep everything as typed, including a biome in the player's own words. New fields sit beside the old ones, empty until filled.
+
 ## [3.25.0] - 2026-11-04
 ### Added
 - Portal addresses show each glyph's name, from the wiki: on a system's screen under the address, in dialling order, and in the system editor as the address is typed, so a slip is easy to spot. Screen readers hear the names. No glyph art, only the names.

@@ -35,6 +35,13 @@ Occasionally, [[Tentacle Plant|Tentacle Plants]] take root in the ceilings. Also
 
 These are the possible names for the terminal found inside Abandoned Buildings. One of the following is randomly chosen when an Abandoned Building is procedurally generated.
 
+1. Corrupted Terminal
+1. Abandoned Terminal
+1. Haunted Terminal
+1. Deserted Terminal
+1. Forgotten Terminal
+1. Forsaken Terminal
+
 ## Stories
 
 These are the four major stories that you read from the terminal logs. As of the Waypoint update ([[Update 4.00]]), they are now recorded under Options → Catalogue & Guide → Collected Knowledge → Other History → Abandoned Building.

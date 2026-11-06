@@ -508,3 +508,242 @@ A list of eight recommended free apps can be found [here](https://helpdeskgeek.c
 - Without a centralised nervous system, these are creatures of pure instinct, pure reaction. [[Creatures - Discovery Aspects|(BEHAVIOUR)]]
 - Without a centralised nervous system, these creatures know nothing but swim, fight, flee, consume. [[Creatures - Discovery Aspects|(BEHAVIOUR)]]
 - Yielding quickly in direct confrontation, their non-threatening nature is a successful counter-strategy in an aggressive world. [[Creatures - Discovery Aspects|(BEHAVIOUR)]]
+
+## Additional Observations list
+
+- Absorbs humidity
+- Absorbs moisture from air
+- Acidic blood
+- Alluring pheromones
+- Always waiting
+- Always watching
+- Armored skull
+- Armoured skull
+- Asexual reproduction
+- Assembled in the stars
+- Autonomous regeneration
+- Aware of its fate
+- Barbed feet
+- Beloved by the Gek
+- Bioluminescent blood
+- Bioluminescent teeth
+- Blue blood
+- Bonds with Vy'keen
+- Born on meteors
+- Both gills and lungs
+- Brain hemispheres not linked
+- Breathes through mouth
+- Brittle bones
+- Bruisable organs
+- Builds metal nest
+- Buries food supplies
+- Burns in the sun
+- Calcified claws
+- Can change color
+- Can change colour
+- Can dislocate jawbones
+- Can feel love
+- Can sense magnetic fields
+- Cannot digest starch
+- Cannot drown
+- Cannot see colour
+- Cannot sweat
+- Carbon-based skeleton
+- Carries babies in pouch
+- Carries symbiotic fungus
+- Carries symbiotic worms
+- Caustic skin
+- Changes gender when cold
+- Chromatophore
+- Claws harbour disease
+- Colour-blind
+- Compound eyes
+- Covered in tiny hairs
+- Covered in toxic bristles
+- Creates beautiful webs
+- Cutaneous respiration
+- Decentralised nervous system
+- Deceptively fast
+- Delicious
+- Detachable tongue
+- Digests via symbionts
+- Digs underground nests
+- Dislikes being scanned
+- Dislikes bright colours
+- Divergent
+- Does not age
+- Double-coned eyes
+- Drinks blood
+- Easily confused
+- Easily trained
+- Echolocation glands
+- Elaborate mating displays
+- Establishes connections with Vy'keen
+- Evil
+- Excellent navigator
+- Excellent sense of smell
+- Excess of bile
+- Extensive gut bacteria
+- Extremely heterozygous
+- Extremely homozygous
+- Eyes regrow after damage
+- Fear of fire
+- Fears the rain
+- Flexible joints
+- Forms colonies
+- Fragile skin
+- Fragile skull
+- Fragrant
+- Frequently lost
+- Frequently regurgitates
+- Gelatinous bones
+- Genetically unstable
+- Gentle soul
+- Gets cold easily
+- Gets lost often
+- Goes underground to die
+- Good parent
+- Good pollinator
+- Green blood
+- Grows lungs after birth
+- Grows wings before death
+- Has a language
+- Has chlorophyll glands
+- Has no bones
+- Hatched from cocoons
+- Hears ground vibrations
+- Hibernates
+- Hidden extra claws
+- Hidden extra skull
+- Hidden extra tongue
+- Hidden stinger
+- Highly fertile
+- Highly intelligent
+- Highly social
+- Hunts Sentinels
+- Hibernates
+- Hybrid species
+- Hydrophobic
+- Inflates when stressed
+- Inverted organ sacs
+- Irritable
+- Knows its destiny
+- Lacks gallbladder
+- Laden with nectar
+- Lays beautiful eggs
+- Limited mind control
+- Limited sentience
+- Looks for red flowers
+- Lovely eyes
+- Made of stardust
+- Magnetic teeth
+- Makes art with sticks
+- Many hidden toes
+- Massive tongue
+- Mates for life
+- Matriarchal society
+- Metal bones
+- Mildly radioactive
+- Monstrous tongue
+- Moon Baby
+- Needs dietetic iron
+- Nests in blue foliage
+- Never blinks
+- Night vision
+- Nine additional senses
+- Nitrogen-rich blood
+- No stomach
+- Non-simulated
+- Not carbon based
+- Nutritious faeces
+- Occasionally eats rocks
+- Occasionally invisible
+- One extendible finger
+- Parasites in brain
+- Partially domesticated
+- Particularly oily
+- Photosensitive
+- Poor hearing
+- Poor sense of direction
+- Porous skin
+- Possesses language
+- Powerful digestive enzymes
+- Powerful mandibles
+- Pretty eyes
+- Produces vile stench
+- Promiscuous
+- Rapid self-healing
+- Recognises other species
+- Redundant internal organs
+- Regrows teeth each day
+- Regularly sheds skin
+- Requires dietary iron
+- Respires anaerobically
+- Respires inorganically
+- Retractable appendages
+- Retractable eyestalks
+- Retractable limbs
+- Riddled with pests
+- Rigid bones
+- Rubber skull
+- Saliva pH 14
+- Scared of fire
+- Scared of mirrors
+- Screams when upset
+- Secondary skin
+- Secretes phytotoxins
+- Secretes venom
+- Seeks red flowers
+- Self-aware
+- Sense organs in feet
+- Senses ATLAS
+- Sharp claws
+- Sheds and regrows bones
+- Sings beautifully
+- Six stomachs
+- Skin parasites
+- Skull full of holes
+- Sleeps standing up
+- Smells with tongue
+- Solar Powered
+- Spawns in water
+- Sprays ink when scared
+- Stomach inside skull
+- Stores water in hidden sacs
+- Strong burrower
+- Strong digger
+- Strong swimmer
+- Strongly radioactive
+- Superheated stomach
+- Superconducting wires
+- Sweats milk for infants
+- Symmetrical insides
+- Tapeworm host
+- Technically immortal
+- Telepathic
+- Thick skull
+- Three hearts
+- Ticklish
+- Tiny brain
+- Tiny organs
+- Tongue parasites
+- Toughened skin
+- Toxic tongue
+- Translucent teeth
+- Transmits symbiotic mushroom
+- Transmitting to the Atlas
+- Two livers
+- Ultrasonic roar
+- Ultrasonic scream
+- Unpleasant to eat
+- Untameable
+- Valuable blood
+- Varied phenotype
+- Venom-laden claws
+- Versatile joints
+- Vestigial udders
+- Waiting for infinity
+- Waxy all-over
+- Weak lungs
+- Well insulated
+- Yellow blood

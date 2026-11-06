@@ -81,6 +81,114 @@ The names are procedurally generated with certain terms using one of the followi
 
 The sequence is taken from the game file.
 
+### Adjective
+
+1. Gek
+1. Vy'keen
+1. Korvax
+1. Dusty
+1. Curious
+1. Heretical
+1. Leather-Bound
+1. Suspicious
+1. Undiscovered
+1. Long-Lost
+1. Ancient
+1. Cursed
+1. Rare
+1. Mysterious
+1. Haunted
+1. Forsaken
+1. Beautiful
+1. Subtle
+1. Thoughtful
+1. Intimate
+1. Well-Observed
+1. Crumbling
+1. Ashen
+1. Romantic
+1. Ornate
+1. Blighted
+1. Lyrical
+1. Historical
+1. Grim
+1. Lost
+1. Ill-Advised
+1. Delicate
+1. Sublime
+1. Coarse
+1. Elegant
+1. Timeworn
+1. Age-Old
+1. Antiquated
+1. Luminous
+1. Dangerous
+1. Hand-Made
+1. Blood Stained
+1. Stained
+1. Lewd
+1. Sealed
+1. Unsealed
+1. Wistful
+1. Precious
+1. Epic
+1. Dramatic
+1. Forbidden
+1. Crumpled
+
+### Noun
+
+1. Field Notes
+1. Papers
+1. Diagrams
+1. Books
+1. Manuscripts
+1. Artefacts
+1. Research Data
+1. Recipe
+1. Formulae
+1. Diaries
+1. Poetry
+1. Drawings
+1. Etchings
+1. Woodcut
+1. Documents
+1. Scribblings
+1. Calendar
+1. Portraits
+1. Sheet Music
+1. Theses
+1. Treatises
+1. Literature
+1. Calligraphy
+1. Tracts
+1. Pamphlets
+1. Recordings
+1. Memoirs
+1. Scrolls
+1. Mementos
+1. Sketches
+1. Photographs
+1. Reports
+1. Case Files
+1. Lawsuits
+1. Receipts
+1. Portfolio
+1. Archives
+1. Anthology
+1. Compositions
+1. Miscellany
+1. Legal Documents
+1. Commercial Records
+1. Relic
+1. Pictographs
+1. Statue
+1. Heirloom
+1. Leaflet
+1. Brochure
+1. Essay
+1. Autobiography
+
 ## Additional information
 
 - The game descriptions and the name generation are extracted from the 1.77 version of **NMS_UPDATE3_ENGLISH.MBIN** game file, while the modifier and value ranges are extracted from the 1.77 version of **PROCEDURALPRODUCTTABLE.MBIN** game file.

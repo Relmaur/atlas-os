@@ -1,6 +1,6 @@
 // Store actions shared by React screens: mutate the live state, save, and confirm to the person.
 import type { OutlawSettings } from '@atlas/core/state';
-import { newId, normalizeSystem, tagSlug, type System } from '@atlas/core/systems-model';
+import { newId, normalizePlanetScan, normalizeSystem, tagSlug, type System } from '@atlas/core/systems-model';
 import { clampOutlawSetting } from '@atlas/core/outlaw';
 import { MAX_SESSIONS, type PastSession } from '@atlas/core/session';
 import { MAX_TIMER_MS, type Timer, type TimerKind } from '@atlas/core/timers';
@@ -79,6 +79,23 @@ export interface PlanetFields {
   biome: string;
   tags: string;
   notes: string;
+  /** The scan, as the form's fields hold it: words, a comma-separated resource list, a temperature in °C. */
+  scan?: Partial<
+    Record<
+      | 'descriptor'
+      | 'body'
+      | 'weather'
+      | 'sentinels'
+      | 'flora'
+      | 'fauna'
+      | 'abundance'
+      | 'resources'
+      | 'temperature'
+      | 'discoveredBy'
+      | 'discoveredOn',
+      string
+    >
+  >;
 }
 export function savePlanet(systemId: string, planetId: string | null, fields: PlanetFields): void {
   const system = find(systemId);
@@ -88,11 +105,19 @@ export function savePlanet(systemId: string, planetId: string | null, fields: Pl
     name,
     biome: fields.biome.trim(),
     tags: [...new Set(fields.tags.split(',').map(tagSlug).filter(Boolean))],
-    notes: fields.notes.trim()
+    notes: fields.notes.trim(),
+    // A save without the scan (an older caller) leaves the planet's scan as it was.
+    ...(fields.scan &&
+      normalizePlanetScan({
+        ...fields.scan,
+        resources: (fields.scan.resources ?? '').split(',').map(item => item.trim()),
+        // "-60,8" is how half the world writes -60.8; an empty field is "not logged", never 0.
+        temperature: fields.scan.temperature?.trim() ? Number(fields.scan.temperature.replace(',', '.')) : null
+      }))
   };
   const planet = system.planets.find(item => item.id === planetId);
   if (planet) Object.assign(planet, values);
-  else system.planets.push({ id: newId('pl'), ...values });
+  else system.planets.push({ id: newId('pl'), ...normalizePlanetScan({}), ...values });
   saveAppState();
 }
 

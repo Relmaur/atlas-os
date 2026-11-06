@@ -246,3 +246,47 @@ test('a new system has nothing to delete', () => {
   render(<SystemPanel />);
   expect(screen.queryByRole('button', { name: 'Delete system' })).toBeNull();
 });
+
+const GALAXY_MAP = {
+  spectral: { page: 'Spectral class', path: 's', revId: 1, classes: { F: 'yellow' as const, E: 'green' as const } },
+  economy: {
+    page: 'Economy',
+    path: 'e',
+    revId: 1,
+    strength: { 1: ['Struggling'], 2: ['Balanced'], 3: ['Opulent'] },
+    types: [{ page: 'Mining Economy', path: 'm', revId: 1, name: 'Mining', names: ['Prospecting', 'Mining'] }]
+  }
+};
+
+test('editor: the galaxy map’s pairs, "F4 // Water" and "Prospecting // Opulent", fill the colour and stars they mean', async () => {
+  setFactsForTests({ schema: 1, facts: {}, galaxyMap: GALAXY_MAP });
+  edit('sys-a');
+  await userEvent.type(screen.getByRole('textbox', { name: 'Spectral class' }), 'F4');
+  expect(screen.getByRole('radio', { name: 'Yellow' }).getAttribute('aria-checked')).toBe('true');
+  expect(screen.getByText('Class F: a yellow star, by the wiki’s table.')).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: 'Water' }));
+  await userEvent.type(screen.getByRole('combobox', { name: 'Economy' }), 'Prospecting');
+  await userEvent.type(screen.getByRole('combobox', { name: 'Economy strength' }), 'Opulent');
+  expect(screen.getByText('A Mining economy, ★★★ strength.')).toBeTruthy();
+  expect(screen.getByRole('radio', { name: '3 of 3' }).getAttribute('aria-checked')).toBe('true');
+  await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+  expect(system('sys-a')).toMatchObject({
+    spectralClass: 'F4',
+    star: 'yellow',
+    water: true,
+    dissonant: false,
+    economy: 'Prospecting',
+    economyStrength: 'Opulent',
+    wealth: 3
+  });
+});
+
+test('editor: a colour or stars already logged are never changed for you', async () => {
+  setFactsForTests({ schema: 1, facts: {}, galaxyMap: GALAXY_MAP });
+  appState.systems[0] = { ...appState.systems[0]!, star: 'red', wealth: 1 };
+  edit('sys-a');
+  await userEvent.type(screen.getByRole('textbox', { name: 'Spectral class' }), 'E1');
+  await userEvent.type(screen.getByRole('combobox', { name: 'Economy strength' }), 'Opulent');
+  await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+  expect(system('sys-a')).toMatchObject({ spectralClass: 'E1', star: 'red', wealth: 1, economyStrength: 'Opulent' });
+});

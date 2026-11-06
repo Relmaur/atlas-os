@@ -32,6 +32,21 @@ Terminals of various types can be crafted, each with their own special purposes.
 
 The [[blueprint|blueprints]] for the following items can be acquired at an Exocraft Terminal based on specific quests from the [[Technician]].
 
+- [[Roamer Geobay]]
+- [[Exocraft Signal Booster]]
+- [[Exocraft Mounted Cannon]]
+- [[Exocraft Acceleration Module]]
+- [[Exocraft Mining Laser]]
+- [[Nomad Geobay]]
+- [[Colossus Geobay]]
+- [[Exocraft Mining Laser Upgrade Sigma]]
+- [[Exocraft Signal Booster Upgrade Tau]]
+
+Other Rewards:
+
+- [[Exocraft Acceleration Module Upgrade|Exocraft Boost Modules]]
+- [[Exocraft Acceleration Module Upgrade|Exocraft Acceleration Modules]]
+
 ## Game description
 
 A research station tailored to the needs of Mechanics, and equipped with bespoke vehicular design software.

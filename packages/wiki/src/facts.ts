@@ -82,6 +82,16 @@ export const FACTS = {
     quote: 'Exotic worlds are characterized by having various mysterious objects not found in any other biomes',
     value: { biome: 'Exotic', family: 'exotic' }
   },
+  'biome-mega-exotic': {
+    page: 'Biome',
+    quote: 'Though they are classified similarly to exotic biomes, they are clearly a class of their own',
+    value: { biome: 'Mega Exotic', family: 'exotic' }
+  },
+  'biome-gas-giant': {
+    page: 'Biome - Gas Giant',
+    quote: 'the temperature is always similar to the non-storm temperature on an extreme scorched or volcanic world',
+    value: { biome: 'Gas Giant', family: 'hot' }
+  },
   'region-light-years': {
     page: 'Portal address',
     quote: 'the proportions of each region are roughly 400ly x 400 ly x 400 ly',

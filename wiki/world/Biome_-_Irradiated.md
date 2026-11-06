@@ -30,6 +30,17 @@ The biome type is indicated in the information panel when the player exits their
 
 The sequence is taken from the game file.
 
+1. Irradiated
+1. Radioactive
+1. Contaminated
+1. Nuclear
+1. Isotopic
+1. Decaying Nuclear
+1. Gamma-Intensive
+1. High Radio Source
+1. Supercritical
+1. High Energy
+
 ## Conditions
 
 - [[Hazard protection]] is always on due to high amounts of radiation. [[Radiation Protection Upgrade|Radiation Protection]] upgrades are recommended, especially on extreme worlds.

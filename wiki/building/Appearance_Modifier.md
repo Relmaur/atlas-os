@@ -88,6 +88,19 @@ The following items can be unlocked as customisation parts.
 
 The following helmets are purchasable from the **Quicksilver Synthesis Companion** for 3200 quicksilver each.
 
+- [[Iteration: Ares Visage]]
+- [[Iteration: Ariadne Visage]]
+- [[Iteration: Cronus Visage]]
+- [[Iteration: Eos Visage]]
+- [[Iteration: Gemini Visage]]
+- [[Iteration: Helios Visage]]
+- [[Iteration: Hesperus Visage]]
+- [[Iteration: Hyperion Visage]]
+- [[Iteration: Mercury Visage]]
+- [[Iteration: Perses Visage]]
+- [[Iteration: Selene Visage]]
+- [[Iteration: Tethys Visage]]
+
 ### Banner and Title
 
 Characters can choose custom banner icons and colors and a [[Player Titles|custom title]] in the Banner section of the Appearance Modifier.

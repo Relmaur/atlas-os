@@ -512,7 +512,7 @@ This page aims to catalogue the various puzzles offered to the player in [[Manuf
 | Select an item from the CraftProducts tree |   |   |
 | MONEY | GiveAll | Between 500 & 2000 Units |
 | MONEY_L | GiveAll | Between 20000 & 35000 Units |
-| PROC_TECH_ALL | SelectFromSuccess | Order: InOrder<br>Technology from list: |
+| PROC_TECH_ALL | SelectFromSuccess | Order: InOrder<br>Technology from list:<br>• Haz-Mat Gauntlet<br>• Advanced Mining Laser<br>• Personal Forcefield<br>• Plasma Launcher<br>• Combat Scope<br>• Teleport Receiver<br>• Economy Scanner<br>• Phase Beam<br>• Conflict Scanner<br>• Geology Cannon<br>• Blaze Javelin<br>• Scatter Blaster<br>• Pulse Spitter<br>• Cadmium Drive<br>• Positron Ejector<br>• Emeril Drive<br>• Infra-Knife Accelerator<br>• Indium Drive<br>• Cyclotron Ballista |
 | A Upgrade Module for Pulse Engine, with the following probabilities:<br>• normal: 55<br>• rare: 25<br>• epic: 15<br>• legendary: 5 |   |   |
 | A Upgrade Module for Hyperdrive, with the following probabilities:<br>• normal: 55<br>• rare: 25<br>• epic: 15<br>• legendary: 5 |   |   |
 | A Upgrade Module for Deflector Shield, with the following probabilities:<br>• normal: 55<br>• rare: 25<br>• epic: 15<br>• legendary: 5 |   |   |
@@ -589,7 +589,7 @@ This page aims to catalogue the various puzzles offered to the player in [[Manuf
 | A Upgrade Module for Scatter Blaster, with the following probabilities:<br>• normal: 55<br>• rare: 25<br>• epic: 15<br>• legendary: 5 |   |   |
 | A Upgrade Module for Pulse Spitter, with the following probabilities:<br>• normal: 55<br>• rare: 25<br>• epic: 15<br>• legendary: 5 |   |   |
 | P_HYPERFUEL1 | SelectAlways | 1 Warp Cell |
-| RECIPE_LIST | GiveAll | Order: TryAllRandom<br>Product recipe from list: |
+| RECIPE_LIST | GiveAll | Order: TryAllRandom<br>Product recipe from list:<br>• Microprocessor<br>• AtlasPass v1<br>• AtlasPass v2<br>• AtlasPass v3<br>• Unstable Plasma<br>• Oxygen Capsule<br>• Advanced Ion Battery<br>• Life Support Gel<br>• Hermetic Seal<br>• Carbon Crystal<br>• Rare Metal Element<br>• TetraCobalt<br>• Chloride Lattice<br>• Destablised Sodium<br>• Superoxide Crystal<br>• Aronium<br>• Dirty Bronze<br>• Herox<br>• Lemmium<br>• Magno-Gold<br>• Grantine<br>• Geodesite<br>• Iridesite<br>• Thermic Condensate<br>• Enriched Carbon<br>• Nitrogen Salt<br>• Organic Catalyst<br>• Semiconductor<br>• Hot Ice<br>• Fusion Accelerant<br>• Superconductor<br>• Cryo-Pump<br>• Portable Reactor<br>• Quantum Processor<br>• Cryogenic Chamber<br>• Stasis Device<br>• Fusion Ignitor<br>• Mind Control Device<br>• Holographic Analyser<br>• Mineral Compressor<br>• Explosive Drones<br>• Fuel Oxidiser<br>• Oxygen Filter<br>• Salt Refractor<br>• Cobalt Mirror<br>• Sodium Diode<br>• Warp Hypercore<br>• Starshield Battery |
 | R_CAVECUBE | GiveAll | 1 Vortex Cube |
 | R_CURIO7 | GiveAll | 1 Gek Relic |
 | R_DAGGER | GiveAll | 1 Vy'keen Dagger |

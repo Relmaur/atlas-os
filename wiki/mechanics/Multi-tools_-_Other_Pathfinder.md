@@ -22,6 +22,53 @@ data: {"fields":{},"recipes":[]}
 
 The [[multi-tool|multi-tools]] listed below either have no picture or additional information to enable categorization.
 
+## Release multi-tools
+
+- 2/5 Rising Path
+- 3-90u Defiant Gift
+- 3-W Obscured Inversion
+- 50Q-S83 Complete Retort
+- A/B Sublime Trace
+- Aspect of Aicuecan-Machi - 14 slots
+- Aspect of Umburmel-Stitz
+- Experiment 1-E
+- Experiment 2/Q
+- Experiment 5/OB2
+- Experiment 6-94J
+- Experiment 8-UF8
+- Experiment 9-D
+- Experiment N42-KG5
+- Experiment Q66-117
+- Experiment TJ6-5
+- Fading Uginoomo-Faid
+- Fleeting Efuelmelb
+- G/42M Steady Impulse
+- Gigastikle-Anna v7.13 - 23 slots
+- Gleam of Nulaasten
+- Imperfect Galaxy XVII
+- Lucid Gleam III
+- Mercurial Inspiration II
+- Mercurial Onamatsu-Avlo
+- Mercurial Reshibukar
+- OF6/1 Unusual Harmony
+- Strange Adrinstov
+- Subdued Iehabaron-Udoc
+- The Aymakhnyev-Egre C200
+- The Erimanoya-Yoss L500
+- The Lizamashe N500 - 16 slots
+  - Acquired from a Vy'keen in Euclid
+- The Tugaelsaftu v3.15
+- The Wukourno v6.20
+- Theory of Naximosa-Pube
+- U90-5 Silent Prayer - 14 slots
+  - Acquired from a Vy'keen monolith in Euclid
+- Unusual Shadow XV
+- Unusual Ujemeowai
+  - found in Euclid for the price of 64,000 units
+- V-79K Comforting Intuition
+- Vainoine Mark I
+- Vibrant Aspect XI
+
 ## Foundation multi-tools
 
 - Elevated Rokumokpa

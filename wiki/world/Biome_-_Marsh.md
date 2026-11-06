@@ -28,6 +28,21 @@ The biome type is indicated in the information panel when the player exits their
 
 The sequence is taken from the game file.
 
+1. Marshy
+1. Swamp
+1. Tropical
+1. Foggy
+1. Misty
+1. Boggy
+1. Endless Morass
+1. Quagmire
+1. Hazy
+1. Cloudy
+1. Vapour
+1. Reeking
+1. Murky
+1. Damp
+
 ## Conditions
 
 - On lush-like marsh planets the weather is the most ideal, as day and night temperatures don't enable hazard protection.

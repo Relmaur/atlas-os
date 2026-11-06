@@ -11,10 +11,30 @@ export interface Visit {
 export interface Planet {
   id: string;
   name: string;
+  /** The biome as the player gave it: one of the wiki's ("Frozen") or their own words, which are kept as typed. */
   biome: string;
   tags: string[];
   notes: string;
+  // What a scan shows (added 2026-11; an older log reads them as empty). Words as the game shows them.
+  /** The prefix before "Planet" or "Moon": "Frostbound". */
+  descriptor: string;
+  body: PlanetBody | '';
+  weather: string;
+  sentinels: string;
+  flora: string;
+  fauna: string;
+  /** The scan's "Resources" line: "Uncommon". */
+  abundance: string;
+  /** The resources the scan lists, in its order: "Copper", "Dioxite". */
+  resources: string[];
+  /** °C as the player read it (it changes with day and night); null when not logged. */
+  temperature: number | null;
+  discoveredBy: string;
+  /** The day the game says it was discovered (YYYY-MM-DD), or ''. */
+  discoveredOn: string;
 }
+export const PLANET_BODIES = { planet: 'Planet', moon: 'Moon' };
+export type PlanetBody = keyof typeof PLANET_BODIES;
 // A system as normalizeSystem() stores it: every field present, with a known type.
 export interface System {
   id: string;
@@ -26,6 +46,15 @@ export interface System {
   race: Race | '';
   economy: string;
   wealth: number;
+  // The galaxy map's other words (added 2026-11; an older log reads them as empty): "F4 // Water", "… // Opulent".
+  /** The spectral class as the map shows it: "F4", "G2m". */
+  spectralClass: string;
+  /** The map says "Water": a planet here has seas or oceans. */
+  water: boolean;
+  /** The map says "Dissonant": a planet here is dissonant. */
+  dissonant: boolean;
+  /** The economy's strength word: "Opulent". `wealth` holds its stars. */
+  economyStrength: string;
   /** How many planets and moons the game lists for the system (0: not logged); the logged ones are in `planets`. */
   planetCount: number;
   conflict: ConflictLevel | '';
@@ -155,6 +184,33 @@ const tagList = (value: unknown): string[] => [
 ];
 const isDate = (value: unknown): value is string => typeof value === 'string' && !Number.isNaN(Date.parse(value));
 
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+// The scan fields: each missing or damaged one reads as empty, never as a guess.
+export function normalizePlanetScan(
+  planet: Record<string, unknown>
+): Omit<Planet, 'id' | 'name' | 'biome' | 'tags' | 'notes'> {
+  const word = (value: unknown) => toText(value, '').trim().slice(0, 80);
+  const temperature = typeof planet.temperature === 'number' ? planet.temperature : Number.NaN;
+  return {
+    descriptor: word(planet.descriptor),
+    body: oneOf(PLANET_BODIES, planet.body),
+    weather: word(planet.weather),
+    sentinels: word(planet.sentinels),
+    flora: word(planet.flora),
+    fauna: word(planet.fauna),
+    abundance: word(planet.abundance),
+    resources: [...new Set((Array.isArray(planet.resources) ? planet.resources : []).map(word).filter(Boolean))].slice(
+      0,
+      12
+    ),
+    // The game's coldest and hottest worlds stay within a few hundred degrees; anything else is a typing slip.
+    temperature:
+      Number.isFinite(temperature) && Math.abs(temperature) < 1000 ? Math.round(temperature * 10) / 10 : null,
+    discoveredBy: word(planet.discoveredBy),
+    discoveredOn: typeof planet.discoveredOn === 'string' && DAY.test(planet.discoveredOn) ? planet.discoveredOn : ''
+  };
+}
+
 export function normalizeSystem(raw: Record<string, unknown>): System {
   const rawVisits: unknown[] = Array.isArray(raw.visits) ? raw.visits : [];
   const firstVisit = rawVisits[0];
@@ -168,6 +224,10 @@ export function normalizeSystem(raw: Record<string, unknown>): System {
     race: oneOf(RACES, raw.race),
     economy: toText(raw.economy, ''),
     wealth: clampInt(raw.wealth, 0, 3),
+    spectralClass: toText(raw.spectralClass, '').trim().slice(0, 8),
+    water: raw.water === true,
+    dissonant: raw.dissonant === true,
+    economyStrength: toText(raw.economyStrength, '').trim().slice(0, 40),
     planetCount: clampInt(raw.planetCount, 0, 15), // a portal's planet index is one hex digit
     conflict: oneOf(CONFLICT_LEVELS, raw.conflict),
     tags: tagList(raw.tags),
@@ -179,7 +239,8 @@ export function normalizeSystem(raw: Record<string, unknown>): System {
       name: toText(planet.name, 'Unnamed planet'),
       biome: toText(planet.biome, ''),
       tags: tagList(planet.tags),
-      notes: toText(planet.notes, '')
+      notes: toText(planet.notes, ''),
+      ...normalizePlanetScan(planet)
     })),
     visits: rawVisits
       .filter(isPlainObject)
@@ -265,7 +326,15 @@ export function systemHaystack(system: System): string {
     system.race ? RACES[system.race] : undefined,
     system.star ? STAR_CLASSES[system.star].label : undefined,
     ...system.tags,
-    ...system.planets.flatMap(planet => [planet.name, planet.biome, planet.notes, ...planet.tags]),
+    ...system.planets.flatMap(planet => [
+      planet.name,
+      planet.biome,
+      planet.descriptor,
+      planet.weather,
+      planet.notes,
+      ...planet.tags,
+      ...planet.resources
+    ]),
     ...system.visits.map(visit => visit.note)
   ]
     .filter(Boolean)

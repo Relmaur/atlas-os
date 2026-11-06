@@ -38,9 +38,33 @@ The biome type is indicated in the information panel when the player exits their
 
 There is one exception: Terraforming Catastrophe does not receive additional text indicating the type of the astronomical body. The sequence is taken from the game file.
 
+1. Terraforming Catastrophe
+1. Dead
+1. Empty
+1. Desolate
+1. Lifeless
+1. Forsaken
+1. Life-Incompatible
+1. Low Atmosphere
+1. Airless
+1. Abandoned
+
 ## Conditions
 
 - Dead calm. Storms never occur.
+
+## Weather
+
+- Absent
+- Airless
+- Clear
+- Eerily Calm
+- Inert
+- No Atmosphere
+- Peaceful
+- Perfectly Clear
+- Silent
+- Utterly Still
 
 ## Exotification
 

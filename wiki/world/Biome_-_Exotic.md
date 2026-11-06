@@ -167,13 +167,39 @@ The real mystery of these planets are the **Zimbaites**. While bigger instances 
 
 Name generation
 
+1. Crimson
+1. Planetary Anomaly
+1. Malfunctioning
+1. Breached
+1. Infected
+1. [REDACTED]
+1. Glassy
+1. Thirsty
+1. Doomed
+1. Erased
+1. Temporary
+1. Corrupted
+
 A Glitch planet is essentially randomized, in that they can contain any other exotic subbiomes. If these planet types are encountered, a visitor can never be sure what they will find. The only exception are the Crimson, Planetary Anomaly and [REDACTED] types, which tend to default to Chromatic biomes for all star types. While these planets can be very diverse, they are also quite rare among the true exotics.
 
 ## Weather
 
 Some exotic planets have gravity storms, during which the gravity is significantly reduced. This is independent of any weather descriptor.
 
-Some descriptors from the  biome can also apply to the exotic biome. The following scorched weather types have been observed, along with the system or planet where they have been found:
+1. Invisible Mist
+1. Internal Rain
+1. Lost Clouds
+1. Crimson Heat
+1. Winds of Glass
+1. Thirsty Clouds
+1. Obsidian Heat
+1. Memories of Frost
+1. Haunted Frost
+1. Indetectable Burning
+1. [REDACTED]
+1. Anomalous
+
+Some descriptors from the [[Biome - Mega Exotic|Mega Exotic]] biome can also apply to the exotic biome. The following scorched weather types have been observed, along with the system or planet where they have been found:
 - Deadly Pressure Variations ([[Wislawa II]])
 - Harsh Toxic Wind ([[MCB243-YK2MAT Shiman-Boo Zeta]])
 

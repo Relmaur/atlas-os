@@ -98,6 +98,18 @@ Unlike the capital freighters, regular freighters don't have static designs. The
 
 Basic Threat Level (no keel):
 
+- Hammerhead-class
+- Revolver-class
+- Galleon-class
+- Blade-class
+- Enterprise-class
+- Cargo-class (Cuboid)
+- Cargo-class (Underbite)
+- Iris-class
+- Oculus-class
+- Cargo-class (Overbite)
+- Centrifuge-class
+
 Note: With a military keel the Enterprise-class easily outcompetes the Blade-class and Galleon-class. Its only weakness is the lack of a lower plane defense without.
 
 ### Blade-class

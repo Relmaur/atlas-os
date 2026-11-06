@@ -72,7 +72,7 @@ The sequence is taken from the game file.
 | • Superconducting<br>• Brilliant<br>• Dazzling<br>• Supreme<br>• Incomparable | • Supercharged<br>• Powerful<br>• High-Energy<br>• Electromagnetic<br>• Resonant | • Advanced<br>• Fine-Tuned<br>• Overloaded<br>• Liquid<br>• Oscillating | • Retuned<br>• Enhanced<br>• Boosted<br>• Efficient<br>• Additional |
 | Suffixes |   |   |   |
 | S-class A-class B-class C-class |   |   |   |
-|   |   |   |   |
+| • Beam Amplifier<br>• Beam Capacitor<br>• Lens Optics<br>• Emission Chamber<br>• Photon Mirror<br>• Cooling System<br>• Diode Battery<br>• Light Filter<br>• Reflector Glass<br>• Output Coupler |   |   |   |
 
 ## Additional information
 

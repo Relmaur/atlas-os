@@ -67,7 +67,7 @@ The sequence is taken from the game file.
 | • Kinetic<br>• T-Gel<br>• Vacuum<br>• Liquid Gas<br>• Solar | • Organic<br>• High-Volume<br>• Microbe<br>• Alkaloid<br>• Biofuel | • Oxygen<br>• Gas<br>• Carbon<br>• Nitrogen<br>• Ammonium |
 | Suffixes |   |   |
 | S-class A-class B-class |   |   |
-|   |   |   |
+| • Filter<br>• Generator Unit<br>• Recycler<br>• Stabiliser<br>• Purifier<br>• Drain<br>• Sieve<br>• Pump<br>• Tanks<br>• Harvester |   |   |
 
 ## Upgrade Modules Min - Max
 

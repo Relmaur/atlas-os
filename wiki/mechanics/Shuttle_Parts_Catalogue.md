@@ -37,6 +37,16 @@ This provides the general appearance of the starship, known as the silhouette. T
 
 These nine wing types provide the customized appearance of each starship model:
 
+- Voyager
+- Grill Wing
+- Y-Wing
+- Bent Wing
+- Drop-Wing
+- X-Wing
+- Low Wing
+- Glider
+- V-Wing
+
 ## Thrusters
 
 They can have one of the following two thrusters attached:
@@ -46,6 +56,19 @@ They can have one of the following two thrusters attached:
 ## Attachments
 
 The 12 attachments provide extra details:
+
+- Straight Turbine
+- Tapered Turbine
+- Omega Cap
+- Retro Booster
+- Fatboy
+- Magnatreme Adapter
+- Afterburner
+- Hover Fan
+- Magnatreme Dome
+- Magnatreme Ring
+- Magnatreme Shield
+- Wing Turbine
 
 ## Chins
 
@@ -60,9 +83,32 @@ The five chins provide light:
 
 Shuttle starships are stabilised by six different fin types:
 
+- Rudder
+- Angled Rudder
+- Stabilizer
+- Delta Wing
+- Shield
+- Air Foil
+
 ## Accessories
 
 These 15 accessories provide a large customization palette:
+
+- Micro Thruster
+- Vertical Intake
+- Solar Panel
+- Keg
+- Mr. Fusion
+- R2 Unit
+- Fuel Port
+- Antenna
+- Lunch Box
+- Cargo Vent
+- Cooling Channel
+- Exhaust Cooling Channel
+- Angled Vent
+- Fuel Compressor
+- Coolant Ports
 
 ## References
 

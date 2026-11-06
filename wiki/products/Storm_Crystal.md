@@ -55,4 +55,4 @@ It can be harvested on extreme weather planets during storms. Look for planets w
 - [[Desolation]] - can be found on Derelict Freighters
 - [[Origins]] - value changed back to 129,150.0 units.
 - [[Waypoint]] - value changed to 211,150.0 units.
-- [[Worlds Part II]] - can now be found on  planets
+- [[Worlds Part II]] - can now be found on [[Biome - Gas Giant|Gas Giant]] planets

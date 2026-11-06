@@ -33,6 +33,18 @@ It is used by a hired NPC known as an [[Overseer (NPC)|Overseer]]. The Overseer 
 
 [[Blueprint|Blueprints]] for the following items can be acquired at a Construction Terminal through the Overseer's mission [[Expanding the Base]]:
 
+- [[Agricultural Terminal]]
+- [[Autonomous Mining Unit]]
+- [[Save Beacon]]
+- [[Cuboid Room]]
+- [[Decals]]
+- [[Galactic trade terminal]]
+- [[Landing Pad]]
+- [[Science Terminal]]
+- [[Storage Container]]
+- [[Weapons Terminal]]
+- [[Exocraft Terminal]]
+
 ## Game description
 
 A research station tailored to the needs of Construction Overseers, and equipped with architectural and engineering design software.

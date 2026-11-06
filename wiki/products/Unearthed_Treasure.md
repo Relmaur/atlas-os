@@ -81,6 +81,137 @@ The names are procedurally generated with certain terms using one of the followi
 
 The sequence is taken from the game file.
 
+### Container
+
+1. Crate
+1. Box
+1. Jumble
+1. Sarcophagus
+1. Chest
+1. Barrel
+1. Case
+1. Package
+1. Bushel
+1. Trunk
+1. Bundle
+1. Assortment
+1. Pallet
+1. Crate
+1. Chest
+1. Trunk
+1. Case
+1. Packet
+1. Collection
+1. Trove
+1. Pile
+1. Parcel
+1. Hoard
+1. Crate
+1. Box
+1. Crate
+1. Chest
+1. Armour
+
+### Adjective
+
+1. Shiny
+1. Glowing
+1. Humming
+1. Lustrous
+1. Rare
+1. Desirable
+1. Ancient
+1. Polished
+1. Tarnished
+1. Gleaming
+1. Valuable
+1. Splendid
+1. Long-Lost
+1. Stolen
+1. Abandoned
+1. Cursed
+1. Vibrating
+1. Radioactive
+1. Precious
+1. Strange
+1. Mysterious
+1. Anomalous
+1. Exceptional
+1. Gek
+1. Vy'keen
+1. Korvax
+1. Magnetic
+1. Sparkling
+1. Electrified
+1. Luxurious
+1. Ornate
+1. Conductive
+1. Synthetic
+1. Pleasing
+1. Irresistible
+1. Multicoloured
+1. Legendary
+1. Timeless
+1. Hypnotic
+1. Preserved
+1. Starry
+1. Celestial
+1. Translucent
+1. Contaminated
+1. Musical
+1. Ill-gotten
+1. Scientific
+1. Ancestral
+
+### Noun
+
+1. Moonstones
+1. Treasures
+1. Jewels
+1. Trinkets
+1. Bullion
+1. Gemstones
+1. Skulls
+1. Stones
+1. Loot
+1. Gems
+1. Riches
+1. Pearls
+1. Orbs
+1. Beads
+1. Ornaments
+1. Baubles
+1. Artworks
+1. Statuettes
+1. Pelts
+1. Robes
+1. Crowns
+1. Metalwork
+1. Relics
+1. Swords
+1. Diamonds
+1. Eggs
+1. Rings
+1. Bangles
+1. Sunstones
+1. Coins
+1. Weaponry
+1. Goblets
+1. Trophies
+1. Teeth
+1. Silk
+1. Cloth
+1. Potions
+1. Curios
+1. Antiques
+1. Material
+1. Remains
+1. Bones
+1. Armour
+1. Runes
+1. Wine
+1. Spirit Bottles
+
 ## Additional information
 
 - The game descriptions and the name generation are extracted from the 1.77 version of **NMS_UPDATE3_ENGLISH.MBIN** game file, while the modifier and value ranges are extracted from the 1.77 version of **PROCEDURALPRODUCTTABLE.MBIN** game file.

@@ -28,6 +28,16 @@ The biome type is indicated in the information panel when the player exits their
 
 The sequence is taken from the game file.
 
+1. Barren
+1. Desert
+1. Rocky
+1. Bleak
+1. Parched
+1. Abandoned
+1. Dusty
+1. Desolate
+1. Wind-swept
+
 ## Conditions
 
 - This biome has the 2nd most ideal weather, as day temperatures are liveable. However, nights can get quite cold, enabling hazard protection.

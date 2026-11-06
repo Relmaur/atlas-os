@@ -31,6 +31,20 @@ The **Science Terminal** is an item used for research.
 
 The [[blueprint|blueprints]] for the following items can be acquired at a Science Terminal based on specific quests from the [[Scientist]].
 
+- [[Lubricant]]
+- [[Acid]]
+- [[Microprocessor]]
+- [[Large Refiner]]
+- [[Living Glass]]
+- [[Save Beacon]]
+- [[Autonomous Mining Unit]]
+- [[Atmosphere Harvester]]
+- [[Unstable Gel]]
+- [[Poly Fibre]]
+- [[Circuit Board]]
+- [[Heat Capacitor]]
+- [[Liquid Explosive]]
+
 ## Game description
 
 A research station tailored to the needs of Scientists, and equipped for research and development of scientific blueprints.

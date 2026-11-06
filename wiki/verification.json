@@ -1,12 +1,84 @@
 {
-  "checkedAt": "2026-10-30T18:18:55.956Z",
+  "checkedAt": "2026-11-06T02:24:52.372Z",
   "wiki": "https://nomanssky.fandom.com",
   "source": "dump",
   "dump": "nomanssky_gamepedia_pages_current.xml",
   "dumpDate": "2026-10-29T01:40:20Z",
   "status": "match",
-  "pages": 3705,
-  "matched": 3705,
+  "pages": 3714,
+  "matched": 3714,
+  "newerThanDump": [
+    {
+      "title": "Doctinawyra",
+      "archived": 1342100,
+      "live": 1336025
+    },
+    {
+      "title": "Messenger of Atlas",
+      "archived": 1342754,
+      "live": 1287562
+    },
+    {
+      "title": "Update 7.00",
+      "archived": 1342838,
+      "live": 1332933
+    },
+    {
+      "title": "Update 7.01",
+      "archived": 1342684,
+      "live": 1336506
+    },
+    {
+      "title": "Update 7.02",
+      "archived": 1342705,
+      "live": 1336507
+    },
+    {
+      "title": "Update 7.03",
+      "archived": 1342723,
+      "live": 1336508
+    },
+    {
+      "title": "Update 7.03.1",
+      "archived": 1342725,
+      "live": 1336509
+    },
+    {
+      "title": "Update 7.04",
+      "archived": 1342732,
+      "live": 1336510
+    },
+    {
+      "title": "Update 7.05",
+      "archived": 1342837,
+      "live": 1336504
+    },
+    {
+      "title": "Update 7.06",
+      "archived": 1342742,
+      "live": 1341722
+    },
+    {
+      "title": "Update 7.10",
+      "archived": 1342827,
+      "live": 1341891
+    },
+    {
+      "title": "Viral Heart",
+      "archived": 1342643,
+      "live": 0
+    },
+    {
+      "title": "Update 7.11",
+      "archived": 1342833,
+      "live": 0
+    },
+    {
+      "title": "Update 7.12",
+      "archived": 1342834,
+      "live": 0
+    }
+  ],
   "obsolete": 339,
   "excluded": 105,
   "removed": [],
@@ -108,6 +180,6 @@
     "Wrackjaw",
     "Writhing Brainworm"
   ],
-  "facts": 13,
+  "facts": 16,
   "staleFacts": []
 }

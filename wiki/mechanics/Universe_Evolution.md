@@ -81,7 +81,7 @@ This is not intended to catch all nuances and minor changes to simulation, or be
 
 **Planets**:
 - Biome changes/resets: Some planets biomes were changed significantly, thus the discovery status is reset and the planet can be rediscovered and renamed.
-- Biome changes: Some  planets were converted to the  or rarely to  biome. Change in colors apparent on all biomes.
+- Biome changes: Some [[Biome - Dead|Dead]] planets were converted to the [[Biome - Exotic|Exotic]] or rarely to [[Biome - Mega Exotic|Mega Exotic]] biome. Change in colors apparent on all biomes.
 - Name Resets: If a dead planet converted to Exotic or Mega Exotic, then the discovery status is reset and it could be rediscovered and renamed.
 - Planets and moons in uncharted systems lost most habitable structure types of [[Point of Interest|Point of Interests]] sites.
 - Planets and moons in abandoned systems had most habitable structure types changed to abandoned building variants.
@@ -133,8 +133,8 @@ This is not intended to catch all nuances and minor changes to simulation, or be
 **Planets**:
 - Additional planets in some star systems if the system had less than a total of 6 planets and moons prior to Origins. Up to 2 extra planets potentially added in a system.
 - Biome changes:
-  - Some  planets were converted to the  biome. Most Lush planets retained their discovery names and status
-  - Some  planets were converted to the new  biome. Many such planets had their discovery names and status reset, and they can be rediscovered.
+  - Some [[Biome - Lush|Lush]] planets were converted to the [[Biome - Marsh|Marsh]] biome. Most Lush planets retained their discovery names and status
+  - Some [[Biome - Scorched|Scorched]] planets were converted to the new [[Biome - Volcanic|Volcanic]] biome. Many such planets had their discovery names and status reset, and they can be rediscovered.
 - Name Resets: All prior named planet discoveries remain the same except for those occasionally changed to Marsh and Scorched. There was no apparent pattern to determine why some discoveries for biome changes reset and some did not.
 - Fauna changes/resets: Major reset. No prior discoveries are retained. All prior fauna are extinct on all planets in all galaxies and new fauna exist everywhere.
 

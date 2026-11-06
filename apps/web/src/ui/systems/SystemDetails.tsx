@@ -22,6 +22,8 @@ import { LinkedNoteRows } from '../notes/note-bits.tsx';
 import { newNote } from '../notes/note-nav.ts';
 import { openSystemEditor } from './panel-store.ts';
 import { GlyphPlate } from './GlyphPlate.tsx';
+import { PlanetScanFields, PlanetScanPills, planetScanLine } from './PlanetScan.tsx';
+import type { PlanetFacts } from '@atlas/core/planets';
 
 const HERO_BUTTON =
   'w-10 h-10 rounded-control bg-[rgba(5,8,17,0.7)] border border-hairline grid place-items-center text-ink hover:border-control-edge transition-colors duration-[var(--duration-micro)]';
@@ -157,6 +159,7 @@ export function SystemDetails() {
               <PlanetRow
                 planet={planet}
                 family={biomeFamily(facts, planet.biome)}
+                planetFacts={facts?.planets ?? null}
                 onOpen={() => {
                   openPlanet(planet.id);
                 }}
@@ -223,6 +226,7 @@ export function SystemDetails() {
         open={planetSheet.open}
         planet={system.planets.find(planet => planet.id === planetSheet.planetId)}
         session={planetSheet.session}
+        planetFacts={facts?.planets ?? null}
         onClose={closePlanet}
       />
     </div>
@@ -255,17 +259,22 @@ function Facts({ system }: { system: System }) {
             aria-hidden="true"
           />
           {STAR_CLASSES[system.star].label}
+          {system.spectralClass && <span className="font-mono text-ink-soft">{system.spectralClass}</span>}
         </span>
       ) : (
-        missing
+        system.spectralClass || missing
       )
     ],
     ['Race', system.race ? RACES[system.race] : missing],
-    ['Economy', system.economy || missing],
+    // As the galaxy map pairs them: "Prospecting // Opulent".
+    ['Economy', [system.economy, system.economyStrength].filter(Boolean).join(' // ') || missing],
     ['Wealth', system.wealth ? stars(system.wealth, 3) : missing, system.wealth ? 'text-units-amber-text' : ''],
     ['Conflict', system.conflict ? CONFLICT_LEVELS[system.conflict] : missing],
     ['Your rating', system.rating ? stars(system.rating, 5) : missing, system.rating ? 'text-units-amber-text' : '']
   ];
+  // "Water" and "Dissonant" show only when the map says so: their absence isn't something the player logged.
+  const flags = [system.water && 'Water', system.dissonant && 'Dissonant'].filter(Boolean).join(' · ');
+  if (flags) cells.splice(1, 0, ['On the map', flags]);
   return (
     <dl className="grid grid-cols-2 gap-px rounded-card overflow-hidden bg-hairline border border-hairline">
       {cells.map(([label, value, tone]) => (
@@ -330,10 +339,20 @@ function PortalAddress({ system }: { system: System }) {
   );
 }
 
-function PlanetRow({ planet, family, onOpen }: { planet: Planet; family: string | null; onOpen: () => void }) {
+function PlanetRow({
+  planet,
+  family,
+  planetFacts,
+  onOpen
+}: {
+  planet: Planet;
+  family: string | null;
+  planetFacts: PlanetFacts | null;
+  onOpen: () => void;
+}) {
   const base = planet.tags.includes('base');
   const note = planet.notes.split('\n').find(line => line.trim());
-  const sub = [planet.biome, note ? `“${note.trim()}”` : ''].filter(Boolean).join(' · ');
+  const sub = [planetScanLine(planet), note ? `“${note.trim()}”` : ''].filter(Boolean).join(' · ');
   return (
     <button
       type="button"
@@ -346,6 +365,7 @@ function PlanetRow({ planet, family, onOpen }: { planet: Planet; family: string 
       <span className="flex-1 min-w-0">
         <span className="block text-row font-semibold text-ink-bright break-words">{planet.name}</span>
         {sub && <span className="block text-caption text-ink-muted line-clamp-2">{sub}</span>}
+        <PlanetScanPills planet={planet} facts={planetFacts} />
       </span>
       {base && (
         <span className="h-[22px] px-2 rounded-full bg-scanner-cyan-tint text-quantity-cyan text-pill uppercase inline-flex items-center shrink-0">
@@ -412,12 +432,14 @@ function PlanetSheet({
   planet,
   open,
   session,
+  planetFacts,
   onClose
 }: {
   system: System;
   planet: Planet | undefined;
   open: boolean;
   session: number;
+  planetFacts: PlanetFacts | null;
   /** Stable (useCallback): the sheet's open effect depends on it. */
   onClose: () => void;
 }) {
@@ -438,7 +460,24 @@ function PlanetSheet({
       name: field('name'),
       biome: field('biome'),
       tags: field('tags'),
-      notes: field('notes')
+      notes: field('notes'),
+      scan: Object.fromEntries(
+        (
+          [
+            'descriptor',
+            'body',
+            'weather',
+            'sentinels',
+            'flora',
+            'fauna',
+            'abundance',
+            'resources',
+            'temperature',
+            'discoveredBy',
+            'discoveredOn'
+          ] as const
+        ).map(name => [name, field(name)])
+      )
     });
     onClose();
   };
@@ -457,7 +496,7 @@ function PlanetSheet({
         aria-labelledby="planetSheetTitle"
         aria-hidden={!open}
         inert={!open}
-        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${open ? '' : 'lg:translate-x-full'}`}
+        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${open ? '' : 'lg:translate-x-full'}`}
       >
         <PanelGrab onClose={onClose} label="Close planet" />
         <form
@@ -482,17 +521,6 @@ function PlanetSheet({
             <input name="name" required maxLength={80} defaultValue={planet?.name ?? ''} className={FIELD} />
           </label>
           <label className="flex flex-col gap-1.5 text-caption text-ink-muted">
-            Biome
-            <input
-              name="biome"
-              list="biomeOptions"
-              maxLength={40}
-              defaultValue={planet?.biome ?? ''}
-              placeholder="e.g. Frozen"
-              className={FIELD}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-caption text-ink-muted">
             Tags
             <input
               name="tags"
@@ -502,6 +530,7 @@ function PlanetSheet({
               className={FIELD}
             />
           </label>
+          <PlanetScanFields planet={planet} facts={planetFacts} />
           <label className="flex flex-col gap-1.5 text-caption text-ink-muted">
             Notes
             <textarea

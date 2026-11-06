@@ -63,6 +63,19 @@ The conclusion of Agricultural Research unlocks a repeatable mission from the Fa
 
 Blueprints:
 
+- [[Hydroponic Tray]]
+- [[Gutrot Flower]]
+- [[Frostwort]]
+- [[Solar Vine]]
+- [[Fungal Cluster]]
+- [[Gamma Weed]]
+- [[Gravitino Host]]
+- [[Venom Urchin]]
+- [[Albumen Pearl Orb]]
+- [[Echinocactus]]
+- [[Star Bramble]]
+- [[Mordite Root]]
+
 ## Mission Progression
 
 For a detailed chart of how this mission progresses, see [[Mission Progression]].

@@ -26,7 +26,7 @@ data: {"fields":{"name":"Swamp Terrain","type":"Geographical feature","descripti
 
 ## Summary
 
-**Swamp Terrain**, refers to a occurrence of [[planet]] surfaces that have no oceans or seas but feature small to medium size lakes of water the fill shallow or deep ravines, craters and MESA depressions. [[Moon|Moons]],  and  [[planet|planets]] will never have swamp terrain.
+**Swamp Terrain**, refers to a occurrence of [[planet]] surfaces that have no oceans or seas but feature small to medium size lakes of water the fill shallow or deep ravines, craters and MESA depressions. [[Moon|Moons]], [[Biome - Exotic|Exotic]] and [[Biome - Dead|Dead]] [[planet|planets]] will never have swamp terrain.
 
 A planet with swamp terrain will feature very limited water.
 

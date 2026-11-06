@@ -36,6 +36,8 @@ import {
 import { InvalidDump, followRedirect, scanDump } from './dump.ts';
 import { discover, reportMarkdown } from './discover.ts';
 import { GlyphTableSchema, glyphPageDigit, parseGlyphNames, type Glyph, type GlyphTable } from '@atlas/core/glyphs';
+import { GalaxyMapFactsSchema, parseEconomyNames, parseEconomyStrength, parseSpectralClasses, type GalaxyMapFacts } from '@atlas/core/galaxy-map';
+import { PlanetFactsSchema, biomePageName, resourceLinks, parseBiomeDescriptors, parseBiomeWeather, parseLifeWords, parseSentinelWords, type PlanetFacts } from '@atlas/core/planets';
 import { FACTS, checkFacts, currentGameVersion, type FactPage, type UpdatePage } from './facts.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -84,11 +86,12 @@ async function readArchive(): Promise<Map<number, ArchiveEntry>> {
 }
 
 // Compares the dump with the archive and returns what a sync would change.
-function plan(livePages: Page[], archive: Map<number, ArchiveEntry>) {
+function plan(livePages: Page[], archive: Map<number, ArchiveEntry>, dumpDate: string) {
   const writes: FileWrite[] = [];
   const deletes: string[] = [];
   const excluded: { title: string; reason: string }[] = [];
   const outdated: { title: string; archived: number | undefined; live: number }[] = [];
+  const newer: { title: string; archived: number; live: number }[] = [];
   const missing: string[] = [];
   const taken = new Set<string>();
   const kept = new Set<number>();
@@ -115,6 +118,14 @@ function plan(livePages: Page[], archive: Map<number, ArchiveEntry>) {
     if (factTitles.has(page.title))
       factPages.set(page.title, { path: `wiki/${file}`, url: article.meta.source, revId: page.revId, body: article.body });
     const existing = archive.get(page.pageId);
+    // Revision ids only grow, so an archived copy newer than the dump's (taken from the API before the mirror moved
+    // to dumps) stays as it is: an older dump never rolls a page back. Its facts still come from the archived copy.
+    if (existing?.meta.revId !== undefined && existing.meta.revId > page.revId) {
+      newer.push({ title: page.title, archived: existing.meta.revId, live: page.revId });
+      if (factTitles.has(page.title))
+        factPages.set(page.title, { path: `wiki/${existing.file}`, url: article.meta.source, revId: existing.meta.revId, body: parseFrontmatter(existing.text).body });
+      continue;
+    }
     if (!existing) missing.push(page.title);
     else if (existing.meta.revId !== page.revId)
       outdated.push({ title: page.title, archived: existing.meta.revId, live: page.revId });
@@ -124,11 +135,16 @@ function plan(livePages: Page[], archive: Map<number, ArchiveEntry>) {
   const removed: string[] = [];
   for (const [pageId, entry] of archive) {
     if (kept.has(pageId) || entry.meta.status === 'removed') continue;
+    // A page written after the dump was taken can't be in it: absent isn't removed, so it stays current.
+    if (dumpDate && entry.meta.revTimestamp && entry.meta.revTimestamp > dumpDate) {
+      newer.push({ title: entry.meta.title ?? '', archived: entry.meta.revId ?? 0, live: 0 });
+      continue;
+    }
     removed.push(entry.meta.title ?? '');
     writes.push({ file: entry.file, text: entry.text.replace(/^status: "current"$/m, 'status: "removed"') });
   }
   const unknownNames = [...recipeNames].filter(name => name && !titles.has(name.toLowerCase())).sort();
-  return { writes, deletes, excluded, outdated, missing, removed, titles, unknownNames, factPages };
+  return { writes, deletes, excluded, outdated, newer, missing, removed, titles, unknownNames, factPages };
 }
 
 // Recipe ingredients named by an old title (e.g. "Rigogen") reach their page through a wiki redirect in the dump.
@@ -170,7 +186,7 @@ async function sync({ dump, dryRun }: { dump: string; dryRun: boolean }): Promis
   // A renamed or deleted mechanics page: its archived copy is marked removed, and the facts citing it go stale.
   if (scan.mechanicsMissing.length) console.warn(`⚠️  Mechanics pages not in the dump: ${scan.mechanicsMissing.join(', ')}`);
 
-  const changes = plan(livePages, await readArchive());
+  const changes = plan(livePages, await readArchive(), scan.latest);
   const { stale: staleFacts } = checkFacts(changes.factPages);
   for (const fact of staleFacts) console.warn(`⚠️  Cited fact ${fact.id} (${fact.page}): ${fact.reason}. Update packages/wiki/src/facts.ts.`);
   const committedAliases = await fs.readFile(path.join(WIKI_DIR, 'aliases.json'), 'utf8').catch(() => '');
@@ -210,7 +226,9 @@ async function sync({ dump, dryRun }: { dump: string; dryRun: boolean }): Promis
     dumpDate: scan.latest,
     status: dryRun && differences ? 'differs' : 'match',
     pages,
-    matched: dryRun ? pages - changes.outdated.length - changes.missing.length : pages,
+    matched: dryRun ? pages - changes.outdated.length - changes.missing.length - changes.newer.length : pages,
+    // Pages the archive holds at a later revision than the dump: kept, never rolled back.
+    newerThanDump: changes.newer,
     obsolete: archived.filter(entry => entry.meta.status === 'current' && entry.meta.obsolete).length,
     excluded: changes.excluded.length,
     removed: archived
@@ -242,7 +260,7 @@ async function sync({ dump, dryRun }: { dump: string; dryRun: boolean }): Promis
     return !differences && !staleFacts.length;
   }
   console.log(
-    `✅ Synced ${pages} pages: ${changes.writes.length} written, ${changes.deletes.length} renamed, ${changes.removed.length} marked removed, ${changes.excluded.length} player-found pages skipped.`
+    `✅ Synced ${pages} pages: ${changes.writes.length} written, ${changes.deletes.length} renamed, ${changes.removed.length} marked removed, ${changes.newer.length} kept at a newer revision than the dump, ${changes.excluded.length} player-found pages skipped.`
   );
   return true;
 }
@@ -351,6 +369,8 @@ async function buildIndexes(): Promise<void> {
   }
   const { found, stale } = checkFacts(factPages);
   const glyphs = glyphTable(articles);
+  const planets = planetFacts(articles);
+  const galaxyMap = galaxyMapFacts(articles);
   for (const fact of stale) console.warn(`⚠️  Cited fact ${fact.id} (${fact.page}) left out: ${fact.reason}.`);
   // The game version the runs are checked against: the newest Update page.
   // Every item above was built with a title, category, path, url and fields, which is all an UpdatePage reads.
@@ -358,7 +378,7 @@ async function buildIndexes(): Promise<void> {
   if (!game) console.warn('⚠️  No current Update page: runs can\'t say which game version they were checked against.');
   await fs.writeFile(
     path.join(WIKI_DIR, 'facts.json'),
-    `${JSON.stringify({ schema: 1, facts: found, ...(game ? { game } : {}), glyphs }, null, 2)}\n`,
+    `${JSON.stringify({ schema: 1, facts: found, ...(game ? { game } : {}), glyphs, ...(planets ? { planets } : {}), ...(galaxyMap ? { galaxyMap } : {}) }, null, 2)}\n`,
     'utf8'
   );
   console.log(
@@ -387,6 +407,85 @@ function glyphTable(articles: { title: string; path?: unknown; source?: unknown;
     page: overview.title,
     path: String(overview.path),
     glyphs: glyphs.sort((a, b) => parseInt(a.digit, 16) - parseInt(b.digit, 16))
+  });
+}
+
+// What the planet editor offers: the biomes with their name prefixes and weather, the sentinel words by level, and the
+// discovery page's flora and fauna words. Unlike the glyphs, a gap only costs suggestions (the fields stay typed), so
+// a missing page warns and leaves the planets out rather than failing the build.
+type IndexedArticle = { title: string; path?: unknown; source?: unknown; removed?: unknown; revId?: unknown; body?: unknown };
+function planetFacts(articles: IndexedArticle[]): PlanetFacts | null {
+  const live = (article: IndexedArticle): article is IndexedArticle & { body: string } =>
+    article.source === 'wiki' && !article.removed && typeof article.body === 'string';
+  const source = (article: IndexedArticle) => ({ page: article.title, path: String(article.path), revId: Number(article.revId) });
+  const resourcePages = new Map(
+    articles
+      .filter(article => live(article) && (article as { category?: unknown }).category === 'resources')
+      .map(article => [article.title.toLowerCase(), article.title])
+  );
+  const biomes = articles.flatMap(article => {
+    const name = biomePageName(article.title);
+    if (!name || !live(article)) return [];
+    const resources = resourceLinks(article.body).flatMap(title => resourcePages.get(title.toLowerCase()) ?? []);
+    return [
+      {
+        ...source(article),
+        name,
+        descriptors: parseBiomeDescriptors(article.body),
+        weather: parseBiomeWeather(article.body),
+        resources: [...new Set(resources)]
+      }
+    ];
+  });
+  const sentinelPage = articles.find(article => article.title === 'Sentinel' && live(article));
+  const lifePage = articles.find(article => article.title === 'Planet - Discovery Menu' && live(article));
+  const sentinels = sentinelPage && live(sentinelPage) ? parseSentinelWords(sentinelPage.body) : null;
+  const life = lifePage && live(lifePage) ? parseLifeWords(lifePage.body) : null;
+  const problems = [
+    !biomes.length && 'no Biome pages',
+    ...biomes.filter(biome => !biome.descriptors.length).map(biome => `Biome - ${biome.name} lists no name prefixes`),
+    !sentinels && 'the Sentinel page no longer has its activity table',
+    !life && 'the Planet - Discovery Menu page no longer lists flora and fauna words'
+  ].filter(Boolean);
+  for (const problem of problems) console.warn(`⚠️  Planets: ${String(problem)}.`);
+  if (!sentinelPage || !lifePage || !sentinels || !life || !biomes.length) return null;
+  return PlanetFactsSchema.parse({
+    biomes: biomes.sort((a, b) => a.name.localeCompare(b.name)),
+    sentinels: { ...source(sentinelPage), ...sentinels },
+    life: { ...source(lifePage), ...life }
+  });
+}
+
+// What the system editor offers for the galaxy map's "F4 // Water" and "Prospecting // Opulent": the colour each
+// spectral class letter gives, the economy strength words, and each economy type's names. A gap costs suggestions
+// only, so it warns and leaves the block out.
+function galaxyMapFacts(articles: IndexedArticle[]): GalaxyMapFacts | null {
+  const page = (title: string) =>
+    articles.find(
+      (article): article is IndexedArticle & { body: string } =>
+        article.title === title && article.source === 'wiki' && !article.removed && typeof article.body === 'string'
+    );
+  const source = (article: IndexedArticle) => ({ page: article.title, path: String(article.path), revId: Number(article.revId) });
+  const spectralPage = page('Spectral class');
+  const economyPage = page('Economy');
+  const classes = spectralPage && parseSpectralClasses(spectralPage.body);
+  const strength = economyPage && parseEconomyStrength(economyPage.body);
+  const types = articles.flatMap(article => {
+    const name = /^(.+) Economy$/.exec(article.title)?.[1];
+    const found = name ? page(article.title) : undefined;
+    const names = found ? parseEconomyNames(found.body) : [];
+    return found && name && names.length ? [{ ...source(found), name, names }] : [];
+  });
+  const problems = [
+    !classes && 'the Spectral class page no longer has its class table',
+    !strength && 'the Economy page no longer has its strength words',
+    types.length < 7 && `only ${String(types.length)} economy types list their names`
+  ].filter(Boolean);
+  for (const problem of problems) console.warn(`⚠️  Galaxy map: ${String(problem)}.`);
+  if (!spectralPage || !economyPage || !classes || !strength || !types.length) return null;
+  return GalaxyMapFactsSchema.parse({
+    spectral: { ...source(spectralPage), classes },
+    economy: { ...source(economyPage), strength, types: types.sort((a, b) => a.name.localeCompare(b.name)) }
   });
 }
 

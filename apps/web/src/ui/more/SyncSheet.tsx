@@ -52,7 +52,7 @@ export function SyncSheet() {
         aria-label="Sync"
         aria-hidden={!shown}
         inert={!shown}
-        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 top-[max(84px,env(safe-area-inset-top))] rounded-t-sheet border-t ${shown ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${shown ? '' : 'lg:translate-x-full'}`}
+        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 top-[max(84px,env(safe-area-inset-top))] rounded-t-sheet border-t ${shown ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${shown ? '' : 'lg:translate-x-full'}`}
       >
         <PanelGrab onClose={closeSyncSheet} label="Close sync" />
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] lg:pb-6">

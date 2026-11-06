@@ -36,7 +36,7 @@ data: {"fields":{"image":"GAS.3.png","color":"Green","category":"Earth","type":"
 
 A pungent atmospheric gas. High concentrations are extremely hazardous to organic life.
 
-With the aid of specialised machinery, can be extracted from the atmospheres of , [[Biome - Barren|Desert]] and [[Biome - Volcanic|Volcanic]] planets.
+With the aid of specialised machinery, can be extracted from the atmospheres of [[Biome - Scorched|Scorched]], [[Biome - Barren|Desert]] and [[Biome - Volcanic|Volcanic]] planets.
 
 ## Source
 
