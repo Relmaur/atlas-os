@@ -20,7 +20,9 @@ const LIST_LIMIT = 12;
 const RECIPES_SHOWN = 5;
 const TOP_BUTTON =
   'w-11 h-11 shrink-0 rounded-control bg-slate-ground border border-control-edge grid place-items-center text-ink hover:border-control-edge-hover';
-const CARD = 'rounded-card bg-panel-glass border border-hairline p-4 flex flex-col gap-3 scroll-mt-28';
+// From lg the article is its own pane (round 6, d08), so its sections are headed blocks rather than boxes in a box.
+const CARD =
+  'rounded-card bg-panel-glass border border-hairline p-4 flex flex-col gap-3 scroll-mt-28 lg:rounded-none lg:bg-transparent lg:border-0 lg:p-0';
 const SECTION_ICON: Record<string, string> = {
   'quick facts': 'ph-info',
   source: 'ph-map-pin',
@@ -186,7 +188,7 @@ export function Article({
   );
 
   return (
-    <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_16rem] xl:gap-12">
+    <div className="article-layout xl:grid xl:grid-cols-[minmax(0,1fr)_16rem] xl:gap-12">
       <article className="min-w-0 flex flex-col gap-section max-w-2xl lg:max-w-[720px]">
         <header ref={header} id="articleHeader" className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
@@ -242,7 +244,10 @@ export function Article({
           {entry.summary ? <p className="text-[15px] leading-relaxed text-ink">{entry.summary}</p> : null}
           {split.intro ? <Markdown markdown={split.intro} index={index} q={q} prefix="intro-" /> : null}
           {parts.length > 2 && (
-            <nav aria-label="On this page" className="xl:hidden rounded-card border border-hairline px-4 py-3">
+            <nav
+              aria-label="On this page"
+              className="xl:hidden rounded-card border border-hairline px-4 py-3 lg:border-0 lg:px-0"
+            >
               <p className="text-label uppercase text-ink-label">On this page</p>
               <ol className="mt-1.5 flex flex-col">
                 {parts.slice(1).map((part, i) => (

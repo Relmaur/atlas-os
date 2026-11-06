@@ -158,6 +158,18 @@ test('axe on the shell at 1024, 1440 and 1920: the rail, the open sidebar and th
     await page.keyboard.press('Control+k');
     await expect(page.locator('#globalSearchInput')).toBeFocused();
     await axe();
+    // d15: typed, it's grouped (Your log, the Codex, Actions) and Tab jumps between the groups.
+    await page.locator('#globalSearchInput').fill('ek'); // the field keeps what was typed at the last width
+    const results = page.locator('#globalSearchResults');
+    await expect(results.getByRole('group', { name: 'Your log' })).toBeVisible();
+    await expect(results.getByRole('group', { name: 'Actions' })).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#globalSearchInput')).toBeFocused();
+    await expect(results.getByRole('group', { name: 'Codex' }).getByRole('option').first()).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await axe();
     await page.keyboard.press('Escape');
   }
 });

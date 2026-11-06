@@ -147,6 +147,12 @@ export async function loadAppState(): Promise<void> {
   changed();
 }
 
+/** The Codex page (round 6): the log as this device saved it, for the nav's counts and what's live. It never saves. */
+export function readSavedState(): void {
+  appState = buildState(null, readLocalState());
+  changed();
+}
+
 // The only way the state reaches storage. Returns true once it's written; every failure reaches the banner.
 // `touch: false` keeps the save time, for a copy merged from sync that this device didn't edit.
 export function persistState({ touch = true } = {}): boolean {

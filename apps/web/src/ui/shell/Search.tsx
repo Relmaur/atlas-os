@@ -19,6 +19,7 @@ import { readRecent, rememberRecent, type Recent } from './search-recent.ts';
 import { KINDS } from '../gear/kinds.ts';
 import { ClassPill, openGear } from '../gear/fleet-bits.tsx';
 import { newNote, openNote } from '../notes/note-nav.ts';
+import { useMedia } from '../parts/useMedia.ts';
 
 // How many of each kind "All" shows; a chip scoped to one kind shows up to SCOPED.
 const LIMIT = { gear: 3, notes: 4, systems: 5, codex: 6, guides: 6 } as const;
@@ -39,7 +40,8 @@ type Hit =
   | { type: 'note'; note: Note }
   | { type: 'system'; system: System }
   | { type: 'wiki'; entry: PreparedEntry }
-  | { type: 'book'; book: BookHit };
+  | { type: 'book'; book: BookHit }
+  | { type: 'action'; action: (typeof ACTIONS)[number] };
 interface Results {
   query: string;
   tokens: string[];
@@ -119,7 +121,7 @@ const count = (results: Results, scope: Scope): number =>
         guides: results.books
       }[scope].length;
 
-const recentOf = (hit: Hit): Recent =>
+const recentOf = (hit: Exclude<Hit, { type: 'action' }>): Recent =>
   hit.type === 'gear'
     ? { type: 'gear', id: hit.item.id, title: hit.item.name }
     : hit.type === 'note'
@@ -197,6 +199,22 @@ const ACTIONS: { label: string; icon: string; tile: string; run: () => void }[] 
   }
 ];
 
+// The palette's groups from lg (d15): what you logged together, then the Codex, the books, and what you can do.
+const DESK_GROUP: Record<Hit['type'], [key: string, label: string]> = {
+  gear: ['log', 'Your log'],
+  note: ['log', 'Your log'],
+  system: ['log', 'Your log'],
+  wiki: ['codex', 'Codex'],
+  book: ['guides', 'Guides'],
+  action: ['actions', 'Actions']
+};
+// The actions a typed search offers too, on the Workbench (d15), with what each starts.
+const DESK_ACTIONS: [label: string, sub: string][] = [
+  ['Log this system', 'Warped somewhere new'],
+  ['Start a timer', 'Refiner, crops or your own'],
+  ['New note', 'Markdown, linked to what you name']
+];
+
 export function Search() {
   const [results, setResults] = useState(EMPTY);
   const [scope, setScope] = useState<Scope>('all');
@@ -206,6 +224,7 @@ export function Search() {
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const open = focused || phoneOverlay;
+  const wide = useMedia('(min-width: 1024px)');
 
   const run = (query: string) => {
     setResults(find(query));
@@ -271,13 +290,28 @@ export function Search() {
     };
   });
 
-  const hits = shown(results, scope);
   const { tokens } = results;
+  // From lg there are no scope chips: everything, grouped, and the actions after (d15).
+  const hits: Hit[] = wide
+    ? [
+        ...shown(results, 'all'),
+        ...(tokens.length
+          ? DESK_ACTIONS.flatMap(([label]) => {
+              const action = ACTIONS.find(item => item.label === label);
+              return action ? [{ type: 'action' as const, action }] : [];
+            })
+          : [])
+      ]
+    : shown(results, scope);
   const activate = (hit: Hit | undefined) => {
     if (!hit) return;
     const query = results.query;
     close();
-    rememberRecent(recentOf(hit));
+    if (hit.type !== 'action') rememberRecent(recentOf(hit));
+    if (hit.type === 'action') {
+      hit.action.run();
+      return;
+    }
     if (hit.type === 'system') openSystem(hit.system.id);
     else if (hit.type === 'gear') openGear(hit.item.id);
     else if (hit.type === 'note') openNote(hit.note.id);
@@ -302,6 +336,15 @@ export function Search() {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       move(event.key === 'ArrowDown' ? 1 : -1);
+    } else if (event.key === 'Tab' && wide && hits.length && !event.shiftKey) {
+      // Tab: the first of the next group (d15), round to the first group after the last.
+      event.preventDefault();
+      const groupOf = (hit: Hit | undefined) => (hit ? DESK_GROUP[hit.type][0] : '');
+      const from = groupOf(hits[Math.max(active, 0)]);
+      let next = hits.findIndex((hit, i) => i > Math.max(active, 0) && groupOf(hit) !== from);
+      if (next === -1) next = 0;
+      setActive(next);
+      document.getElementById(`search-hit-${String(next)}`)?.scrollIntoView({ block: 'nearest' });
     } else if (event.key === 'Enter' && hits.length) {
       event.preventDefault();
       activate(hits[Math.max(active, 0)]);
@@ -324,11 +367,18 @@ export function Search() {
       className="search-hit"
     >
       {tile}
-      <span className="min-w-0 flex-1 flex flex-col gap-0.5">
-        <span className="text-[14px] font-semibold text-ink-bright truncate">{title}</span>
-        <span className="search-snippet text-caption text-ink-muted line-clamp-2">{sub}</span>
+      <span className="min-w-0 flex-1 flex flex-col gap-0.5 lg:flex-row lg:items-baseline lg:gap-3">
+        <span className="text-[14px] font-semibold text-ink-bright truncate lg:shrink-0 lg:max-w-[55%]">{title}</span>
+        <span className="search-snippet text-caption text-ink-muted line-clamp-2 lg:line-clamp-1 lg:min-w-0">
+          {sub}
+        </span>
       </span>
       {end}
+      {wide && i === active && (
+        <kbd className="nav-kbd shrink-0" aria-hidden="true">
+          ↵
+        </kbd>
+      )}
     </button>
   );
   const tile = (icon: string, lit = false) => (
@@ -364,10 +414,27 @@ export function Search() {
     group = { key, label, rows: [] };
     return group.rows;
   };
+  const intoFor = (hit: Hit, key: string, label: string) =>
+    wide ? into(DESK_GROUP[hit.type][0], DESK_GROUP[hit.type][1]) : into(key, label);
   hits.forEach((hit, i) => {
-    if (hit.type === 'gear') {
+    if (hit.type === 'action') {
+      const sub = DESK_ACTIONS.find(([label]) => label === hit.action.label)?.[1] ?? '';
+      intoFor(hit, 'actions', 'Actions').push(
+        option(
+          i,
+          <span
+            aria-hidden="true"
+            className={`w-[34px] h-[34px] shrink-0 rounded-[10px] grid place-items-center ${hit.action.tile}`}
+          >
+            <i className={`ph-bold ${hit.action.icon} text-[17px]`} />
+          </span>,
+          hit.action.label,
+          sub
+        )
+      );
+    } else if (hit.type === 'gear') {
       const { item } = hit;
-      into('gear', 'Ships & Multi-Tools').push(
+      intoFor(hit, 'gear', 'Ships & Multi-Tools').push(
         option(
           i,
           tile(KINDS[item.kind].icon, true),
@@ -378,7 +445,7 @@ export function Search() {
       );
     } else if (hit.type === 'note') {
       const { note } = hit;
-      into('notes', 'Notes').push(
+      intoFor(hit, 'notes', 'Notes').push(
         option(
           i,
           tile('ph-file-text'),
@@ -388,7 +455,7 @@ export function Search() {
       );
     } else if (hit.type === 'system') {
       const { system } = hit;
-      into('systems', 'Systems').push(
+      intoFor(hit, 'systems', 'Systems').push(
         option(
           i,
           <span
@@ -403,7 +470,7 @@ export function Search() {
       );
     } else if (hit.type === 'wiki') {
       const { entry } = hit;
-      into('codex', 'Codex').push(
+      intoFor(hit, 'codex', 'Codex').push(
         option(
           i,
           tile(categoryIcon(entry.category)),
@@ -418,7 +485,7 @@ export function Search() {
       );
     } else {
       const { book } = hit;
-      into('guides', 'Guides').push(
+      intoFor(hit, 'guides', 'Guides').push(
         option(
           i,
           tile('ph-book-open-text'),
@@ -477,23 +544,25 @@ export function Search() {
       <div id="globalSearchPanel" className={open ? 'search-panel' : 'hidden'}>
         {typed ? (
           <>
-            <div role="group" aria-label="Search in" className="search-chips">
-              {SCOPES.map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={scope === key}
-                  onClick={() => {
-                    setScope(key);
-                    setActive(-1);
-                    input.current?.focus();
-                  }}
-                  className="search-chip"
-                >
-                  {label} · {count(results, key)}
-                </button>
-              ))}
-            </div>
+            {!wide && (
+              <div role="group" aria-label="Search in" className="search-chips">
+                {SCOPES.map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={scope === key}
+                    onClick={() => {
+                      setScope(key);
+                      setActive(-1);
+                      input.current?.focus();
+                    }}
+                    className="search-chip"
+                  >
+                    {label} · {count(results, key)}
+                  </button>
+                ))}
+              </div>
+            )}
             <div id="globalSearchResults" role="listbox" aria-label="Search results" className="flex flex-col gap-1">
               {hits.length ? (
                 groups
@@ -589,6 +658,8 @@ export function Search() {
           move
           <kbd className="nav-kbd ml-3">↵</kbd>
           open
+          <kbd className="nav-kbd ml-3">Tab</kbd>
+          next group
           <kbd className="nav-kbd ml-3">Esc</kbd>
           close
         </span>

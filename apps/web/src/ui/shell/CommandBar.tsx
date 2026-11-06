@@ -10,6 +10,11 @@ import { openSession } from '../session/sheet-store.ts';
 import { useClock } from '../session/useClock.ts';
 import { timerKindName } from '../session/TimerRow.tsx';
 import { toggleSearch, useSearchOpen } from './Search.tsx';
+import { appHref, goToSession, onCodexPage, shellSearch } from './place.ts';
+
+const toSession = (): void => {
+  goToSession(openSession);
+};
 
 const SHOWN = 2; // timers in the bar; the rest are a count
 
@@ -64,7 +69,7 @@ function TimerItem({ timer, now }: { timer: Timer; now: number }) {
   const time = status.done ? 'done' : formatCountdown(status.remaining);
   return (
     <Item
-      onClick={openSession}
+      onClick={toSession}
       live="timer"
       label={`${[timerKindName(timer.kind), timer.label].filter(Boolean).join(' ')}, ${status.done ? 'done' : `${time} left`}`}
     >
@@ -92,7 +97,7 @@ function SyncItem() {
       ? ['ph-arrows-clockwise', 'Syncing', 'text-ink-muted']
       : ['ph-cloud-check', 'Synced', 'text-ready-emerald-pale'];
   return (
-    <Item href="#more" label={`${text}, open Settings`}>
+    <Item href={appHref('#more')} label={`${text}, open Settings`}>
       <i className={`ph-bold ${icon} text-[18px] ${tone}`} aria-hidden="true" />
       <span className={tone}>{text}</span>
     </Item>
@@ -112,7 +117,7 @@ export function CommandBar() {
     items.push(
       <Item
         key="session"
-        onClick={openSession}
+        onClick={toSession}
         live="session"
         label={`Session, ${formatDuration(now - Date.parse(session.startedAt))}`}
       >
@@ -124,17 +129,26 @@ export function CommandBar() {
   for (const timer of shown) items.push(<TimerItem key={timer.id} timer={timer} now={now} />);
   if (timers.length > SHOWN)
     items.push(
-      <Item key="more" onClick={openSession} label={`${String(timers.length - SHOWN)} more timers`}>
+      <Item key="more" onClick={toSession} label={`${String(timers.length - SHOWN)} more timers`}>
         <span className="font-mono text-ink-muted">{`+${String(timers.length - SHOWN)}`}</span>
       </Item>
     );
   if (sync.enabled) items.push(<SyncItem key="sync" />);
   return (
     <div id="commandBar" role="toolbar" aria-label="Search and what's live" className="command-bar">
-      <button type="button" onClick={toggleSearch} aria-expanded={searching} className="command-search">
+      <button
+        type="button"
+        onClick={() => {
+          shellSearch(toggleSearch);
+        }}
+        aria-expanded={onCodexPage() ? undefined : searching}
+        className="command-search"
+      >
         <i className="ph-bold ph-magnifying-glass text-[18px]" aria-hidden="true" />
         <span className="flex-1 min-w-0 truncate text-left">
-          <span className="command-name">Search systems, planets, the Codex…</span>
+          <span className="command-name">
+            {onCodexPage() ? 'Search the Codex…' : 'Search systems, planets, the Codex…'}
+          </span>
           <span className="command-short">Search…</span>
         </span>
         <kbd className="nav-kbd">Ctrl K</kbd>

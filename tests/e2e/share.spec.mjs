@@ -40,7 +40,7 @@ test('the Share sheet makes a postcard on the device, in three shapes, with the 
 
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    sheet.getByRole('button', { name: 'Save picture' }).click()
+    sheet.getByRole('button', { name: /^Save (picture|PNG)$/ }).click() // "Save PNG" from lg (d18)
   ]);
   expect(download.suggestedFilename()).toBe('ekwa-nexus-wide.png');
   const bytes = await fs.readFile(await download.path());
@@ -58,7 +58,9 @@ test('a ship has a Fleet card', async ({ page }) => {
   expect(violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
 });
 
-test('from lg sharing is a centred dialog, with the preview beside the choices', async ({ page }, testInfo) => {
+test('from lg sharing is a centred dialog: the choices left, the preview right with Save PNG under it (d18)', async ({
+  page
+}, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'wide screens');
   await page.goto('./#card');
   await page.getByRole('button', { name: 'Share' }).click();
@@ -68,8 +70,22 @@ test('from lg sharing is a centred dialog, with the preview beside the choices',
   const box = await dialog.boundingBox();
   expect(box.x + box.width / 2).toBeCloseTo(1440 / 2, 0);
   const preview = await page.locator('#sharePreview').boundingBox();
-  const save = await dialog.getByRole('button', { name: 'Save picture' }).boundingBox();
-  expect(save.x).toBeGreaterThanOrEqual(preview.x + preview.width);
+  const title = await dialog.getByRole('heading', { name: 'Share your card' }).boundingBox();
+  const save = await dialog.getByRole('button', { name: 'Save PNG' }).boundingBox();
+  expect(preview.x).toBeGreaterThanOrEqual(title.x + title.width);
+  expect(save.y).toBeGreaterThanOrEqual(preview.y + preview.height);
+  for (const width of [1024, 1920]) {
+    await page.setViewportSize({ width, height: width === 1024 ? 768 : 1080 });
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#shareSheet *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).include('#shareSheet').analyze();
+    expect(violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
+  }
   await page.keyboard.press('Escape');
   await expect(page.locator('#shareSheet')).toHaveCount(0);
 });

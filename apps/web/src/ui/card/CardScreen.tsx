@@ -12,6 +12,7 @@ import { ShareShell } from '../share/ShareSheet.tsx';
 import { CARD_EXPORT, drawTravellerExport } from '../share/draw.ts';
 import { CardBack, CardFront } from './TravellerCard.tsx';
 import { useTravellerCard } from './card-data.ts';
+import { STAR_ORDER, deepestReading, type TravellerCard } from '@atlas/core/traveller';
 
 const STILL = '(prefers-reduced-motion: reduce)';
 // The card's natural size, scaled as one piece in full screen so its type grows with it.
@@ -69,6 +70,7 @@ export function CardScreen() {
   const [motionOn, setMotionOn] = useState(() => !motionPrompt());
   const [full, setFull] = useState(false);
   const roomForBoth = useMedia('(min-width: 1280px)');
+  const wide = useMedia('(min-width: 1024px)');
   const both = roomForBoth && !full;
   const [scale, setScale] = useState(1);
   const asked = useRef(false);
@@ -179,6 +181,170 @@ export function CardScreen() {
     );
   };
 
+  const stageEl = (
+    <div
+      ref={overlay}
+      {...(full ? { role: 'dialog', 'aria-modal': true, 'aria-label': 'Traveller Card, full screen' } : {})}
+      className={full ? 'card-full' : 'contents'}
+    >
+      <span ref={safeInsets} className="card-full-inset" aria-hidden="true" />
+      {full && (
+        <>
+          <button
+            ref={closeButton}
+            type="button"
+            onClick={closeFull}
+            aria-label="Close full screen"
+            className="card-full-close"
+          >
+            <i className="ph-bold ph-x" aria-hidden="true" />
+          </button>
+          <p className="card-full-hint">Tap to flip · flick down to close</p>
+        </>
+      )}
+      <div
+        ref={stage}
+        id="travellerCard"
+        onPointerMove={event => {
+          const start = press.current;
+          if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > TAP_SLOP_PX) start.moved = true;
+          onPointerMove(event);
+        }}
+        onPointerDown={event => {
+          press.current = { x: event.clientX, y: event.clientY, at: event.timeStamp, moved: false };
+        }}
+        onPointerUp={event => {
+          const start = press.current;
+          if (full && start && event.clientY - start.y > FLICK_PX && event.timeStamp - start.at < FLICK_MS) closeFull();
+        }}
+        onPointerLeave={() => {
+          setTilt(stage.current, 0, 0);
+        }}
+        onClick={event => {
+          askMotion();
+          if (press.current?.moved) return; // a drag to tilt, not a tap
+          // A tap on the card flips it; its own controls (the back's tabs) don't.
+          if (!both && (!(event.target instanceof Element) || !event.target.closest('button'))) setFlipped(!flipped);
+        }}
+        style={
+          full
+            ? {
+                width: CARD_W,
+                height: CARD_H,
+                flex: 'none',
+                transform: `scale(${scale.toFixed(3)})`,
+                touchAction: flipped ? 'pan-y' : 'none' // the front tilts under a finger; the back scrolls
+              }
+            : undefined
+        }
+        className={
+          both
+            ? 'flex justify-center gap-6 w-full'
+            : `card-stage cursor-pointer select-none ${full ? '' : 'w-full max-w-[380px] aspect-[9/16]'}`
+        }
+      >
+        {both ? (
+          <>
+            <div className="card-stage w-[380px] aspect-[9/16] shrink-0 select-none">
+              <div className="card-tilt relative w-full h-full">
+                <section aria-label="Traveller Card, front" className="absolute inset-0">
+                  <CardFront card={card} art={art} lyPerRegion={lyPerRegion} game={game} animate={shown && !still} />
+                </section>
+              </div>
+            </div>
+            <div className="card-stage w-[380px] aspect-[9/16] shrink-0 select-none">
+              <div className="card-tilt relative w-full h-full">
+                <section aria-label="Traveller Card, back" className="absolute inset-0">
+                  <CardBack card={card} art={art} />
+                </section>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="card-tilt relative w-full h-full">
+            <div className={`card-flip relative w-full h-full ${flipped ? 'is-flipped' : ''}`}>
+              <section
+                aria-label="Traveller Card, front"
+                aria-hidden={flipped}
+                inert={flipped}
+                className="card-side absolute inset-0"
+              >
+                <CardFront
+                  card={card}
+                  art={art}
+                  lyPerRegion={lyPerRegion}
+                  game={game}
+                  animate={shown && !still && !flipped}
+                />
+              </section>
+              <section
+                aria-label="Traveller Card, back"
+                aria-hidden={!flipped}
+                inert={!flipped}
+                className="card-side card-side-back absolute inset-0"
+              >
+                <CardBack card={card} art={art} />
+              </section>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+  const share = (
+    <ShareShell
+      title="Share your card"
+      size={CARD_EXPORT}
+      open={sharing}
+      onClose={closeShare}
+      file={shareFileName(card.rank.title, 'traveller-card')}
+      shareTitle="My Traveller Card"
+      label={`Traveller Card picture: ${card.rank.title}, class ${card.cls}`}
+      draw={draw}
+    >
+      {null}
+    </ShareShell>
+  );
+
+  // The Workbench (round 6, d17): the card at its own size (never scaled to fill the screen), both faces once there's
+  // room, and what it says in the inspector beside it.
+  // Full screen stays in this tree (the overlay is fixed over everything), so the element asked to go full screen
+  // isn't swapped out from under the browser.
+  if (wide)
+    return (
+      <div className="card-desk grid h-full grid-cols-[minmax(0,1fr)_minmax(0,clamp(300px,26%,380px))] gap-[var(--spacing-pane-gap)]">
+        <div className="min-w-0 min-h-0 overflow-auto flex flex-col items-center">
+          {/* my-auto, not justify-center: a card taller than the room scrolls from its top instead of losing it. */}
+          <div className="my-auto w-full flex flex-col items-center gap-3 py-2">
+            {stageEl}
+            <p inert={full} className="text-caption text-ink-muted">
+              {both ? 'Front and back · tilts with the pointer' : 'Tilts with the pointer · click to flip'}
+            </p>
+            {!both && !full && (
+              <Button
+                icon="ph-arrows-clockwise"
+                onClick={() => {
+                  setFlipped(!flipped);
+                }}
+              >
+                {flipped ? 'Show the front' : 'Flip'}
+              </Button>
+            )}
+          </div>
+        </div>
+        <CardSide
+          inert={full}
+          card={card}
+          lyPerRegion={lyPerRegion}
+          onShare={() => {
+            setSharing(true);
+          }}
+          onFull={openFull}
+        />
+        {share}
+      </div>
+    );
+
   return (
     <div className="flex flex-col items-center gap-4 pt-[env(safe-area-inset-top)]">
       <header inert={full} className="w-full max-w-[380px] flex items-center justify-between gap-3 mt-4 lg:mt-0">
@@ -198,115 +364,7 @@ export function CardScreen() {
         </button>
       </header>
 
-      <div
-        ref={overlay}
-        {...(full ? { role: 'dialog', 'aria-modal': true, 'aria-label': 'Traveller Card, full screen' } : {})}
-        className={full ? 'card-full' : 'contents'}
-      >
-        <span ref={safeInsets} className="card-full-inset" aria-hidden="true" />
-        {full && (
-          <>
-            <button
-              ref={closeButton}
-              type="button"
-              onClick={closeFull}
-              aria-label="Close full screen"
-              className="card-full-close"
-            >
-              <i className="ph-bold ph-x" aria-hidden="true" />
-            </button>
-            <p className="card-full-hint">Tap to flip · flick down to close</p>
-          </>
-        )}
-        <div
-          ref={stage}
-          id="travellerCard"
-          onPointerMove={event => {
-            const start = press.current;
-            if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > TAP_SLOP_PX) start.moved = true;
-            onPointerMove(event);
-          }}
-          onPointerDown={event => {
-            press.current = { x: event.clientX, y: event.clientY, at: event.timeStamp, moved: false };
-          }}
-          onPointerUp={event => {
-            const start = press.current;
-            if (full && start && event.clientY - start.y > FLICK_PX && event.timeStamp - start.at < FLICK_MS)
-              closeFull();
-          }}
-          onPointerLeave={() => {
-            setTilt(stage.current, 0, 0);
-          }}
-          onClick={event => {
-            askMotion();
-            if (press.current?.moved) return; // a drag to tilt, not a tap
-            // A tap on the card flips it; its own controls (the back's tabs) don't.
-            if (!both && (!(event.target instanceof Element) || !event.target.closest('button'))) setFlipped(!flipped);
-          }}
-          style={
-            full
-              ? {
-                  width: CARD_W,
-                  height: CARD_H,
-                  flex: 'none',
-                  transform: `scale(${scale.toFixed(3)})`,
-                  touchAction: flipped ? 'pan-y' : 'none' // the front tilts under a finger; the back scrolls
-                }
-              : undefined
-          }
-          className={
-            both
-              ? 'flex justify-center gap-6 w-full'
-              : `card-stage cursor-pointer select-none ${full ? '' : 'w-full max-w-[380px] aspect-[9/16]'}`
-          }
-        >
-          {both ? (
-            <>
-              <div className="card-stage w-[380px] aspect-[9/16] shrink-0 select-none">
-                <div className="card-tilt relative w-full h-full">
-                  <section aria-label="Traveller Card, front" className="absolute inset-0">
-                    <CardFront card={card} art={art} lyPerRegion={lyPerRegion} game={game} animate={shown && !still} />
-                  </section>
-                </div>
-              </div>
-              <div className="card-stage w-[380px] aspect-[9/16] shrink-0 select-none">
-                <div className="card-tilt relative w-full h-full">
-                  <section aria-label="Traveller Card, back" className="absolute inset-0">
-                    <CardBack card={card} art={art} />
-                  </section>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="card-tilt relative w-full h-full">
-              <div className={`card-flip relative w-full h-full ${flipped ? 'is-flipped' : ''}`}>
-                <section
-                  aria-label="Traveller Card, front"
-                  aria-hidden={flipped}
-                  inert={flipped}
-                  className="card-side absolute inset-0"
-                >
-                  <CardFront
-                    card={card}
-                    art={art}
-                    lyPerRegion={lyPerRegion}
-                    game={game}
-                    animate={shown && !still && !flipped}
-                  />
-                </section>
-                <section
-                  aria-label="Traveller Card, back"
-                  aria-hidden={!flipped}
-                  inert={!flipped}
-                  className="card-side card-side-back absolute inset-0"
-                >
-                  <CardBack card={card} art={art} />
-                </section>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {stageEl}
 
       <div inert={full} className="contents">
         <p className="text-caption text-ink-muted">{both ? 'Tilt to inspect' : 'Tilt to inspect · tap to flip'}</p>
@@ -340,19 +398,101 @@ export function CardScreen() {
             Frontier
           </a>
         </nav>
-        <ShareShell
-          title="Share your card"
-          size={CARD_EXPORT}
-          open={sharing}
-          onClose={closeShare}
-          file={shareFileName(card.rank.title, 'traveller-card')}
-          shareTitle="My Traveller Card"
-          label={`Traveller Card picture: ${card.rank.title}, class ${card.cls}`}
-          draw={draw}
-        >
-          {null}
-        </ShareShell>
+        {share}
       </div>
     </div>
+  );
+}
+
+// What the card says, beside it on the Workbench (d17): its class and the next, how deep you've been, the star colours
+// you've logged, and the firsts most recently earned.
+function CardSide({
+  inert,
+  card,
+  lyPerRegion,
+  onShare,
+  onFull
+}: {
+  inert: boolean;
+  card: TravellerCard;
+  lyPerRegion: number | null;
+  onShare: () => void;
+  onFull: () => void;
+}) {
+  const deep = card.deepest && lyPerRegion ? deepestReading(card.deepest.regions, lyPerRegion).ly : '—';
+  const seen = STAR_ORDER.filter(star => card.stars[star] > 0).length;
+  const newest = [...card.firsts].sort((a, b) => b.at - a.at).slice(0, 4);
+  const stats: [string, string, string?][] = [
+    ['Class', card.cls, `${card.points.total.toLocaleString()} points`],
+    [
+      'Next class',
+      card.next?.cls ?? '—',
+      card.next ? `${card.next.cls} at ${card.next.points.toLocaleString()} points` : 'The top class'
+    ],
+    ['Deepest', deep],
+    ['Star colours', `${String(seen)} of ${String(STAR_ORDER.length)}`]
+  ];
+  return (
+    <aside
+      inert={inert}
+      aria-labelledby="cardTitle"
+      className="workbench-panel min-w-0 min-h-0 overflow-y-auto p-[22px] flex flex-col gap-5"
+    >
+      <div className="flex flex-col gap-1.5">
+        <h1 id="cardTitle" className="font-display font-extrabold text-[24px] leading-tight text-ink-bright">
+          Traveller Card
+        </h1>
+        <p className="text-sub text-ink-muted">
+          Grows as you explore. It keeps its card size rather than stretching to fill the screen.
+        </p>
+      </div>
+      <dl className="grid grid-cols-2 gap-2">
+        {stats.map(([label, value, more]) => (
+          <div key={label} className="min-w-0 rounded-control bg-slate-ground px-3 py-2.5">
+            <dt className="text-label uppercase text-ink-label">{label}</dt>
+            <dd title={more ?? value} className="font-mono text-[15px] text-ink-bright truncate">
+              {value}
+              {more && <span className="sr-only">, {more}</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <section aria-labelledby="cardFirstsTitle" className="flex flex-col gap-1">
+        <h2 id="cardFirstsTitle" className="font-display font-bold text-[15px] text-ink-bright">
+          Newest firsts
+        </h2>
+        {newest.length ? (
+          <ul className="flex flex-col">
+            {newest.map(first => (
+              <li key={first.key} className="py-2.5 border-t border-hairline first:border-t-0 text-sub text-ink">
+                {first.label}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-caption text-ink-muted">Your firsts (a new star colour, a new galaxy) stamp the card.</p>
+        )}
+      </section>
+      <div className="mt-auto flex flex-col gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <Button variant="primary" icon="ph-share-network" onClick={onShare}>
+            Share
+          </Button>
+          <a href="#cards" className={`${LINK} px-4`}>
+            Collection
+          </a>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <a href="#frontier" className={LINK}>
+            <i className="ph-bold ph-compass" aria-hidden="true" />
+            Frontier
+          </a>
+          <button type="button" onClick={onFull} className={LINK}>
+            <i className="ph-bold ph-corners-out" aria-hidden="true" />
+            Full screen
+          </button>
+        </div>
+      </div>
+    </aside>
   );
 }

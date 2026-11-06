@@ -23,6 +23,7 @@ import { KINDS } from '../gear/kinds.ts';
 import { Button } from '../parts/Button.tsx';
 import { PanelGrab, SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
 import { useGameVersion } from '../runs/run-bits.tsx';
+import { useMedia } from '../parts/useMedia.ts';
 import { Segments } from '../systems/editor-parts.tsx';
 import { drawFleetCard, drawPostcard, loadShareFonts, pictureBlob } from './draw.ts';
 
@@ -161,6 +162,21 @@ export function ShareShell({
         if (!isDismissal(error)) showToast('Couldn’t share the picture. Try saving it instead.');
       });
   };
+  // The picture straight to the clipboard, where the browser allows images there (Chromium, Safari).
+  // Outside a secure context the clipboard is missing, though its type says it's always there.
+  const canCopyImage =
+    typeof ClipboardItem !== 'undefined' && 'clipboard' in navigator && 'write' in navigator.clipboard;
+  const copyImage = () => {
+    navigator.clipboard
+      .write([new ClipboardItem({ 'image/png': get() })])
+      .then(() => {
+        showToast('Picture copied.');
+      })
+      .catch(() => {
+        showToast('Couldn’t copy the picture. Try saving it instead.');
+      });
+  };
+  const wide = useMedia('(min-width: 1024px)');
   const save = () => {
     get()
       .then(blob => {
@@ -185,69 +201,129 @@ export function ShareShell({
         aria-labelledby={titleId}
         aria-hidden={!open}
         inert={!open}
-        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[min(880px,calc(100vw-4rem))] lg:max-h-[88dvh] lg:rounded-card lg:border lg:overflow-hidden ${open ? '' : 'lg:invisible'}`}
+        className={`fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[min(880px,calc(100vw-4rem))] lg:max-h-[88dvh] lg:rounded-panel lg:border lg:overflow-hidden ${open ? '' : 'lg:invisible'}`}
       >
         <PanelGrab onClose={onClose} label="Close sharing" />
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-x-6 lg:pl-8 lg:pb-6">
-          <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 pb-1 bg-slate-deep lg:col-span-2">
-            <SheetGrab onClose={onClose} label="Close sharing" />
-            <div className="flex items-baseline justify-between gap-3">
-              <h2
-                ref={heading}
-                id={titleId}
-                tabIndex={-1}
-                className="font-display text-lg font-bold text-ink-bright focus:outline-hidden"
-              >
-                {title}
-              </h2>
-              <span
-                id={open ? 'shareSize' : undefined}
-                className="font-mono text-caption text-ink-muted whitespace-nowrap"
-              >
-                {size.width} × {size.height}
-              </span>
+        {wide ? (
+          // The Workbench (round 6, d18): what to put on the picture on the left, the picture on the right with what
+          // to do with it underneath.
+          <div className="flex-1 min-h-0 grid grid-cols-[340px_minmax(0,1fr)]">
+            <div className="min-h-0 overflow-y-auto p-6 flex flex-col gap-4 border-r border-hairline">
+              <div className="flex flex-col gap-1">
+                <h2
+                  ref={heading}
+                  id={titleId}
+                  tabIndex={-1}
+                  className="font-display text-[22px] font-extrabold text-ink-bright focus:outline-hidden"
+                >
+                  {title}
+                </h2>
+                <span id={open ? 'shareSize' : undefined} className="font-mono text-caption text-ink-muted">
+                  {size.width} × {size.height}
+                </span>
+              </div>
+              {children}
+              {copy && (
+                <Button icon="ph-file-text" onClick={copy} className="self-start">
+                  Copy as text
+                </Button>
+              )}
+              <p className="mt-auto text-caption text-ink-muted">
+                Made on this device, nothing uploaded. The picture carries a small ATLAS mark.
+              </p>
             </div>
-          </div>
-          <canvas
-            ref={canvas}
-            id={open ? 'sharePreview' : undefined}
-            role="img"
-            aria-label={label}
-            width={size.width}
-            height={size.height}
-            className="block mx-auto max-w-full max-h-[42dvh] lg:max-h-[70dvh] w-auto h-auto rounded-card"
-          />
-          {/* Beside the preview from lg (design/desktop-direction); on a phone these simply follow it. */}
-          <div className="contents lg:flex lg:flex-col lg:gap-4">
-            {children}
-            {phone ? (
-              <Button variant="primary" icon="ph-download-simple" onClick={share}>
-                Save to Photos
-              </Button>
-            ) : (
-              <Button variant="primary" icon="ph-download-simple" onClick={save}>
-                Save picture
-              </Button>
-            )}
-            {(sharing || copy) && (
-              <div className={`grid gap-2 ${sharing && copy ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <div className="min-w-0 min-h-0 p-6 flex flex-col gap-4 bg-[rgba(2,6,23,0.35)]">
+              <div className="flex-1 min-h-0 grid place-items-center">
+                <canvas
+                  ref={canvas}
+                  id={open ? 'sharePreview' : undefined}
+                  role="img"
+                  aria-label={label}
+                  width={size.width}
+                  height={size.height}
+                  className="block max-w-full max-h-[62dvh] w-auto h-auto rounded-card"
+                />
+              </div>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button onClick={onClose}>Cancel</Button>
+                {canCopyImage && (
+                  <Button icon="ph-copy" onClick={copyImage}>
+                    Copy image
+                  </Button>
+                )}
                 {sharing && (
                   <Button icon="ph-link-simple" onClick={share}>
                     Share…
                   </Button>
                 )}
-                {copy && (
-                  <Button icon="ph-file-text" onClick={copy}>
-                    Copy as text
-                  </Button>
-                )}
+                <Button variant="primary" size="M" icon="ph-download-simple" onClick={save}>
+                  Save PNG
+                </Button>
               </div>
-            )}
-            <p className="text-caption text-ink-muted text-center">
-              Made on this device, nothing uploaded. The picture carries a small ATLAS mark.
-            </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-x-6 lg:pl-8 lg:pb-6">
+            <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 pb-1 bg-slate-deep lg:col-span-2">
+              <SheetGrab onClose={onClose} label="Close sharing" />
+              <div className="flex items-baseline justify-between gap-3">
+                <h2
+                  ref={heading}
+                  id={titleId}
+                  tabIndex={-1}
+                  className="font-display text-lg font-bold text-ink-bright focus:outline-hidden"
+                >
+                  {title}
+                </h2>
+                <span
+                  id={open ? 'shareSize' : undefined}
+                  className="font-mono text-caption text-ink-muted whitespace-nowrap"
+                >
+                  {size.width} × {size.height}
+                </span>
+              </div>
+            </div>
+            <canvas
+              ref={canvas}
+              id={open ? 'sharePreview' : undefined}
+              role="img"
+              aria-label={label}
+              width={size.width}
+              height={size.height}
+              className="block mx-auto max-w-full max-h-[42dvh] lg:max-h-[70dvh] w-auto h-auto rounded-card"
+            />
+            {/* Beside the preview from lg (design/desktop-direction); on a phone these simply follow it. */}
+            <div className="contents lg:flex lg:flex-col lg:gap-4">
+              {children}
+              {phone ? (
+                <Button variant="primary" icon="ph-download-simple" onClick={share}>
+                  Save to Photos
+                </Button>
+              ) : (
+                <Button variant="primary" icon="ph-download-simple" onClick={save}>
+                  Save picture
+                </Button>
+              )}
+              {(sharing || copy) && (
+                <div className={`grid gap-2 ${sharing && copy ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  {sharing && (
+                    <Button icon="ph-link-simple" onClick={share}>
+                      Share…
+                    </Button>
+                  )}
+                  {copy && (
+                    <Button icon="ph-file-text" onClick={copy}>
+                      Copy as text
+                    </Button>
+                  )}
+                </div>
+              )}
+              <p className="text-caption text-ink-muted text-center">
+                Made on this device, nothing uploaded. The picture carries a small ATLAS mark.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

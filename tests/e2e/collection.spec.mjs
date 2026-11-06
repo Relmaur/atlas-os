@@ -31,7 +31,7 @@ test('the collection: cards from the log, flip, next, copy and a 4:5 picture', a
   await expect(sheet.locator('#shareSize')).toHaveText('1080 × 1350');
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    sheet.getByRole('button', { name: 'Save picture' }).click()
+    sheet.getByRole('button', { name: /^Save (picture|PNG)$/ }).click() // "Save PNG" from lg (d18)
   ]);
   expect(download.suggestedFilename()).toMatch(/-card\.png$/);
   const bytes = await fs.readFile(await download.path());

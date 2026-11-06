@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from './fixtures.mjs';
 
 test('the Codex landing shows the verification result and all categories', async ({ page }) => {
@@ -111,4 +112,34 @@ test('a new article saves as a draft and opens', async ({ page }) => {
   expect((await download).suggestedFilename()).toBe('Test_Notes.md');
   await expect(page.locator('#articleHeader h1')).toHaveText('Test Notes');
   await expect(page.locator('#articleBody [data-md] a', { hasText: 'Oxygen' })).toBeVisible();
+});
+
+test('d08: a Codex article on the Workbench at 1024, 1440 and 1920 has no text out of its box and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./wiki/#/a/wiki%2Fresources%2FFrost_Crystal.md?q=frost');
+    await expect(page.locator('#articleHeader h1')).toHaveText('Frost Crystal');
+    // The app's nav frames this page too, with the Codex marked and the app a folder up.
+    const nav = page.getByRole('navigation', { name: 'Primary' });
+    await expect(nav.getByRole('link', { name: /^Codex/ })).toHaveAttribute('aria-current', 'page');
+    await expect(nav.getByRole('link', { name: /^Systems/ })).toHaveAttribute('href', '../#systems');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#codexRoot *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
 });

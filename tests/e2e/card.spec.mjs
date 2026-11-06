@@ -98,7 +98,8 @@ test('full screen: the card alone, clear of the notch, flips on a tap and closes
   );
   await page.getByRole('button', { name: 'Close full screen' }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
+  // The screen is back: its Full screen button is on a phone's top bar and in the Workbench's inspector (d17).
+  await expect(page.getByRole('button', { name: 'Full screen' })).toBeVisible();
 });
 
 test('from xl both faces show side by side, and full screen is still the one card that flips', async ({
@@ -116,4 +117,33 @@ test('from xl both faces show side by side, and full screen is still the one car
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Full screen' }).click();
   await expect(page.locator('#travellerCard .card-flip')).toBeVisible();
+});
+
+test('d17: the Traveller Card on the Workbench at 1024, 1440 and 1920 keeps its size, has no text out of its box and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./#card');
+    await expect(page.locator('#cardTitle')).toBeVisible();
+    // Never scaled up: each face is the card's own 380px at every width.
+    for (const face of await page.locator('#travellerCard .card-stage, #travellerCard.card-stage').all())
+      expect(Math.round((await face.boundingBox()).width)).toBeLessThanOrEqual(380);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#sec-card aside *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
 });

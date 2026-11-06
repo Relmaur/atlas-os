@@ -12,6 +12,7 @@ import { useLoaded, useOutlawReady } from './counts.ts';
 import { toggleNav, useNavOpen } from './nav-store.ts';
 import { toggleSearch, useSearchOpen } from './Search.tsx';
 import { useSection } from './section-store.ts';
+import { appHref, onCodexPage, shellSearch } from './place.ts';
 
 interface Item {
   href: string;
@@ -90,7 +91,7 @@ function useGroups(): Group[] {
     {
       label: 'Knowledge',
       items: [
-        { href: 'wiki/', icon: 'ph-books', label: 'Codex', sections: [] },
+        { href: 'wiki/', icon: 'ph-books', label: 'Codex', sections: ['codex'] },
         {
           href: '#guides',
           icon: 'ph-book-open-text',
@@ -134,7 +135,7 @@ function SyncLine() {
           'text-ready-emerald-pale'
         ];
   return (
-    <a href="#more" className={`nav-link ${tone}`}>
+    <a href={appHref('#more')} className={`nav-link ${tone}`}>
       <i className={`ph-bold ${icon}`} aria-hidden="true" />
       <span className="nav-name">{text}</span>
     </a>
@@ -149,7 +150,7 @@ function Link({ item, open, at, children }: { item: Item; open: boolean; at: str
   return (
     <>
       <a
-        href={item.href}
+        href={appHref(item.href)}
         aria-current={current ? 'page' : undefined}
         aria-label={open ? undefined : spoken}
         className="nav-link"
@@ -184,7 +185,7 @@ function RecentSystems() {
   return (
     <>
       {recent.map((system, i) => (
-        <a key={system.id} href={`#system/${encodeURIComponent(system.id)}`} className="nav-link nav-sub">
+        <a key={system.id} href={appHref(`#system/${encodeURIComponent(system.id)}`)} className="nav-link nav-sub">
           <StarDot system={system} size="w-[7px] h-[7px]" />
           <span className="nav-name">{system.name}</span>
           <span className="nav-count">{i === 0 ? 'here' : short(latest(system))}</span>
@@ -197,27 +198,31 @@ function RecentSystems() {
 function RunShortcuts() {
   return (
     <>
-      <a href="#outlaw" className="nav-link nav-sub">
+      <a href={appHref('#outlaw')} className="nav-link nav-sub">
         <i className="ph-bold ph-plus" aria-hidden="true" />
         <span className="nav-name">Outlaw stations</span>
       </a>
-      <button
-        type="button"
-        onClick={() => {
-          openRunEditor();
-        }}
-        className="nav-link nav-sub"
-      >
-        <i className="ph-bold ph-plus" aria-hidden="true" />
-        <span className="nav-name">New run</span>
-      </button>
+      {/* The run editor is the app's; from the Codex page this would only lead away. */}
+      {!onCodexPage() && (
+        <button
+          type="button"
+          onClick={() => {
+            openRunEditor();
+          }}
+          className="nav-link nav-sub"
+        >
+          <i className="ph-bold ph-plus" aria-hidden="true" />
+          <span className="nav-name">New run</span>
+        </button>
+      )}
     </>
   );
 }
 
 export function WorkbenchNav() {
   const open = useNavOpen();
-  const at = useSection();
+  const section = useSection();
+  const at = onCodexPage() ? 'codex' : section;
   const searching = useSearchOpen();
   const groups = useGroups();
   const toggle = (
@@ -250,8 +255,10 @@ export function WorkbenchNav() {
       )}
       <button
         type="button"
-        onClick={toggleSearch}
-        aria-expanded={searching}
+        onClick={() => {
+          shellSearch(toggleSearch);
+        }}
+        aria-expanded={onCodexPage() ? undefined : searching}
         aria-label={open ? undefined : 'Search and quick actions (Ctrl K)'}
         className="nav-link nav-search"
       >

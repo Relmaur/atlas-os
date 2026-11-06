@@ -1721,7 +1721,14 @@ label.list-row:active {
     border-radius: var(--radius-panel);
   }
   /* Screens made of their own panels (Home, d03): the content area is only the room they sit in. */
-  body:is([data-section='home'], [data-section='map'], [data-section='plan'], [data-section='more']) main.app-main {
+  body:is(
+      [data-section='home'],
+      [data-section='map'],
+      [data-section='plan'],
+      [data-section='more'],
+      [data-section='card']
+    )
+    main.app-main {
     padding: 0;
     background: none;
     border: 0;
@@ -1730,7 +1737,8 @@ label.list-row:active {
   body[data-section='home'] :is(#sec-home, #homeRoot),
   body[data-section='map'] :is(#sec-map, #mapRoot),
   body[data-section='plan'] :is(#sec-plan, #planRoot),
-  body[data-section='more'] :is(#sec-more, #moreRoot) {
+  body[data-section='more'] :is(#sec-more, #moreRoot),
+  body[data-section='card'] :is(#sec-card, #cardRoot) {
     height: 100%;
   }
   body[data-section='more'] #sec-more {
@@ -1973,22 +1981,113 @@ label.list-row:active {
   body.search-open .search-foot {
     display: flex;
   }
+  /* The palette is the box: its groups are rows, not boxes in it, and the selected row is marked by a bar. */
+  body.search-open #globalSearch .search-list {
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  body.search-open #globalSearch .search-list > * + * {
+    border-top: 0;
+  }
+  body.search-open #globalSearch .search-hit {
+    min-height: 48px;
+    border-radius: calc(var(--radius-panel) - 6px);
+  }
+  body.search-open #globalSearch .search-hit[aria-selected='true'] {
+    background: var(--color-scanner-cyan-tint);
+    box-shadow: inset 3px 0 0 var(--color-scanner-cyan-glow);
+  }
+  body.search-open #globalSearch .search-hit > span[aria-hidden='true']:first-child {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    background: none;
+  }
 }
 
-/* The Codex page, from 1024: the same rail, and an article beside the search and results. */
+/* The Codex page, from 1024 (round 6, d08): the app's nav and command bar, the search and results in a list pane, the
+   article in its own, and its index in a third from xl. The window scrolls, so the article's reading marks keep
+   working; the list and the index are sticky, and a band under the command bar hides what scrolls beneath it. */
 @media (min-width: 1024px) {
-  #codexRoot {
-    padding-left: 88px;
+  body.codex-page main.app-main.codex-desk {
+    height: auto;
+    overflow: visible;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  body.codex-page::before {
+    content: '';
+    position: fixed;
+    z-index: 43;
+    inset: 0 0 auto 0;
+    height: calc(var(--workbench-top) - var(--spacing-pane-gap));
+    background: #050811;
+  }
+  html:has(body.codex-page) {
+    scroll-padding-top: calc(var(--workbench-top) + 8px);
+  }
+  #codexRoot .codex-split {
+    display: grid;
+    grid-template-columns: var(--list-width, 340px) minmax(0, 1fr);
+    gap: var(--spacing-pane-gap);
+    align-items: start;
+  }
+  body[data-nav='open'] #codexRoot .codex-split {
+    --list-width: 300px;
   }
   #codexRoot .codex-list {
     position: sticky;
-    top: 6rem;
-    max-height: calc(100dvh - 7rem);
+    top: var(--workbench-top);
+    max-height: calc(100dvh - var(--workbench-top) - var(--spacing-float));
     overflow-y: auto;
-    padding: 2px;
+    padding: 18px;
+  }
+  /* Results in the narrow list pane: one padded row (not a padded row in a padded item), a one-line excerpt. */
+  #codexRoot .codex-list .result {
+    padding: 0;
+    border-radius: var(--radius-control);
+  }
+  #codexRoot .codex-list .result > button {
+    padding: 10px 8px;
+  }
+  #codexRoot .codex-list .result > a {
+    margin-top: 10px;
+  }
+  #codexRoot .codex-list .result .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
   }
   #codexRoot .codex-list nav[aria-label='Groups'] {
     grid-template-columns: repeat(2, minmax(0, 1fr)); /* three to a row would cut their names in this narrow pane */
+  }
+  #codexRoot .article-layout {
+    gap: var(--spacing-pane-gap);
+  }
+  #codexRoot .article-layout > article {
+    max-width: none;
+    padding: 24px 30px 30px;
+    background: rgba(11, 19, 37, 0.86);
+    border: 1px solid var(--color-nav-edge);
+    border-radius: var(--radius-panel);
+  }
+  #codexRoot .article-layout > article > * {
+    max-width: 720px;
+  }
+  #codexRoot #articleRail {
+    top: var(--workbench-top);
+    max-height: calc(100dvh - var(--workbench-top) - var(--spacing-float));
+    padding: 18px;
+    background: rgba(11, 19, 37, 0.86);
+    border: 1px solid var(--color-nav-edge);
+    border-radius: var(--radius-panel);
+  }
+}
+@media (min-width: 1600px) {
+  #codexRoot .codex-split {
+    --list-width: 380px;
   }
 }
 

@@ -156,30 +156,31 @@ export function Codex() {
     ) : null;
   return (
     <>
-      <Header
-        onNew={() => {
-          setCreating(true);
-        }}
-      />
-      <main
-        id="codexMain"
-        className="app-main max-w-[1400px] mx-auto px-4 sm:px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] lg:pt-5 pb-28 lg:py-8"
-      >
-        {data.status !== 'ready' ? (
-          <CodexLoading />
-        ) : route.view === 'article' ? (
-          wide ? (
-            <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-8 items-start">
-              <div className="codex-list">{browsePane}</div>
+      {wide ? (
+        // The Workbench (round 6, d08): the search and results in a list pane, the article beside it. The window
+        // still scrolls (the article's reading marks follow it); the list and the article's index stay in view.
+        <main id="codexMain" className="app-main codex-desk">
+          {data.status !== 'ready' ? (
+            <div className="workbench-panel p-6">
+              <CodexLoading />
+            </div>
+          ) : route.view === 'article' ? (
+            <div className="codex-split">
+              <div className="codex-list workbench-panel">{browsePane}</div>
               {article}
             </div>
           ) : (
-            article
-          )
-        ) : (
-          browsePane
-        )}
-      </main>
+            <div className="workbench-panel px-6 py-5">{browsePane}</div>
+          )}
+        </main>
+      ) : (
+        <main
+          id="codexMain"
+          className="app-main max-w-[1400px] mx-auto px-4 sm:px-6 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-28"
+        >
+          {data.status !== 'ready' ? <CodexLoading /> : route.view === 'article' ? article : browsePane}
+        </main>
+      )}
       {data.status === 'ready' ? (
         <>
           <QuickLook
@@ -267,27 +268,5 @@ export function SearchField({
         /
       </kbd>
     </label>
-  );
-}
-
-// From lg, beside the rail: the Codex's own name and New article. Below lg the tab bar and the screens do this.
-function Header({ onNew }: { onNew: () => void }) {
-  return (
-    <header className="app-header hidden lg:block sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
-      <div className="max-w-[1400px] mx-auto h-16 px-6 flex items-center gap-4">
-        <a href="#/" className="font-display font-bold tracking-wider text-emerald-300 shrink-0 rounded-lg">
-          CODEX
-        </a>
-        <button
-          type="button"
-          onClick={onNew}
-          aria-label="New article"
-          className="ml-auto shrink-0 h-10 px-3 rounded-xl border border-ready-emerald-edge bg-ready-emerald-tint text-ready-emerald-text text-sm font-semibold flex items-center gap-2"
-        >
-          <i className="ph-bold ph-note-pencil text-base" aria-hidden="true" />
-          New article
-        </button>
-      </div>
-    </header>
   );
 }

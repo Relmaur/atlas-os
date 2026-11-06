@@ -111,7 +111,7 @@ function Landing(props: Props) {
             type="button"
             onClick={props.onNew}
             aria-label="Write an article"
-            className="lg:hidden w-11 h-11 rounded-control border border-control-edge bg-slate-ground grid place-items-center text-ink hover:border-control-edge-hover"
+            className="w-11 h-11 rounded-control border border-control-edge bg-slate-ground grid place-items-center text-ink hover:border-control-edge-hover"
           >
             <i className="ph-bold ph-note-pencil text-lg" aria-hidden="true" />
           </button>
@@ -147,7 +147,7 @@ function Landing(props: Props) {
           ))}
         </nav>
         <h2 className="text-label uppercase text-ink-label mt-2">Recently edited on the wiki</h2>
-        <ul className="rounded-card bg-panel-glass border border-hairline divide-y divide-hairline overflow-hidden">
+        <ul className="rounded-card bg-panel-glass border border-hairline divide-y divide-hairline overflow-hidden lg:rounded-none lg:bg-transparent lg:border-0">
           {props.listed.map((item, i) => (
             <li key={String(item.entry.path)}>
               <a
@@ -244,7 +244,10 @@ function Results(props: Props) {
       )}
 
       {filtersOpen && (
-        <div id="codexFilters" className="rounded-card bg-panel-glass border border-hairline p-4 flex flex-col gap-4">
+        <div
+          id="codexFilters"
+          className="rounded-card bg-panel-glass border border-hairline p-4 flex flex-col gap-4 lg:rounded-control lg:bg-slate-ground lg:border-0"
+        >
           <Filter label="Group">
             <button
               type="button"
@@ -351,7 +354,7 @@ function Results(props: Props) {
         {props.listed.length ? (
           <ul
             aria-label="Articles"
-            className="rounded-card bg-panel-glass border border-hairline divide-y divide-hairline overflow-hidden"
+            className="rounded-card bg-panel-glass border border-hairline divide-y divide-hairline overflow-hidden lg:rounded-none lg:bg-transparent lg:border-0"
           >
             {props.listed.map((item, i) => {
               const entry = item.entry;

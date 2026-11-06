@@ -1,4 +1,4 @@
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
@@ -11,8 +11,13 @@ import { StorageBanner, reportStorage } from './StorageBanner.tsx';
 import { showSection } from './section-store.ts';
 import { setWikiEntries } from './wiki-index.ts';
 import { prepare } from '@atlas/core/search';
+import { setWide } from '../test-media.ts';
 
 vi.mock('../systems/panel-store.ts', () => ({ openSystem: vi.fn(), openSystemEditor: vi.fn() }));
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 beforeEach(async () => {
   localStorage.clear();
@@ -40,6 +45,7 @@ beforeEach(async () => {
 });
 
 test('the search lists matching systems, moves with the arrows and opens the chosen one with Enter', async () => {
+  setWide(false); // the phone's search, with its scope chips; the palette's groups (d15) are tested below
   render(<Search />);
   const input = screen.getByRole('combobox');
   await userEvent.type(input, 'e');
@@ -55,6 +61,7 @@ test('the search lists matching systems, moves with the arrows and opens the cho
 });
 
 test('a search typed before the wiki index arrives fills in its wiki results when it does', async () => {
+  setWide(false); // its count is on the phone's chip
   render(<Search />);
   await userEvent.type(screen.getByRole('combobox'), 'oxygen');
   expect(screen.queryByRole('group', { name: 'Codex' })).toBeNull();
@@ -68,6 +75,7 @@ test('a search typed before the wiki index arrives fills in its wiki results whe
 });
 
 test('a chip scopes the results to one kind, and says when that kind has none', async () => {
+  setWide(false); // the phone's search, with its scope chips; the palette's groups (d15) are tested below
   act(() => {
     setWikiEntries([]); // an earlier test's Oxygen would count too
   });
@@ -99,6 +107,7 @@ test('an empty field offers the quick actions, and lists what was opened from se
 });
 
 test('a search with no match says so', async () => {
+  setWide(false); // the phone's search, with its scope chips; the palette's groups (d15) are tested below
   render(<Search />);
   await userEvent.type(screen.getByRole('combobox'), 'zzzz');
   expect(screen.getByRole('listbox').textContent).toContain('Nothing matches “zzzz”');
@@ -183,4 +192,37 @@ test('a failed save raises the banner with an export, and it can be dismissed', 
   expect(screen.getByRole('button', { name: 'Export backup' })).toBeTruthy();
   await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
   expect(screen.queryByRole('alert')).toBeNull();
+});
+
+test('d15: on a computer the palette groups your log, the Codex and actions, and Tab jumps to the next group', async () => {
+  setWide(true);
+  act(() => {
+    setWikiEntries([
+      prepare({ title: 'Ekwa Pearl', category: 'resources', path: 'wiki/resources/Ekwa_Pearl.md', summary: 'A pearl.' })
+    ]);
+  });
+  render(<Search />);
+  const input = screen.getByRole('combobox');
+  await userEvent.type(input, 'ekwa');
+  const list = screen.getByRole('listbox');
+  expect(
+    within(list)
+      .getAllByRole('group')
+      .map(group => group.getAttribute('aria-labelledby'))
+  ).toEqual(['search-group-log', 'search-group-codex', 'search-group-actions']);
+  expect(screen.queryByRole('group', { name: 'Search in' })).toBeNull();
+  const actions = within(within(list).getByRole('group', { name: 'Actions' })).getAllByRole('option');
+  expect(actions.map(option => option.textContent)).toEqual([
+    expect.stringContaining('Log this system'),
+    expect.stringContaining('Start a timer'),
+    expect.stringContaining('New note')
+  ]);
+  // Your log holds Ekwa Nexus (option 0); Tab goes to the Codex's first (1), then the actions' (2), then round.
+  await userEvent.keyboard('{Tab}');
+  expect(input.getAttribute('aria-activedescendant')).toBe('search-hit-1');
+  await userEvent.keyboard('{Tab}');
+  expect(input.getAttribute('aria-activedescendant')).toBe('search-hit-2');
+  expect(actions[0]?.id).toBe('search-hit-2');
+  await userEvent.keyboard('{Tab}');
+  expect(input.getAttribute('aria-activedescendant')).toBe('search-hit-0');
 });

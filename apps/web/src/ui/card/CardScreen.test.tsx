@@ -6,10 +6,12 @@ import { setAppState } from '../../app/store.ts';
 import { setFactsForTests } from '../gear/facts-store.ts';
 import { setGalaxiesForTests } from '../systems/galaxies-store.ts';
 import { CardScreen } from './CardScreen.tsx';
+import { setWide } from '../test-media.ts';
 
 vi.mock('../shell/section-store.ts', () => ({ useSection: () => 'card', goBack: vi.fn() }));
 
 beforeEach(() => {
+  setWide(false); // the phone's screen; the Workbench's (d17) is tested at the end
   setFactsForTests({
     schema: 1,
     facts: {
@@ -29,6 +31,7 @@ beforeEach(() => {
   );
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   setFactsForTests(null);
   setGalaxiesForTests(null);
 });
@@ -92,4 +95,20 @@ test('on iOS the first tap asks for motion, once, and then the phone tilts the c
     expect(Number(card?.style.getPropertyValue('--tilt-x'))).toBeGreaterThan(0.1);
   });
   vi.unstubAllGlobals();
+});
+
+test('d17: on a computer the card keeps its size beside an inspector of its class, depth, colours and firsts', async () => {
+  setWide(true);
+  render(<CardScreen />);
+  expect(screen.getByRole('heading', { level: 1, name: 'Traveller Card' })).toBeTruthy();
+  const side = screen.getByRole('complementary', { name: 'Traveller Card' });
+  expect(within(side).getByText('Deepest').nextElementSibling?.textContent).toBe('102,000 ly');
+  expect(within(side).getByText('Star colours').nextElementSibling?.textContent).toBe('2 of 5');
+  expect(within(side).getByRole('list').textContent).toContain('First green star');
+  expect(within(side).getByRole('link', { name: 'Collection' }).getAttribute('href')).toBe('#cards');
+  expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+  // The card never scales: its stage is the phone's 380px card.
+  expect(document.querySelector('#travellerCard')?.className).toContain('max-w-[380px]');
+  await userEvent.click(within(side).getByRole('button', { name: 'Full screen' }));
+  expect(screen.getByRole('dialog', { name: 'Traveller Card, full screen' })).toBeTruthy();
 });

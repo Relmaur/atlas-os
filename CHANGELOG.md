@@ -6,6 +6,13 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.34.0] - 2026-11-06
+### Changed
+- The Codex on a computer has the app's floating nav and command bar (with the Codex marked, and what's live from your log), the search and results in a list pane with one-line excerpts, the article in its own pane at reading width with its sections as headed blocks, and On this page in a third pane from 1280px. Search in the command bar goes to the Codex's own field.
+- Ctrl K on a computer groups what it finds: Your log (ships, notes and systems together), the Codex, the guides, then Actions (Log this system, Start a timer, New note). Tab jumps to the next group, the chosen row shows ↵, and the rows sit flat in the palette. The scope chips stay on phones.
+- The Traveller Card on a computer keeps its own size, both faces side by side from 1280px, with an inspector beside it: class and the next, deepest, star colours, the newest firsts, and Share, Collection, Frontier and Full screen.
+- Sharing on a computer is a dialog with the choices on the left and the picture on the right, with Cancel, Copy image (where the browser can put pictures on the clipboard) and Save PNG under it; Copy as text sits with the choices.
+
 ## [3.33.0] - 2026-11-06
 ### Changed
 - Notes on a computer: the list is compact rows beside the open note, with New (N), a filter field and the tag filters behind a button. A note has its formatting toolbar along the top (bold, italic, heading, list, numbered list, checklist, table, Codex link; Ctrl+B and Ctrl+I while writing), the Markdown beside its preview when there's room, and an inspector: what it links (its pinned systems and ships, and each [[name]], opening your system or planet when the name matches one, otherwise the Codex), its tags, where it also shows, and a timer to start.
