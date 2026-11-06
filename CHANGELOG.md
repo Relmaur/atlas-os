@@ -6,6 +6,23 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.32.0] - 2026-11-06
+### Changed
+- Home on a computer is four panels:
+  - where you are: the orbit, Log visit, Open system, the slide for a new system and the session's hold;
+  - your timers, each with its ring and countdown, and buttons to start a refiner, crop or custom timer;
+  - Warp back beside your last seven days (systems logged, planets discovered, timers done, time played) and the Frontier's next first;
+  - your Traveller Card at a glance.
+
+  On a tall window the panels share the height; on a shorter one the page scrolls rather than cut anything off.
+- The Map on a computer has two panes:
+  - the galaxy chain, as large as the window allows, with All galaxies or One galaxy and Find a system above it, and the galaxies in the order you reached them beside it;
+  - one galaxy fills its pane with the zoom tools along the top, and the side pane shows the selected system over that galaxy's systems. Pick one to select it on the map.
+- Runs on a computer:
+  - The list is one row per run: Outlaw stations under Built in (how many stations are ready), yours with their line, steps and estimate, and New run at the foot. R starts a new run.
+  - Outlaw stations has the next run and its settings in the main column, with your stations and the full run's estimate beside them.
+- Fleet on a computer: the list groups Starships, Multi-Tools and Exosuits, one row each with its class. A ship shows its class, type and role above its name, with Fleet card and Edit beside them. Its grid gives every slot's code (R2C3), and a supercharged slot shows what sits in it. Beside the grid, the inspector lists each supercharged slot and the notes linked to the ship.
+
 ## [3.31.0] - 2026-11-06
 Design round 6, "Workbench" (desktop), part 1: the shell and Systems.
 

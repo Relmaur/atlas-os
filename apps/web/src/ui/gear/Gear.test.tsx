@@ -1,4 +1,4 @@
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
@@ -8,6 +8,7 @@ import { PlayerEditors } from '../PlayerEditors.tsx';
 import { Gear } from './Gear.tsx';
 import { ShipDetail } from './ShipDetail.tsx';
 import { setFactsForTests } from './facts-store.ts';
+import { setWide } from '../test-media.ts';
 
 let param = '';
 vi.mock('../shell/section-store.ts', () => ({
@@ -37,7 +38,12 @@ const FACTS = {
   }
 };
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 beforeEach(() => {
+  setWide(false); // the phone's Fleet (designs 08, 09); the Workbench's (d09) is tested at the end
   localStorage.clear();
   setFactsForTests(FACTS);
   act(() => {
@@ -289,4 +295,40 @@ test('removing gear takes two taps and unlinks its notes', async () => {
   expect(appState.gear).toEqual([]);
   expect(appState.notes[0]?.pins).toEqual(['home']);
   expect(screen.getByRole('heading', { name: 'Not in your fleet' })).toBeTruthy();
+});
+
+test('d09: on the Workbench the fleet is rows by kind, and a ship shows every slot’s code with what’s supercharged beside it', () => {
+  setWide(true);
+  act(() => {
+    setAppState(
+      buildState({
+        gear: [
+          {
+            id: 'g1',
+            kind: 'starship',
+            name: 'Ythgall',
+            class: 'S',
+            type: 'Sentinel Interceptor',
+            role: 'Flagship',
+            superchargedSlots: ['R2C2', 'R2C3'],
+            slotLabels: { R2C3: 'Infra-Knife Accelerator' }
+          }
+        ]
+      })
+    );
+  });
+  render(<Gear />);
+  expect(screen.getByRole('heading', { name: 'Starships · 1' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: /^Ythgall/ }).getAttribute('href')).toBe('#ship/g1');
+  param = 'g1';
+  render(<ShipDetail />);
+  expect(screen.getByRole('heading', { level: 1, name: 'Ythgall' })).toBeTruthy();
+  const side = screen.getByRole('complementary', { name: 'Supercharged and linked' });
+  const slots = within(side).getByRole('list', { name: 'Supercharged slots' });
+  expect(
+    within(slots)
+      .getAllByRole('listitem')
+      .map(li => li.textContent)
+  ).toEqual(['R2C2Not named', 'R2C3Infra-Knife Accelerator']);
+  expect(screen.getByRole('img', { name: /R2C3 \(Infra-Knife Accelerator\)/ })).toBeTruthy();
 });

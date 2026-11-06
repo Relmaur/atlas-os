@@ -20,6 +20,9 @@ import { useSectionParam } from '../shell/section-store.ts';
 import { LogSegment } from '../parts/LogSegment.tsx';
 import { loadFacts, useFacts } from './facts-store.ts';
 import { ClassPill, KindTile, TechGrid, gridLabel } from './fleet-bits.tsx';
+import { GEAR_KINDS } from '@atlas/core/gear';
+import { KINDS } from './kinds.ts';
+import { useMedia } from '../parts/useMedia.ts';
 
 const LABEL = 'text-label uppercase text-ink-label';
 
@@ -42,6 +45,9 @@ export function Gear() {
       return next;
     });
   };
+
+  const wide = useMedia('(min-width: 1024px)');
+  if (wide) return <GearRows gear={gear} />;
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
@@ -204,5 +210,78 @@ function FleetCard({
         </div>
       </div>
     </details>
+  );
+}
+
+// The Workbench's list pane (round 6, d09): Starships, Multi-Tools and Exosuits, one row each with its class.
+function GearRows({ gear }: { gear: GearItem[] }) {
+  const at = useSectionParam();
+  return (
+    <div className="flex flex-col">
+      <header className="flex items-center justify-between gap-2.5 px-[18px] pt-4 pb-1">
+        <h1 className="font-display font-extrabold text-[22px] text-ink-bright">Fleet</h1>
+        <button
+          type="button"
+          onClick={() => {
+            openGearEditor(null, 'starship');
+          }}
+          className="h-10 shrink-0 rounded-control border border-scanner-cyan-edge bg-scanner-cyan-tint text-scanner-cyan-text inline-flex items-center gap-1.5 px-3.5 text-[13px] font-semibold hover:border-scanner-cyan-edge-strong"
+        >
+          <i className="ph-bold ph-plus" aria-hidden="true" />
+          Add<span className="sr-only"> gear</span>
+        </button>
+      </header>
+      {gear.length === 0 && (
+        <p className="px-[18px] py-4 text-sub text-ink-muted">
+          No ships or Multi-Tools yet. Add the one you fly: its supercharged slots stay with it.
+        </p>
+      )}
+      <ul id="fleetList" className="m-0 p-0 list-none">
+        {GEAR_KINDS.map(kind => {
+          const items = gear.filter(item => item.kind === kind);
+          if (!items.length) return null;
+          return (
+            <li key={kind}>
+              <h2 className="px-[18px] pt-4 pb-2 text-label uppercase text-ink-label">
+                {`${KINDS[kind].plural} · ${String(items.length)}`}
+              </h2>
+              <ul className="m-0 p-0 list-none">
+                {items.map(item => {
+                  const line = [item.type, item.role].filter(Boolean).join(' · ');
+                  const open = at === item.id;
+                  return (
+                    <li key={item.id}>
+                      <a
+                        href={`#ship/${encodeURIComponent(item.id)}`}
+                        data-gear={item.id}
+                        aria-current={open ? 'true' : undefined}
+                        className={`grid grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 px-[18px] min-h-[60px] py-2.5 border-t border-hairline ${
+                          open
+                            ? 'bg-scanner-cyan-tint shadow-[inset_3px_0_0_var(--color-scanner-cyan-glow)]'
+                            : 'hover:bg-[rgba(148,163,184,0.06)]'
+                        }`}
+                      >
+                        <KindTile kind={item.kind} />
+                        <span className="min-w-0 flex flex-col gap-0.5">
+                          <span title={item.name} className="truncate text-sm font-semibold text-ink-bright">
+                            {item.name}
+                          </span>
+                          {line && (
+                            <span title={line} className="truncate text-xs text-ink-muted">
+                              {line}
+                            </span>
+                          )}
+                        </span>
+                        <ClassPill value={item.class} />
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

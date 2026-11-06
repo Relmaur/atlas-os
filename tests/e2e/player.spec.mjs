@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 // The player's own content: ships & Multi-Tools, and notes pinned to Home and the books. A new player starts with
 // none of anyone else's.
 import { test, expect, storedState } from './fixtures.mjs';
@@ -56,10 +57,13 @@ test('a ship added in Fleet shows its supercharged slots and is saved', async ({
   await page.locator('#gearEditor').getByRole('button', { name: 'Add to fleet' }).click();
   await expect(page.locator('#toastMessage')).toHaveText('Added Vela Run.');
   const card = page.locator('#sec-gear [data-gear]').filter({ hasText: 'Vela Run' });
-  await card.locator('summary').click(); // a card added since the screen opened starts closed
-  await card.getByRole('link', { name: 'Open Vela Run →' }).click();
+  // Below lg a card added since the screen opened starts closed; from lg (d09) the row itself opens the ship.
+  if (await card.locator('summary').count()) {
+    await card.locator('summary').click();
+    await card.getByRole('link', { name: 'Open Vela Run →' }).click();
+  } else await card.click();
   await expect(page.locator('#shipTitle')).toHaveText('Vela Run');
-  await expect(page.locator('#sec-ship').getByRole('list', { name: 'Supercharged slots' })).toHaveText(/R1C1\s*R1C2/);
+  await expect(page.locator('#sec-ship').getByRole('list', { name: 'Supercharged slots' })).toHaveText(/R1C1.*R1C2/);
   await expect(page.locator('#sec-ship').getByRole('img', { name: /R1C2 \(Pulse Drive upgrade\)/ })).toBeVisible();
   const saved = (await storedState(page)).gear.find(item => item.name === 'Vela Run');
   expect(saved.superchargedSlots).toEqual(['R1C1', 'R1C2']);
@@ -76,7 +80,7 @@ test('a supercharged slot is selected with a tap and cleared with another', asyn
   await cell.click(); // and clears it
   await expect(cell).toHaveAttribute('aria-pressed', 'false');
   await page.locator('#gearEditor').getByRole('button', { name: 'Save changes' }).click();
-  await expect(page.locator('#sec-ship').getByRole('list', { name: 'Supercharged slots' })).toHaveText(/R2C2\s*R2C4/);
+  await expect(page.locator('#sec-ship').getByRole('list', { name: 'Supercharged slots' })).toHaveText(/R2C2.*R2C4/);
 });
 
 test('the slot picker states the wiki’s rule, from the cited facts, and links to its Codex page', async ({ page }) => {
@@ -185,4 +189,30 @@ test('from xl a note is written beside its live preview', async ({ page }, testI
   const text = await page.locator('#noteBody').boundingBox();
   const preview = await page.getByRole('region', { name: 'Preview' }).boundingBox();
   expect(preview.x).toBeGreaterThanOrEqual(text.x + text.width);
+});
+
+test('d09: Fleet on the Workbench at 1024, 1440 and 1920 has no text out of its box and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./#ship/gear-kestrel');
+    await expect(page.locator('#shipTitle')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#sec-gear *, #sec-ship *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
 });

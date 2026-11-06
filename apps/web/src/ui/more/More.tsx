@@ -29,6 +29,8 @@ const SHORTCUTS: [keys: string, what: string][] = [
   ['g then r', 'Go to Runs'],
   ['g then c', 'Go to the Codex'],
   ['n', 'Log a system, in Systems; a new note elsewhere in Log'],
+  ['r', 'New run, in Runs'],
+  ['e', 'Edit the open system or planet'],
   ['Esc', 'Close the top panel']
 ];
 const ROW = 'w-full flex items-center gap-3 min-h-[60px] px-4 py-3 text-left';

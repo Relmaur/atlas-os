@@ -109,7 +109,8 @@ const plural = (n: number, one: string, many = `${one}s`) => `${String(n)} ${n =
 // The line under the Systems title: "2 systems · 5 planets · 1 visit · Euclid". One galaxy is named; more are counted.
 export function systemsLine(systems: System[]): string {
   const { planets, visits, galaxies } = systemsSummary(systems);
-  const where = galaxies.length === 1 ? galaxies[0] : galaxies.length ? plural(galaxies.length, 'galaxy', 'galaxies') : '';
+  const where =
+    galaxies.length === 1 ? galaxies[0] : galaxies.length ? plural(galaxies.length, 'galaxy', 'galaxies') : '';
   return [plural(systems.length, 'system'), plural(planets, 'planet'), plural(visits, 'visit'), where]
     .filter(Boolean)
     .join(' · ');

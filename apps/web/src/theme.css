@@ -1714,6 +1714,23 @@ label.list-row:active {
     border: 1px solid var(--color-nav-edge);
     border-radius: var(--radius-panel);
   }
+  /* A floating panel inside the content (Home's four, d03): the same glass edge as the panes. */
+  .workbench-panel {
+    background: rgba(11, 19, 37, 0.86);
+    border: 1px solid var(--color-nav-edge);
+    border-radius: var(--radius-panel);
+  }
+  /* Screens made of their own panels (Home, d03): the content area is only the room they sit in. */
+  body:is([data-section='home'], [data-section='map']) main.app-main {
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  body[data-section='home'] :is(#sec-home, #homeRoot),
+  body[data-section='map'] :is(#sec-map, #mapRoot) {
+    height: 100%;
+  }
   /* Single-column screens sit in the middle of the pane. */
   :is(#sessionRoot, #planRoot, #craftsRoot, #frontierRoot, #cardsRoot) > * {
     margin-inline: auto;
@@ -1786,9 +1803,6 @@ label.list-row:active {
     font-size: var(--text-sub);
   }
   /* What's open in the list. Systems marks its own rows (d01). */
-  #sec-gear li:has([aria-current='true']) > * {
-    border-color: var(--color-scanner-cyan-edge);
-  }
   /* The Systems list (d01): rows run edge to edge, the header stays and the rows scroll. */
   body[data-pane='systems'] #sec-systems {
     padding: 0;
@@ -1796,6 +1810,10 @@ label.list-row:active {
   }
   #sec-systems > #systemsRoot {
     height: 100%;
+  }
+  /* The Runs and Fleet lists (d06, d09): rows edge to edge too. */
+  body:is([data-pane='runs'], [data-pane='gear']) :is(#sec-runs, #sec-gear) {
+    padding: 0;
   }
   /* System detail (d01): the orbit band runs edge to edge, so the pane has no padding of its own. */
   body[data-pane='systems'] :is(#sec-system, #sec-planet):not(.hidden) {
@@ -1826,6 +1844,13 @@ label.list-row:active {
     .detail-side {
       border-top: 0;
       border-left: 1px solid var(--color-hairline);
+    }
+  }
+  /* An inspector beside a padded main column: it keeps its own gap from the main column when side by side. */
+  @container (min-width: 900px) {
+    .detail-side-pad {
+      padding-left: var(--spacing-pane-gap);
+      margin-left: var(--spacing-pane-gap);
     }
   }
   /* Reading text never runs wider than 720px. */

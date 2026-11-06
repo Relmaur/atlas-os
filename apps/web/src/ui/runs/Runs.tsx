@@ -16,6 +16,7 @@ import { useSection } from '../shell/section-store.ts';
 import { RUN_CARD, SECTION_LABEL, WorksPill, useGameVersion } from './run-bits.tsx';
 import { RunEditor } from './RunEditor.tsx';
 import { closeRunEditor, openRunEditor, useRunEditing } from './run-editor-store.ts';
+import { useMedia } from '../parts/useMedia.ts';
 
 const formatUnits = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n.toLocaleString());
 
@@ -40,6 +41,138 @@ export function Runs() {
   }, [section]);
   const retired = state.runs.filter(run => runStatus(run, catalog) === 'changed');
   const yours = state.runs.filter(run => !retired.includes(run));
+  const wide = useMedia('(min-width: 1024px)');
+  const editor = editing && section === 'runs' && (
+    <RunEditor key={editing.session} existing={state.runs.find(run => run.id === editing.id)} catalog={catalog} />
+  );
+
+  // The Workbench's list pane (round 6, d06): one row per run, Built in then Yours, and New run (R) at the foot.
+  if (wide) {
+    const row = (open: boolean) =>
+      `w-full grid grid-cols-[22px_minmax(0,1fr)_auto] items-center gap-3 px-[18px] min-h-[60px] py-2.5 border-t border-hairline text-left ${
+        open
+          ? 'bg-scanner-cyan-tint shadow-[inset_3px_0_0_var(--color-scanner-cyan-glow)]'
+          : 'hover:bg-[rgba(148,163,184,0.06)]'
+      }`;
+    const outlawLine = progress
+      ? `Station ${String(progress.done + 1)} of ${String(progress.total)}${progress.next ? ` · ${progress.next.system.name}` : ' · all restocking'}`
+      : rows.length
+        ? `${String(ready.length)} of ${String(rows.length)} station${rows.length === 1 ? '' : 's'} ready`
+        : 'No outlaw stations yet';
+    const label = 'px-[18px] pt-4 pb-2 text-label uppercase text-ink-label';
+    return (
+      <div className="flex flex-col">
+        <header className="px-[18px] pt-4 pb-1">
+          <h1 className="font-display font-extrabold text-[22px] text-ink-bright">Runs</h1>
+        </header>
+        <section aria-labelledby="runsOutlawLabel">
+          <h2 id="runsOutlawLabel" className={label}>
+            {progress ? 'In progress' : 'Built in'}
+          </h2>
+          <a
+            id="runsOutlaw"
+            href="#outlaw"
+            aria-current={section === 'outlaw' ? 'page' : undefined}
+            className={row(section === 'outlaw')}
+          >
+            <i className="ph-bold ph-path text-xl text-scanner-cyan-pale" aria-hidden="true" />
+            <span className="min-w-0 flex flex-col gap-0.5">
+              <span className="truncate text-sm font-semibold text-ink-bright">Outlaw stations</span>
+              <span title={outlawLine} className="truncate text-xs text-ink-muted">
+                {outlawLine}
+              </span>
+            </span>
+            <WorksPill game={game} />
+          </a>
+        </section>
+        {yours.length > 0 && (
+          <section aria-labelledby="runsYoursLabel">
+            <h2 id="runsYoursLabel" className={label}>
+              Yours
+            </h2>
+            <ul id="runsYours" className="m-0 p-0 list-none">
+              {yours.map(run => {
+                const units = runEstimate(run, catalog, state.systems).units;
+                const line = [
+                  run.line,
+                  `${String(run.steps.length)} step${run.steps.length === 1 ? '' : 's'}`,
+                  units > 0 ? `≈ ${formatUnits(units)} per run` : ''
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
+                return (
+                  <li key={run.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        openRunEditor(run.id);
+                      }}
+                      className={row(editing?.id === run.id)}
+                    >
+                      <i className="ph-bold ph-path text-xl text-ink-muted" aria-hidden="true" />
+                      <span className="min-w-0 flex flex-col gap-0.5">
+                        <span title={run.name} className="truncate text-sm font-semibold text-ink-bright">
+                          {run.name}
+                        </span>
+                        <span title={line} className="truncate text-xs text-ink-muted">
+                          {line}
+                        </span>
+                      </span>
+                      {runStatus(run, catalog) === 'works' ? <WorksPill game={game} /> : <span />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+        {retired.length > 0 && (
+          <section aria-labelledby="runsRetiredLabel">
+            <h2 id="runsRetiredLabel" className={label}>
+              Retired
+            </h2>
+            <ul id="runsRetired" className="m-0 p-0 list-none">
+              {retired.map(run => (
+                <li key={run.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openRunEditor(run.id);
+                    }}
+                    className={row(false)}
+                  >
+                    <i className="ph-bold ph-path text-xl text-ink-disabled" aria-hidden="true" />
+                    <span title={run.name} className="truncate text-sm font-semibold text-ink-soft">
+                      {run.name}
+                    </span>
+                    <span className="h-6 px-2 shrink-0 rounded-tag inline-flex items-center border border-units-amber-edge bg-units-amber-tint text-[11px] font-semibold text-units-amber-pale">
+                      Values changed
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            openRunEditor();
+          }}
+          aria-keyshortcuts="r"
+          className="grid grid-cols-[22px_minmax(0,1fr)_auto] items-center gap-3 px-[18px] h-[56px] border-t border-hairline text-left text-[15px] font-semibold text-scanner-cyan-pale hover:bg-[rgba(148,163,184,0.06)]"
+        >
+          <i className="ph-bold ph-plus text-lg" aria-hidden="true" />
+          New run
+          <kbd aria-hidden="true" className="nav-kbd">
+            R
+          </kbd>
+        </button>
+        {editor}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 max-w-2xl pt-[env(safe-area-inset-top)]">
       <header className="flex flex-col gap-1.5">
@@ -164,9 +297,7 @@ export function Runs() {
         </section>
       )}
 
-      {editing && section === 'runs' && (
-        <RunEditor key={editing.session} existing={state.runs.find(run => run.id === editing.id)} catalog={catalog} />
-      )}
+      {editor}
     </div>
   );
 }

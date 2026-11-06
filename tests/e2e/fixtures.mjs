@@ -157,8 +157,10 @@ export const liveSession = page => page.locator('#sessionBar:visible, #commandBa
 // Opens the Session screen from the strip, or from the command bar's session or timer.
 export const openLiveBar = page => page.locator('#sessionBar:visible, #commandBar [data-live]:visible').first().click();
 
-// The Session and timers button that's on screen: the app header's, or Home's own on a phone.
-export const sessionButton = page => page.locator('#sessionButton:visible, #homeSessionButton:visible');
+// The way to Session and timers that's on screen: the app header's button, Home's own on a phone, the nav's link from
+// lg (round 6).
+export const sessionButton = page =>
+  page.locator('#sessionButton:visible, #homeSessionButton:visible, .workbench-nav a[href="#session"]:visible').first();
 
 // A Log screen's link: in Log's segmented control below lg, in the nav from lg (round 6 drops the segment there).
 export const logLink = (page, name) =>

@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
@@ -6,6 +6,7 @@ import { HOUR_MS } from '@atlas/core/systems-model';
 import { appState, setAppState } from '../../app/store.ts';
 import { setFactsForTests } from '../gear/facts-store.ts';
 import { Outlaw } from './Outlaw.tsx';
+import { setWide } from '../test-media.ts';
 
 const ago = (hours: number) => new Date(Date.now() - hours * HOUR_MS).toISOString();
 const station = (id: string, runs: number[]) => ({
@@ -16,8 +17,13 @@ const station = (id: string, runs: number[]) => ({
 });
 const runList = () => within(document.getElementById('outlawRunList')!);
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 beforeEach(() => {
   localStorage.clear();
+  setWide(false); // the phone's order; the Workbench's columns (d06) are tested at the end
   setFactsForTests({ schema: 1, facts: {} }); // no fetch
   setAppState(
     buildState({
@@ -133,4 +139,13 @@ test('End run closes the run in progress', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'End run' }));
   expect(appState.outlaw.runStartedAt).toBeUndefined();
   expect(screen.getByRole('button', { name: 'Start a run' })).toBeTruthy();
+});
+
+test('d06: on the Workbench the stations and the full run’s estimate sit in the inspector beside the run', () => {
+  setWide(true);
+  render(<Outlaw />);
+  const side = screen.getByRole('complementary', { name: 'Your outlaw stations' });
+  expect(within(side).getByRole('heading', { name: 'Stations' })).toBeTruthy();
+  expect(within(side).getByRole('heading', { name: /One full run/ })).toBeTruthy();
+  expect(within(side).queryByRole('heading', { name: /Run settings/ })).toBeNull();
 });

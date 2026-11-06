@@ -1,4 +1,4 @@
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
@@ -9,13 +9,14 @@ import { openSession } from '../session/sheet-store.ts';
 import { openGearEditor } from '../parts/editor-store.ts';
 import { setFactsForTests } from '../gear/facts-store.ts';
 import { Home } from './Home.tsx';
+import { setWide } from '../test-media.ts';
 
 // The system panel and the session sheet (their own screens) aren't part of what's under test.
 vi.mock('../systems/panel-store.ts', () => ({
   openSystem: vi.fn(),
   openSystemEditor: vi.fn()
 }));
-vi.mock('../session/sheet-store.ts', () => ({ openSession: vi.fn() }));
+vi.mock('../session/sheet-store.ts', () => ({ openSession: vi.fn(), openAddTimer: vi.fn() }));
 vi.mock('../parts/editor-store.ts', () => ({ openGearEditor: vi.fn() }));
 // Anything logged, so Home shows the log rather than the first run.
 const SHIP = { id: 'g1', kind: 'starship', name: 'Kestrel IV' };
@@ -23,9 +24,16 @@ const SHIP = { id: 'g1', kind: 'starship', name: 'Kestrel IV' };
 const ago = (hours: number) => new Date(Date.now() - hours * HOUR_MS).toISOString();
 const inHours = (hours: number) => new Date(Date.now() + hours * HOUR_MS).toISOString();
 
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
+  setWide(false); // the phone's Home (design 01); the Workbench's (d03) is tested at the end
+  vi.stubGlobal('fetch', () => Promise.reject(new Error('offline'))); // the card's galaxy list: not under test
   setFactsForTests({
     schema: 1,
     facts: {
@@ -174,4 +182,42 @@ test('the sync pill stays away while sync is off', () => {
   render(<Home />);
   expect(screen.queryByRole('status')).toBeNull();
   expect(screen.getByRole('link', { name: 'Settings' }).getAttribute('href')).toBe('#more');
+});
+
+test('d03: on the Workbench Home is four panels: where you are, timers with presets, warp back and the week, your card', async () => {
+  setWide(true);
+  setAppState(
+    buildState({
+      systems: [
+        { id: 'sys-a', name: 'Vintam Reach', region: 'Oshaun Sector', visits: [{ at: ago(1) }], createdAt: ago(30) },
+        { id: 'sys-b', name: 'Asoru Drift', visits: [{ at: ago(40) }], createdAt: ago(400) }
+      ],
+      timers: [
+        {
+          id: 't1',
+          kind: 'refine',
+          label: '300 Chromatic Metal',
+          startedAt: ago(0.2),
+          endsAt: inHours(0.3),
+          alerted: false
+        }
+      ]
+    })
+  );
+  render(<Home />);
+  expect(screen.getByRole('heading', { level: 1, name: 'Vintam Reach' })).toBeTruthy();
+  const timers = screen.getByRole('region', { name: 'Timers · 1 running' });
+  expect(within(timers).getByRole('button', { name: /Refiner · 300 Chromatic Metal/ })).toBeTruthy();
+  await userEvent.click(
+    within(within(timers).getByRole('group', { name: 'Start a timer' })).getByRole('button', { name: 'Crops' })
+  );
+  expect(openSession).toHaveBeenCalled();
+  const week = screen.getByRole('region', { name: 'Last 7 days' });
+  expect(
+    within(week)
+      .getAllByRole('term')
+      .map(term => term.textContent)
+  ).toEqual(['Systems', 'Planets discovered', 'Timers done', 'Played']);
+  expect(within(screen.getByRole('region', { name: 'Warp back' })).getByText('Asoru Drift')).toBeTruthy();
+  expect(screen.getByRole('link', { name: /^Traveller Card class/ }).getAttribute('href')).toBe('#card');
 });

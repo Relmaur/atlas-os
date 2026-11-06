@@ -10,7 +10,7 @@ const S = 358;
 const C = S / 2;
 const RING = S * 0.33;
 
-export function ChainChart({ trip, next }: { trip: Journey; next: Galaxy[] }) {
+export function ChainChart({ trip, next, bare = false }: { trip: Journey; next: Galaxy[]; bare?: boolean }) {
   const n = trip.galaxies.length;
   const slots = Math.max(n + next.length, 6);
   const radiusMax = Math.max(6, Math.min(30, RING * Math.sin(Math.PI / slots) - 9));
@@ -31,14 +31,18 @@ export function ChainChart({ trip, next }: { trip: Journey; next: Galaxy[] }) {
   return (
     <section
       aria-label="Your galaxies"
-      className="rounded-[20px] overflow-hidden border border-[rgba(56,189,248,0.18)] bg-[linear-gradient(170deg,rgba(14,24,46,0.96),rgba(8,14,28,0.96))]"
+      className={
+        bare
+          ? 'w-full h-full' // inside a Workbench pane, which is its box (d04)
+          : 'rounded-[20px] overflow-hidden border border-[rgba(56,189,248,0.18)] bg-[linear-gradient(170deg,rgba(14,24,46,0.96),rgba(8,14,28,0.96))]'
+      }
     >
       <svg
         id="mapChain"
         role="group"
         aria-label={`Galaxy chain: ${trip.galaxies.map(g => g.name).join(', ')}${next.length ? `; next: ${next.map(g => g.name).join(', ')}` : ''}`}
         viewBox={`0 0 ${String(S)} ${String(S)}`}
-        className="block w-full h-auto max-h-[70vh]"
+        className={bare ? 'block w-full h-full' : 'block w-full h-auto max-h-[70vh]'}
       >
         <defs>
           <pattern id="chainGrid" width="24" height="24" patternUnits="userSpaceOnUse">

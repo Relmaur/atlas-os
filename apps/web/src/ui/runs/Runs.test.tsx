@@ -9,6 +9,7 @@ import { appState, setAppState } from '../../app/store.ts';
 import { setFactsForTests } from '../gear/facts-store.ts';
 import { setGameDataForTests } from '../calculators/game-data.ts';
 import { Runs } from './Runs.tsx';
+import { setWide } from '../test-media.ts';
 
 vi.mock('../shell/section-store.ts', () => ({ useSection: () => 'runs' }));
 
@@ -28,10 +29,13 @@ const GAME = {
 };
 
 beforeEach(() => {
+  setWide(false); // the phone's list (design 28); the Workbench's rows (d06) are tested at the end
   setAppState(buildState({ outlaw: { runSize: 2 }, systems: [station('Fresh', []), station('Waiting', [5])] }));
   setFactsForTests({ schema: 1, facts: {}, game: GAME });
 });
 afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   setFactsForTests(null);
   setGameDataForTests({ status: 'idle' });
 });
@@ -174,4 +178,17 @@ test('a run with a repeat timer starts it when the player finishes one; a run ca
   await userEvent.click(screen.getByRole('button', { name: 'Delete run' }));
   await userEvent.click(screen.getByRole('button', { name: 'Tap again to delete' }));
   expect(appState.runs).toEqual([]);
+});
+
+test('d06: on the Workbench each run is a row, Outlaw stations under Built in, and New run (R) at the foot', async () => {
+  setWide(true);
+  vi.stubGlobal('fetch', () => Promise.reject(new Error('offline'))); // the editor's game data: not under test
+  render(<Runs />);
+  const outlaw = screen.getByRole('link', { name: /^Outlaw stations/ });
+  expect(outlaw.getAttribute('href')).toBe('#outlaw');
+  expect(outlaw.textContent).toContain('1 of 2 stations ready');
+  const add = screen.getByRole('button', { name: 'New run' });
+  expect(add.getAttribute('aria-keyshortcuts')).toBe('r');
+  await userEvent.click(add);
+  expect(screen.getByRole('dialog')).toBeTruthy();
 });

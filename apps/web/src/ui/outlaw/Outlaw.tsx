@@ -1,5 +1,6 @@
 // Run · Outlaw stations (design 07), the first run: systems tagged "outlaw", which Contraband Agents have restocked,
 // the run in progress or the next one, the player's own averages, and what one full run earns at them.
+import { useMedia } from '../parts/useMedia.ts';
 import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { formatAgo, formatCountdown, formatDuration } from '@atlas/core/format';
 import { OUTLAW_LIMITS, fullRunEstimate, outlawSummary } from '@atlas/core/outlaw';
@@ -29,7 +30,7 @@ const where = (system: { region: string; galaxy: string }) =>
   [system.region, system.galaxy].filter(Boolean).join(' · ');
 // The design's run sizes; a size set some other way (an import, an older version) joins them.
 const RUN_SIZES = [3, 4, 5, 6, 8];
-const CARD_TITLE = 'font-display font-bold text-[15px] text-ink-bright flex items-center gap-2';
+const CARD_TITLE = 'font-display font-bold text-[15px] text-ink-bright flex items-center gap-2 whitespace-nowrap';
 
 export function Outlaw() {
   const state = useAppState();
@@ -48,9 +49,10 @@ export function Outlaw() {
   ];
   const visible = rows.filter(row => stationFilter === 'all' || (stationFilter === 'ready') === row.status.ready);
   const sizes = [...new Set([...RUN_SIZES, outlaw.runSize])].sort((a, b) => a - b);
+  const wide = useMedia('(min-width: 1024px)');
 
-  return (
-    <div className="flex flex-col gap-4 max-w-2xl pt-[env(safe-area-inset-top)]">
+  const parts = {
+    header: (
       <header className="flex flex-col gap-1.5">
         <p className="text-label uppercase text-ready-emerald-pale mt-4 lg:mt-0">
           Run{game ? ` · works in v${game.version}` : ''}
@@ -78,263 +80,275 @@ export function Outlaw() {
             : ''}
         </p>
       </header>
-
-      {rows.length === 0 && (
-        <div className={`${RUN_CARD} items-center text-center py-7`}>
-          <span aria-hidden="true" className="relative w-24 h-24 grid place-items-center">
-            <span className="absolute inset-0 rounded-full border border-dashed border-control-edge" />
-            <span className="w-16 h-16 rounded-full grid place-items-center border border-control-edge bg-slate-ground">
-              <span className="w-9 h-9 rounded-full grid place-items-center bg-danger-rose-tint border border-danger-rose-edge text-danger-rose-pale">
-                <i className="ph-bold ph-crosshair text-xl" />
+    ),
+    empty: (
+      <>
+        {rows.length === 0 && (
+          <div className={`${RUN_CARD} items-center text-center py-7`}>
+            <span aria-hidden="true" className="relative w-24 h-24 grid place-items-center">
+              <span className="absolute inset-0 rounded-full border border-dashed border-control-edge" />
+              <span className="w-16 h-16 rounded-full grid place-items-center border border-control-edge bg-slate-ground">
+                <span className="w-9 h-9 rounded-full grid place-items-center bg-danger-rose-tint border border-danger-rose-edge text-danger-rose-pale">
+                  <i className="ph-bold ph-crosshair text-xl" />
+                </span>
               </span>
             </span>
-          </span>
-          <h2 className="font-display font-bold text-[16px] text-ink-bright">No outlaw stations yet</h2>
-          <p className="text-sub text-ink-muted max-w-sm">
-            Mark a system as outlaw in its editor and its station joins your run, with a restock timer.
-          </p>
-          <a href="#systems" className={buttonClass('secondary')}>
-            <i className="ph-bold ph-planet text-base" aria-hidden="true" />
-            Pick from your systems
-          </a>
-          <div className="flex flex-wrap justify-center gap-1">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                openSystemEditor(null, { tags: ['outlaw'], conflict: 'pirate' });
-              }}
-            >
-              Add a new one
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setBulkOpen(true);
-              }}
-            >
-              Paste a list
-            </Button>
-          </div>
-        </div>
-      )}
-      <BulkForm
-        open={bulkOpen}
-        onClose={() => {
-          setBulkOpen(false);
-        }}
-      />
-
-      {rows.length > 0 && (
-        <section aria-labelledby="outlawRunTitle" className={RUN_CARD}>
-          <div className="flex items-center justify-between gap-3">
-            <h2 id="outlawRunTitle" className={CARD_TITLE}>
-              <i className="ph-bold ph-path text-scanner-cyan-pale" aria-hidden="true" />
-              {progress ? `Station ${String(progress.done + 1)} of ${String(progress.total)}` : 'Next run'}
-            </h2>
-            {progress?.restockAt != null && (
-              <span className="font-mono text-[13px] text-scanner-cyan-pale">
-                restock {formatCountdown(progress.restockAt - now)}
-              </span>
-            )}
-          </div>
-          {progress && (
-            <span
-              role="progressbar"
-              aria-label="Stations done this run"
-              aria-valuemin={0}
-              aria-valuemax={progress.total}
-              aria-valuenow={progress.done}
-              className="flex gap-1.5"
-            >
-              {Array.from({ length: progress.total }, (_, i) => (
-                <span
-                  key={i}
-                  className={`flex-1 h-1 rounded-full ${i < progress.done ? 'bg-scanner-cyan-glow' : 'bg-slate-800'}`}
-                />
-              ))}
-            </span>
-          )}
-          <ol id="outlawRunList" className="flex flex-col gap-2">
-            {run.length ? (
-              run.map(({ system }, i) => (
-                <li
-                  key={system.id}
-                  className="flex items-start gap-3 p-3 rounded-control bg-slate-ground border border-hairline"
-                >
-                  <span className="w-7 h-7 shrink-0 rounded-full grid place-items-center border border-control-edge font-mono text-[12px] text-ink-soft">
-                    {(progress?.done ?? 0) + i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1 flex flex-col gap-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        openSystem(system.id);
-                      }}
-                      className="block max-w-full text-left"
-                    >
-                      <span className="block text-[14px] font-semibold text-ink-bright truncate hover:underline underline-offset-2">
-                        {system.name}
-                      </span>
-                      <span className="block text-caption text-ink-muted truncate">{where(system)}</span>
-                    </button>
-                    <GlyphChip glyphs={system.glyphs} />
-                  </div>
-                  <VisitedButton id={system.id} />
-                </li>
-              ))
-            ) : (
-              <li className="p-4 rounded-control border border-dashed border-control-edge text-sub text-ink-muted">
-                {rows[0]
-                  ? `Every station is restocking. Next one ready in ${formatDuration(rows[0].status.readyAt - now)} (${rows[0].system.name}).`
-                  : 'Add outlaw systems to plan a run.'}
-              </li>
-            )}
-          </ol>
-          <div id="outlawRunFooter" className="flex flex-col gap-3">
-            {run.length > 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-caption text-ink-soft">
-                  {`${plural(run.length, 'station')} · ${String(summary.runPackets)} packets · ~${(summary.runUnits / 1e6).toFixed(1)}M Units → `}
-                  <strong className="text-units-amber-text font-semibold">
-                    ~{summary.runNanites.toLocaleString()} Nanites
-                  </strong>
-                </p>
-                {run.length > 1 && (
-                  <Button
-                    size="S"
-                    onClick={() => {
-                      logOutlawRun(run.map(row => row.system));
-                    }}
-                  >
-                    Mark whole run visited
-                  </Button>
-                )}
-              </div>
-            )}
-            {progress ? (
-              <Button wide onClick={endOutlawRun}>
-                End run
-              </Button>
-            ) : (
-              <Button variant="primary" icon="ph-crosshair" wide disabled={!ready.length} onClick={startOutlawRun}>
-                {ready.length ? 'Start a run' : 'Start a run · no station ready'}
-              </Button>
-            )}
-          </div>
-        </section>
-      )}
-
-      {rows.length > 0 && (
-        <section aria-labelledby="outlawStationsTitle" className={RUN_CARD}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="outlawStationsTitle" className={CARD_TITLE}>
-              Stations
-            </h2>
-            <div className="flex gap-1">
+            <h2 className="font-display font-bold text-[16px] text-ink-bright">No outlaw stations yet</h2>
+            <p className="text-sub text-ink-muted max-w-sm">
+              Mark a system as outlaw in its editor and its station joins your run, with a restock timer.
+            </p>
+            <a href="#systems" className={buttonClass('secondary')}>
+              <i className="ph-bold ph-planet text-base" aria-hidden="true" />
+              Pick from your systems
+            </a>
+            <div className="flex flex-wrap justify-center gap-1">
               <Button
                 variant="ghost"
-                size="S"
+                onClick={() => {
+                  openSystemEditor(null, { tags: ['outlaw'], conflict: 'pirate' });
+                }}
+              >
+                Add a new one
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setBulkOpen(true);
                 }}
               >
                 Paste a list
               </Button>
-              <Button
-                variant="ghost"
-                size="S"
-                onClick={() => {
-                  openSystemEditor(null, { tags: ['outlaw'], conflict: 'pirate' });
-                }}
-              >
-                Add one
-              </Button>
             </div>
           </div>
-          <div id="outlawFilters" className="flex gap-1.5">
-            {filters.map(([key, label, n]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setStationFilter(key);
-                }}
-                aria-pressed={stationFilter === key}
-                className={`h-[34px] px-3 rounded-full border text-[13px] font-semibold ${stationFilter === key ? 'bg-scanner-cyan-tint border-scanner-cyan-edge-strong text-scanner-cyan-text' : 'bg-slate-ground border-control-edge text-ink-soft hover:text-ink-bright'}`}
+        )}
+        <BulkForm
+          open={bulkOpen}
+          onClose={() => {
+            setBulkOpen(false);
+          }}
+        />
+      </>
+    ),
+    run: (
+      <>
+        {rows.length > 0 && (
+          <section aria-labelledby="outlawRunTitle" className={RUN_CARD}>
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="outlawRunTitle" className={CARD_TITLE}>
+                <i className="ph-bold ph-path text-scanner-cyan-pale" aria-hidden="true" />
+                {progress ? `Station ${String(progress.done + 1)} of ${String(progress.total)}` : 'Next run'}
+              </h2>
+              {progress?.restockAt != null && (
+                <span className="font-mono text-[13px] text-scanner-cyan-pale">
+                  restock {formatCountdown(progress.restockAt - now)}
+                </span>
+              )}
+            </div>
+            {progress && (
+              <span
+                role="progressbar"
+                aria-label="Stations done this run"
+                aria-valuemin={0}
+                aria-valuemax={progress.total}
+                aria-valuenow={progress.done}
+                className="flex gap-1.5"
               >
-                {`${label} `}
-                <span className="font-mono opacity-70">{n}</span>
-              </button>
-            ))}
-          </div>
-          <ul id="outlawStationList" className="flex flex-col gap-2">
-            {visible.length ? (
-              visible.map(({ system, status }) => {
-                const runVisits = system.visits.filter(visit => visit.packets);
-                const last = runVisits.at(-1);
-                return (
+                {Array.from({ length: progress.total }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`flex-1 h-1 rounded-full ${i < progress.done ? 'bg-scanner-cyan-glow' : 'bg-slate-800'}`}
+                  />
+                ))}
+              </span>
+            )}
+            <ol id="outlawRunList" className="flex flex-col gap-2">
+              {run.length ? (
+                run.map(({ system }, i) => (
                   <li
                     key={system.id}
-                    className="p-3 rounded-control bg-slate-ground border border-hairline flex flex-col gap-2"
+                    className="flex items-start gap-3 p-3 rounded-control bg-slate-ground border border-hairline"
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <span className="w-7 h-7 shrink-0 rounded-full grid place-items-center border border-control-edge font-mono text-[12px] text-ink-soft">
+                      {(progress?.done ?? 0) + i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1 flex flex-col gap-1">
                       <button
                         type="button"
                         onClick={() => {
                           openSystem(system.id);
                         }}
-                        className="min-w-0 text-left"
+                        className="block max-w-full text-left"
                       >
-                        <strong className="text-[14px] text-ink-bright hover:underline underline-offset-2">
+                        <span className="block text-[14px] font-semibold text-ink-bright truncate hover:underline underline-offset-2">
                           {system.name}
-                        </strong>{' '}
-                        <span className="block text-caption text-ink-muted">{where(system)}</span>
+                        </span>
+                        <span className="block text-caption text-ink-muted truncate">{where(system)}</span>
                       </button>
-                      <OutlawPill status={status} />
+                      <GlyphChip glyphs={system.glyphs} />
                     </div>
-                    {system.glyphs || system.notes ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <GlyphChip glyphs={system.glyphs} />
-                        {system.notes ? (
-                          <span className="text-caption text-ink-soft line-clamp-1">{system.notes.split('\n')[0]}</span>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-caption text-ink-muted">
-                        {last
-                          ? `${plural(runVisits.length, 'run')} · last ${formatAgo(last.at, now)} · ~${(packetsLogged(system) * outlaw.nanitesPerPacket).toLocaleString()} Nanites`
-                          : 'No packet runs yet'}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <VisitedButton id={system.id} />
-                        {last ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              undoPacketRun(system.id);
-                            }}
-                            title="Undo last run"
-                            aria-label={`Undo last run at ${system.name}`}
-                            className="w-[34px] h-[34px] rounded-[10px] text-ink-muted hover:text-ink-bright hover:bg-panel grid place-items-center"
-                          >
-                            <i className="ph-bold ph-arrow-counter-clockwise" aria-hidden="true" />
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
+                    <VisitedButton id={system.id} />
                   </li>
-                );
-              })
-            ) : (
-              <li className="p-4 rounded-control border border-dashed border-control-edge text-sub text-ink-muted">
-                No stations in this view.
-              </li>
-            )}
-          </ul>
-        </section>
-      )}
-
+                ))
+              ) : (
+                <li className="p-4 rounded-control border border-dashed border-control-edge text-sub text-ink-muted">
+                  {rows[0]
+                    ? `Every station is restocking. Next one ready in ${formatDuration(rows[0].status.readyAt - now)} (${rows[0].system.name}).`
+                    : 'Add outlaw systems to plan a run.'}
+                </li>
+              )}
+            </ol>
+            <div id="outlawRunFooter" className="flex flex-col gap-3">
+              {run.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-caption text-ink-soft">
+                    {`${plural(run.length, 'station')} · ${String(summary.runPackets)} packets · ~${(summary.runUnits / 1e6).toFixed(1)}M Units → `}
+                    <strong className="text-units-amber-text font-semibold">
+                      ~{summary.runNanites.toLocaleString()} Nanites
+                    </strong>
+                  </p>
+                  {run.length > 1 && (
+                    <Button
+                      size="S"
+                      onClick={() => {
+                        logOutlawRun(run.map(row => row.system));
+                      }}
+                    >
+                      Mark whole run visited
+                    </Button>
+                  )}
+                </div>
+              )}
+              {progress ? (
+                <Button wide onClick={endOutlawRun}>
+                  End run
+                </Button>
+              ) : (
+                <Button variant="primary" icon="ph-crosshair" wide disabled={!ready.length} onClick={startOutlawRun}>
+                  {ready.length ? 'Start a run' : 'Start a run · no station ready'}
+                </Button>
+              )}
+            </div>
+          </section>
+        )}
+      </>
+    ),
+    stations: (
+      <>
+        {rows.length > 0 && (
+          <section aria-labelledby="outlawStationsTitle" className={RUN_CARD}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="outlawStationsTitle" className={CARD_TITLE}>
+                Stations
+              </h2>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="S"
+                  onClick={() => {
+                    setBulkOpen(true);
+                  }}
+                >
+                  Paste a list
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="S"
+                  onClick={() => {
+                    openSystemEditor(null, { tags: ['outlaw'], conflict: 'pirate' });
+                  }}
+                >
+                  Add one
+                </Button>
+              </div>
+            </div>
+            <div id="outlawFilters" className="flex gap-1.5">
+              {filters.map(([key, label, n]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => {
+                    setStationFilter(key);
+                  }}
+                  aria-pressed={stationFilter === key}
+                  className={`h-[34px] px-3 rounded-full border text-[13px] font-semibold ${stationFilter === key ? 'bg-scanner-cyan-tint border-scanner-cyan-edge-strong text-scanner-cyan-text' : 'bg-slate-ground border-control-edge text-ink-soft hover:text-ink-bright'}`}
+                >
+                  {`${label} `}
+                  <span className="font-mono opacity-70">{n}</span>
+                </button>
+              ))}
+            </div>
+            <ul id="outlawStationList" className="flex flex-col gap-2">
+              {visible.length ? (
+                visible.map(({ system, status }) => {
+                  const runVisits = system.visits.filter(visit => visit.packets);
+                  const last = runVisits.at(-1);
+                  return (
+                    <li
+                      key={system.id}
+                      className="p-3 rounded-control bg-slate-ground border border-hairline flex flex-col gap-2"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            openSystem(system.id);
+                          }}
+                          className="min-w-0 text-left"
+                        >
+                          <strong className="text-[14px] text-ink-bright hover:underline underline-offset-2">
+                            {system.name}
+                          </strong>{' '}
+                          <span className="block text-caption text-ink-muted">{where(system)}</span>
+                        </button>
+                        <OutlawPill status={status} />
+                      </div>
+                      {system.glyphs || system.notes ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <GlyphChip glyphs={system.glyphs} />
+                          {system.notes ? (
+                            <span className="text-caption text-ink-soft line-clamp-1">
+                              {system.notes.split('\n')[0]}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-caption text-ink-muted">
+                          {last
+                            ? `${plural(runVisits.length, 'run')} · last ${formatAgo(last.at, now)} · ~${(packetsLogged(system) * outlaw.nanitesPerPacket).toLocaleString()} Nanites`
+                            : 'No packet runs yet'}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <VisitedButton id={system.id} />
+                          {last ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                undoPacketRun(system.id);
+                              }}
+                              title="Undo last run"
+                              aria-label={`Undo last run at ${system.name}`}
+                              className="w-[34px] h-[34px] rounded-[10px] text-ink-muted hover:text-ink-bright hover:bg-panel grid place-items-center"
+                            >
+                              <i className="ph-bold ph-arrow-counter-clockwise" aria-hidden="true" />
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })
+              ) : (
+                <li className="p-4 rounded-control border border-dashed border-control-edge text-sub text-ink-muted">
+                  No stations in this view.
+                </li>
+              )}
+            </ul>
+          </section>
+        )}
+      </>
+    ),
+    settings: (
       <section aria-labelledby="outlawSettingsTitle" className={RUN_CARD}>
         <h2 id="outlawSettingsTitle" className={CARD_TITLE}>
           <i className="ph-bold ph-sun text-scanner-cyan-pale" aria-hidden="true" />
@@ -383,28 +397,33 @@ export function Outlaw() {
           Your own averages from the game. Packet prices and contents vary, so the wiki can’t give them.
         </p>
       </section>
-
+    ),
+    estimate: (
       <section
         aria-labelledby="outlawEstimateTitle"
-        className="rounded-card bg-panel-glass border border-units-amber-edge p-4 flex flex-col gap-3"
+        className="@container rounded-card bg-panel-glass border border-units-amber-edge p-4 flex flex-col gap-3"
       >
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <h2 id="outlawEstimateTitle" className={CARD_TITLE}>
             <i className="ph-bold ph-sparkle text-units-amber-text" aria-hidden="true" />
             One full run
           </h2>
-          <span className="h-7 px-3 rounded-full inline-flex items-center border border-control-edge text-caption text-ink-soft">
+          <span className="h-7 px-3 shrink-0 whitespace-nowrap rounded-full lg:rounded-tag inline-flex items-center border border-control-edge text-caption text-ink-soft">
             by your averages
           </span>
         </div>
         <dl id="outlawEstimate" className="grid grid-cols-2 gap-y-3">
           <div>
             <dt className="text-label uppercase text-ink-label">Packets</dt>
-            <dd className="font-mono text-[26px] text-quantity-cyan">{estimate.packets.toLocaleString()}</dd>
+            <dd className="font-mono text-[22px] @[21rem]:text-[26px] text-quantity-cyan">
+              {estimate.packets.toLocaleString()}
+            </dd>
           </div>
           <div className="text-right">
             <dt className="text-label uppercase text-ink-label">Units</dt>
-            <dd className="font-mono text-[26px] text-units-amber-text">{estimate.units.toLocaleString()}</dd>
+            <dd className="font-mono text-[22px] @[21rem]:text-[26px] text-units-amber-text">
+              {estimate.units.toLocaleString()}
+            </dd>
           </div>
           <div className="col-span-2 flex items-center justify-between">
             <dt className="text-sub text-ink-soft">Nanites</dt>
@@ -412,12 +431,51 @@ export function Outlaw() {
           </div>
         </dl>
       </section>
+    ),
+    tail: (
+      <>
+        {rows.length === 0 && (
+          <Button variant="primary" icon="ph-crosshair" wide disabled>
+            Start a run · needs a station
+          </Button>
+        )}
+      </>
+    )
+  };
 
-      {rows.length === 0 && (
-        <Button variant="primary" icon="ph-crosshair" wide disabled>
-          Start a run · needs a station
-        </Button>
-      )}
+  // The Workbench (round 6, d06): the run and its settings in the main column, the stations and the full run's
+  // estimate in the inspector, which folds under the main column when the pane is narrow.
+  if (wide)
+    return (
+      <div className="detail-pane">
+        <div className="detail-split">
+          <div className="min-w-0 flex flex-col gap-4 pb-1 pr-0 @container">
+            {parts.header}
+            {parts.empty}
+            {parts.run}
+            {parts.settings}
+            {parts.tail}
+          </div>
+          <aside
+            aria-label="Your outlaw stations"
+            className="detail-side min-w-0 flex flex-col gap-4 pt-4 detail-side-pad"
+          >
+            {parts.stations}
+            {parts.estimate}
+          </aside>
+        </div>
+      </div>
+    );
+
+  return (
+    <div className="flex flex-col gap-4 max-w-2xl pt-[env(safe-area-inset-top)]">
+      {parts.header}
+      {parts.empty}
+      {parts.run}
+      {parts.stations}
+      {parts.settings}
+      {parts.estimate}
+      {parts.tail}
     </div>
   );
 }

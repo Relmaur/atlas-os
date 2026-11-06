@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { newNote } from '../notes/note-nav.ts';
 import { openSystemEditor } from '../systems/panel-store.ts';
 import { openPlanetSheet } from '../systems/planet-sheet-store.ts';
+import { openRunEditor } from '../runs/run-editor-store.ts';
 import { startNav } from './nav-store.ts';
 import { showSection, useSection, useSectionParam } from './section-store.ts';
 import { tabOf } from './TabBar.tsx';
@@ -36,6 +37,9 @@ function useShortcuts(section: string, param: string) {
       } else if (key === 'e' && section === 'planet' && param.includes('/')) {
         const [systemId = '', planetId = ''] = param.split('/');
         openPlanetSheet(systemId, planetId); // "Edit  E" on a planet (d16)
+      } else if (key === 'r' && (section === 'runs' || section === 'outlaw')) {
+        openRunEditor(); // "New run  R" in Runs (d06)
+        if (section !== 'runs') void showSection('runs'); // the editor lives on the Runs list
       } else if (key === 'n' && SYSTEMS.has(section)) {
         openSystemEditor(); // "Log system  N" on the Systems pane (round 6, d01)
       } else if (key === 'n' && tabOf(section) === 'log') {

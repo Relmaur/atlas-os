@@ -50,7 +50,7 @@ test('the Share sheet makes a postcard on the device, in three shapes, with the 
 
 test('a ship has a Fleet card', async ({ page }) => {
   await page.goto('./#ship/gear-kestrel');
-  await page.getByRole('button', { name: 'Share', exact: true }).click();
+  await page.getByRole('button', { name: /^(Share|Fleet card)$/ }).click(); // "Fleet card" from lg (d09)
   const sheet = page.locator('#shareSheet');
   await expect(sheet.locator('#shareSize')).toHaveText('810 × 1440');
   await expect.poll(async () => (await painted(page, 405, 40))[3]).toBe(255);

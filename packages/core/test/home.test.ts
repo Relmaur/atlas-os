@@ -1,6 +1,14 @@
-import { test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import assert from 'node:assert/strict';
-import { heroPlace, heroStatus, homeSummary, homeTimers, isEmptyAtlas, warpBackLine } from '../src/home.ts';
+import {
+  heroPlace,
+  heroStatus,
+  homeSummary,
+  homeTimers,
+  isEmptyAtlas,
+  warpBackLine,
+  weekSummary
+} from '../src/home.ts';
 import { buildState } from '../src/state.ts';
 import { formatClock } from '../src/format.ts';
 import { systemOrbit } from '../src/orbit.ts';
@@ -152,4 +160,42 @@ test('the atlas is empty until the player logs anything at all', () => {
   assert.equal(isEmptyAtlas({ ...state, notes: [{}] }), false);
   assert.equal(isEmptyAtlas({ ...state, gear: [{}] }), false);
   assert.equal(isEmptyAtlas({ ...state, systems: [normalizeSystem({ name: 'Ekwa Nexus' })] }), false);
+});
+
+describe('weekSummary', () => {
+  const at = Date.parse('2026-11-06T12:00:00Z');
+  const daysAgo = (days: number) => new Date(at - days * 24 * 3600 * 1000).toISOString();
+  test('counts the last seven days: systems logged, planets discovered, timers done and time played', () => {
+    const state = {
+      systems: [
+        normalizeSystem({ name: 'New', createdAt: daysAgo(2), planets: [{ name: 'A', discoveredOn: '2026-11-05' }] }),
+        normalizeSystem({ name: 'Old', createdAt: daysAgo(10), planets: [{ name: 'B', discoveredOn: '2026-10-01' }] })
+      ],
+      sessions: [
+        { startedAt: daysAgo(1), endedAt: new Date(at - 24 * 3600 * 1000 + 3600 * 1000).toISOString(), timersDone: 2 },
+        {
+          startedAt: daysAgo(7.5),
+          endedAt: new Date(Date.parse(daysAgo(7.5)) + 24 * 3600 * 1000).toISOString(),
+          timersDone: 5
+        },
+        { startedAt: daysAgo(20), endedAt: daysAgo(19), timersDone: 9 }
+      ],
+      session: { startedAt: new Date(at - 30 * 60 * 1000).toISOString(), timersDone: 1 }
+    };
+    const week = weekSummary(state, at);
+    expect(week.systems).toBe(1);
+    expect(week.planets).toBe(1);
+    // The 7.5-day-old session ended inside the window (counted), the 20-day-old one didn't.
+    expect(week.timersDone).toBe(2 + 5 + 1);
+    // 1h, plus the part of the long session inside the window (12h of it), plus the running half hour.
+    expect(week.played).toBe(3600_000 + 12 * 3600_000 + 30 * 60_000);
+  });
+  test('an empty log is all zeros', () => {
+    expect(weekSummary({ systems: [], sessions: [], session: null }, at)).toEqual({
+      systems: 0,
+      planets: 0,
+      timersDone: 0,
+      played: 0
+    });
+  });
 });

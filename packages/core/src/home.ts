@@ -95,3 +95,52 @@ export function homeTimers(
   const shown = [...first, ...running.slice(1), ...done.slice(1)].slice(0, limit);
   return [...shown.filter(row => !row.status.done), ...shown.filter(row => row.status.done)];
 }
+
+// ——— The last seven days (round 6, d03's "This week"): rolling, so it never resets to zero on a Monday. ———
+export const WEEK_MS = 7 * 24 * 3600 * 1000;
+
+export interface WeekSummary {
+  systems: number; // logged in the window
+  planets: number; // discovered in the window (the date the player typed for the planet's discovery)
+  timersDone: number; // counted by sessions that ended in the window, and the one running
+  played: number; // ms of sessions inside the window, the running one up to now
+}
+
+export function weekSummary(
+  state: {
+    systems: System[];
+    sessions: { startedAt: string; endedAt: string; timersDone: number }[];
+    session: { startedAt: string; timersDone: number } | null;
+  },
+  now: number
+): WeekSummary {
+  const from = now - WEEK_MS;
+  const inside = (at: number) => at >= from && at <= now;
+  // A discovery date is a calendar day (YYYY-MM-DD): its end of day counts, so today's discoveries are in.
+  const dayInside = (day: string) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(day) && inside(Math.min(Date.parse(`${day}T23:59:59`), now));
+  let played = 0;
+  let timersDone = 0;
+  const spans = [
+    ...state.sessions.map(item => ({
+      start: Date.parse(item.startedAt),
+      end: Date.parse(item.endedAt),
+      done: item.timersDone
+    })),
+    ...(state.session ? [{ start: Date.parse(state.session.startedAt), end: now, done: state.session.timersDone }] : [])
+  ];
+  for (const span of spans) {
+    if (!Number.isFinite(span.start) || !Number.isFinite(span.end) || span.end < from) continue;
+    played += Math.max(0, Math.min(span.end, now) - Math.max(span.start, from));
+    if (inside(span.end)) timersDone += span.done;
+  }
+  return {
+    systems: state.systems.filter(system => inside(Date.parse(system.createdAt))).length,
+    planets: state.systems.reduce(
+      (sum, system) => sum + system.planets.filter(planet => dayInside(planet.discoveredOn)).length,
+      0
+    ),
+    timersDone,
+    played
+  };
+}
