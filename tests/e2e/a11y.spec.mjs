@@ -7,6 +7,12 @@ const openEditor = async page => {
   await page.locator('#systemList').getByText('Ekwa Nexus').click();
   await page.getByRole('button', { name: 'Edit system' }).click();
 };
+// Location read from a Signal Booster (06f): the planet stays unknown.
+const openBooster = async page => {
+  await openEditor(page);
+  await page.locator('#systemPanel').getByRole('radio', { name: 'Signal Booster' }).click();
+  await page.locator('#sysAddress').fill('HUKYA:046A:0081:0D6D:0038');
+};
 const openPlanet = page => page.getByRole('button', { name: /^Add body/ }).click();
 // The planet sheet from a planet's own view, with the weather's word list open (c14).
 const openWeatherList = async page => {
@@ -76,12 +82,16 @@ for (const [name, path, ready, region, setup] of [
   ['Map', './#map', '#mapChain', '#sec-map'],
   ['Map · one galaxy', './#map/Euclid', '#mapGalaxy', '#sec-map'],
   ['Outlaw stations', './#outlaw', '#outlawStationList', '#sec-outlaw'],
-  ['System detail', './#system/sys-ekwa', '#sec-system [data-glyph-plate]', '#sec-system'],
+  ['System detail', './#system/sys-ekwa', '#sec-system #portalTitle', '#sec-system'],
+  ['System detail, no address', './#system/sys-hesper', '#sec-system #portalTitle', '#sec-system'],
   ['Planet sheet', './#system/sys-ekwa', '#systemTitle', '#planetSheet', openPlanet],
   ['Planet sheet, word list open', './#planet/sys-hesper/pl-storm', '#planetTitle', '#planetSheet', openWeatherList],
   ['Planet view', './#planet/sys-hesper/pl-storm', '#planetTitle', '#sec-planet'],
   ['Planet view, nothing scanned', './#planet/sys-hesper/pl-blank', '#planetTitle', '#sec-planet'],
-  ['System editor', './#systems', '#systemPanel [data-glyph-plate]', '#systemPanel', openEditor],
+  ['System editor', './#systems', '#systemPanel [aria-label="Glyphs"]', '#systemPanel', openEditor],
+  ['System editor, Signal Booster', './#systems', '#sysAddressConverted', '#systemPanel', openBooster],
+  ['My glyphs', './#glyphs', '#sec-glyphs [aria-label="Glyphs found"]', '#sec-glyphs'],
+  ['Dialling', './#dial/sys-ekwa', '#sec-dial [aria-label="Glyph 1 of 12"]', '#sec-dial'],
   ['Calculators', './#calculators', '#valueTotal', '#sec-calculators'],
   ['Recipe planner', './#plan/Stasis%20Device', '#planCargo', '#sec-plan'],
   ['Recipe planner, Codex peek', './#plan/Stasis%20Device', '#peekSource', '#codexPeek', openPlanPeek],

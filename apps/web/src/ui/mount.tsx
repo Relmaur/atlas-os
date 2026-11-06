@@ -7,6 +7,8 @@ import { Systems } from './systems/Systems.tsx';
 import { SystemPanel } from './systems/SystemPanel.tsx';
 import { SystemDetails } from './systems/SystemDetails.tsx';
 import { PlanetDetails } from './systems/PlanetDetails.tsx';
+import { MyGlyphs } from './portal/MyGlyphs.tsx';
+import { Dialling } from './portal/Dialling.tsx';
 import { PlanetSheet } from './systems/PlanetSheet.tsx';
 import { Outlaw } from './outlaw/Outlaw.tsx';
 import { Runs } from './runs/Runs.tsx';
@@ -58,6 +60,8 @@ const SCREENS: [string, ReactNode][] = [
   ['systemsRoot', <Systems />],
   ['systemDetailRoot', <SystemDetails />],
   ['planetDetailRoot', <PlanetDetails />],
+  ['myGlyphsRoot', <MyGlyphs />],
+  ['diallingRoot', <Dialling />],
   ['sessionRoot', <Session />],
   ['mapRoot', <MapScreen />],
   ['cardRoot', <CardScreen />],

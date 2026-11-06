@@ -4,7 +4,8 @@ test('adds a system with glyphs and a tag, logging the arrival', async ({ page }
   await page.goto('./#systems');
   await page.locator('#sec-systems').getByRole('button', { name: 'Log system' }).click();
   await page.locator('#sysName').fill('Test Prime');
-  await page.locator('#systemEditor input[name="glyphs"]').fill('1a2b3c4d5e6f');
+  await page.locator('#systemEditor').getByRole('radio', { name: 'Written down' }).click();
+  await page.locator('#sysAddress').fill('1a2b3c4d5e6f');
   await page.locator('#tagInput').fill('mining');
   await page.locator('#tagInput').press('Enter');
   await page.locator('#systemEditor button[type="submit"]').click();
@@ -131,4 +132,39 @@ test('a moon tied to its planet circles it in the diorama and names it on its ow
   await expect(page.locator('#planetTitle')).toHaveText('Hesper Minor');
   await page.locator('#sec-planet').getByRole('link', { name: 'Storm Rock' }).click();
   await expect(page).toHaveURL(/#planet\/sys-hesper\/pl-storm$/);
+});
+
+test('a portal address from Photo Mode, by name: tapped in, read on System detail, dialled one glyph at a time', async ({
+  page
+}) => {
+  await page.goto('./#system/sys-hesper');
+  await page.locator('#sec-system').getByRole('button', { name: 'Add from Photo Mode' }).click();
+  const pad = page.locator('#systemPanel').getByRole('group', { name: 'Glyphs' });
+  for (const name of [
+    'Face',
+    'Bird',
+    'Voxel',
+    'Eclipse',
+    'Atlas',
+    'Sunset',
+    'Diplo',
+    'Voxel',
+    'Sunset',
+    'Tree',
+    'Bird',
+    'Sunset'
+  ])
+    await pad.getByRole('button', { name: new RegExp(`^Add ${name}\\b`) }).click();
+  await expect(page.locator('#systemPanel').getByText(/A full address/)).toBeVisible();
+  await page.locator('#systemPanel').getByRole('button', { name: 'Save changes' }).click();
+  const system = (await storedState(page)).systems.find(item => item.id === 'sys-hesper');
+  expect(system.glyphs).toBe('21A4F03A0E10');
+  await expect(
+    page.locator('#sec-system').getByText('Face, Bird, Voxel, Eclipse', { exact: false }).first()
+  ).toBeAttached();
+  await page.locator('#sec-system').getByRole('link', { name: 'Dial at a portal' }).click();
+  await expect(page).toHaveURL(/#dial\/sys-hesper$/);
+  await page.locator('#sec-dial').getByRole('button', { name: 'Next: Bird' }).click();
+  await expect(page.locator('#sec-dial').getByRole('img', { name: 'Glyph 2 of 12' })).toBeVisible();
+  await expect(page.locator('#tabBarRoot')).toBeHidden();
 });

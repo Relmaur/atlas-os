@@ -14,6 +14,8 @@ const TAB_OF: Record<string, string> = {
   home: 'home',
   session: 'home',
   more: 'home',
+  glyphs: 'home', // My glyphs sits under Settings
+  dial: 'log',
   card: 'home',
   cards: 'home',
   frontier: 'log',

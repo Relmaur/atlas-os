@@ -8,7 +8,8 @@ import { appState, onAdopt } from '../../app/store.ts';
 import { showToast } from '../../app/ui.ts';
 import { showSection } from '../shell/section-store.ts';
 
-export type EditorPreset = Partial<Pick<System, 'tags' | 'conflict'>>;
+// `way` opens the editor at Location with that way picked (03d's buttons, 01b's "Add its address").
+export type EditorPreset = Partial<Pick<System, 'tags' | 'conflict'>> & { way?: 'photo' | 'booster' | 'written' };
 export interface PanelState {
   open: boolean;
   mode: 'view' | 'edit';

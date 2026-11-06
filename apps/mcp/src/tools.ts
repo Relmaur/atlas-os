@@ -366,7 +366,8 @@ export function createServer({ loadWiki, loadLog, logSetupError, now = Date.now 
       return {
         ...system,
         id: undefined,
-        glyphNames: named?.map(glyph => glyph.name),
+        // A Signal Booster's address has no planet glyph: the stand-in is never named.
+        glyphNames: named?.map((glyph, i) => (i === 0 && system.planetGlyphUnknown ? '?' : glyph.name)),
         // A moon's link is an id too: the planet's name stands in for it.
         planets: system.planets.map(planet => ({
           ...planet,

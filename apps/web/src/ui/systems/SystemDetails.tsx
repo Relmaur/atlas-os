@@ -29,7 +29,9 @@ import { copyText, ShareSystemSheet } from '../share/ShareSheet.tsx';
 import { LinkedNoteRows } from '../notes/note-bits.tsx';
 import { newNote } from '../notes/note-nav.ts';
 import { openSystemEditor } from './panel-store.ts';
-import { GlyphPlate } from './GlyphPlate.tsx';
+import { GlyphSlots, TOOL, slotsOf, useGlyphTable } from '../portal/glyph-parts.tsx';
+import { HEX, addressAsNames, glyphName, glyphsToFind, sendsToFirstPlanet } from '@atlas/core/portal';
+import { groupGlyphs } from '@atlas/core/location';
 import { DangerPills, nothingLogged, planetScanLine } from './PlanetScan.tsx';
 import { discoveryWhen } from './DiscoveryFields.tsx';
 import { openPlanetSheet, planetHref, usePlanetSheet } from './planet-sheet-store.ts';
@@ -395,53 +397,177 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
 }
 
 // Twelve slots for the address the portal dials; empty until logged, with Add opening the editor.
+// The portal address (03c), as 12 named slots: planet · star system · region (the wiki's Portal address page). Glyph 1
+// names the planet it takes you to when a planet's own portal glyph matches (35c); My glyphs says what's still to find
+// (never blocking anything). Without an address (03d), the three ways to read one, Photo Mode first.
 function PortalAddress({ system }: { system: System }) {
+  const table = useGlyphTable();
+  const { myGlyphs } = useAppState();
   const glyphs = system.glyphs;
-  return (
-    <section
-      aria-labelledby="portalTitle"
-      className={`rounded-card px-3.5 py-3 flex flex-col gap-3 border ${glyphs ? 'border-hairline bg-panel' : 'border-dashed border-control-edge'}`}
-    >
-      <div className="flex items-center justify-between gap-2.5">
-        <div className="flex flex-col gap-[7px] min-w-0">
-          <h2 id="portalTitle" className={LABEL}>
-            Portal address
-          </h2>
-          <div className="flex gap-[3px]" aria-hidden={!glyphs}>
+  const unknown = system.planetGlyphUnknown;
+  if (!glyphs) {
+    return (
+      <section aria-labelledby="portalTitle" className="flex flex-col gap-2">
+        <h2 id="portalTitle" className={SECTION_TITLE}>
+          Portal address
+        </h2>
+        <div className="rounded-card border border-dashed border-control-edge p-4 flex flex-col gap-3">
+          <div aria-hidden="true" className="flex gap-1">
             {Array.from({ length: 12 }, (_, i) => (
-              <span
-                key={i}
-                className="w-[14px] h-5 rounded-[4px] bg-slate-ground border border-hairline grid place-items-center font-mono text-[11px] text-quantity-cyan"
-              >
-                {glyphs[i] ?? ''}
-              </span>
+              <span key={i} className="flex-1 h-[22px] rounded-[5px] border border-dashed border-control-edge" />
             ))}
           </div>
-          {!glyphs && <span className="sr-only">Not logged</span>}
+          <p className="m-0 text-row leading-normal text-ink-soft">
+            Not logged yet. You can read it <b className="text-ink-bright">before you ever use a portal</b>: Photo Mode
+            shows it in the bottom-left corner.
+          </p>
+          <Button
+            variant="primary"
+            icon="ph-camera"
+            onClick={() => {
+              openSystemEditor(system.id, { way: 'photo' });
+            }}
+          >
+            Add from Photo Mode
+          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => {
+                openSystemEditor(system.id, { way: 'booster' });
+              }}
+              className={TOOL}
+            >
+              <i className="ph-bold ph-broadcast" aria-hidden="true" />
+              Signal Booster
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                openSystemEditor(system.id, { way: 'written' });
+              }}
+              className={TOOL}
+            >
+              <i className="ph-bold ph-hash" aria-hidden="true" />
+              Written down
+            </button>
+          </div>
         </div>
-        {glyphs ? (
-          <Button
-            variant="jump"
-            size="S"
-            onClick={() => {
-              copyText(glyphs, `Copied the portal address ${glyphs}.`);
-            }}
-          >
-            Copy
-          </Button>
-        ) : (
-          <Button
-            variant="jump"
-            size="S"
-            onClick={() => {
-              openSystemEditor(system.id);
-            }}
-          >
-            Add
-          </Button>
-        )}
+      </section>
+    );
+  }
+  const first = unknown ? '' : (glyphs[0] ?? '');
+  const firstName = glyphName(table, first);
+  const index = HEX.indexOf(first);
+  const goesTo = first ? system.planets.find(planet => planet.portalGlyph === first) : undefined;
+  const toFind = glyphsToFind(unknown ? glyphs.slice(1) : glyphs, myGlyphs);
+  const names = (digits: string[]) =>
+    digits.length > 1
+      ? `${digits
+          .slice(0, -1)
+          .map(digit => glyphName(table, digit))
+          .join(', ')} and ${glyphName(table, digits.at(-1) ?? '')}`
+      : glyphName(table, digits[0] ?? '');
+  const shown = `${unknown ? '?' : ''}${unknown ? glyphs.slice(1) : glyphs}`;
+  return (
+    <section aria-labelledby="portalTitle" className="flex flex-col gap-2">
+      <div className="flex justify-between items-baseline gap-3">
+        <h2 id="portalTitle" className={SECTION_TITLE}>
+          Portal address
+        </h2>
+        <span aria-hidden="true" className="font-mono text-xs tracking-[0.08em] text-ink-muted">
+          {groupGlyphs(shown)}
+        </span>
       </div>
-      {glyphs && <GlyphPlate glyphs={glyphs} />}
+      <div className="rounded-card bg-panel border border-hairline p-3.5 flex flex-col gap-3.5">
+        <GlyphSlots slots={slotsOf(glyphs, unknown)} table={table} planetUnknown label="Portal address" />
+        {unknown ? (
+          <div className="flex gap-2.5 items-start p-3 rounded-xl border border-hairline bg-slate-ground text-[12.5px] leading-normal text-ink-soft">
+            <i className="ph-bold ph-info mt-0.5 text-ink-muted" aria-hidden="true" />
+            <span className="flex-1">
+              <b className="text-ink-bright">Planet not known.</b> This came from a Signal Booster. Add the planet’s
+              glyph from Photo Mode when you can.{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  openSystemEditor(system.id, { way: 'photo' });
+                }}
+                className="text-scanner-cyan-pale underline"
+              >
+                Add it
+              </button>
+            </span>
+          </div>
+        ) : goesTo && !sendsToFirstPlanet(first, system.planetCount) ? (
+          <a
+            href={planetHref(system.id, goesTo.id)}
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-ground border border-hairline text-[13px] text-ink-soft hover:border-control-edge"
+          >
+            <i className="ph-bold ph-planet text-scanner-cyan-pale" aria-hidden="true" />
+            <span className="flex-1">
+              Glyph 1, <b className="text-ink-bright">{firstName}</b>, takes you to planet {String(index)}:{' '}
+              <b className="text-ink-bright">{goesTo.name}</b>
+            </span>
+            <i className="ph-bold ph-caret-right text-ink-muted" aria-hidden="true" />
+          </a>
+        ) : (
+          <p className="m-0 text-[13px] text-ink-muted">
+            {sendsToFirstPlanet(first, system.planetCount)
+              ? `Glyph 1, ${firstName}: no planet has that number here, so the portal sends you to planet 1.`
+              : `Glyph 1, ${firstName}, takes you to planet ${String(index)}.`}
+          </p>
+        )}
+        {myGlyphs.length > 0 &&
+          (toFind.length ? (
+            <p className="m-0 flex gap-2.5 items-start p-3 rounded-xl border border-units-amber-edge bg-units-amber-tint text-[12.5px] leading-normal text-units-amber-pale">
+              <i className="ph-bold ph-warning mt-0.5" aria-hidden="true" />
+              <span>
+                You need {names(toFind)} to dial this.{' '}
+                <a href="#glyphs" className="text-units-amber-pale underline">
+                  My glyphs
+                </a>
+              </span>
+            </p>
+          ) : (
+            <p className="m-0 flex gap-2.5 items-start p-3 rounded-xl border border-ready-emerald-edge bg-ready-emerald-wash text-[12.5px] leading-normal text-ready-emerald-text">
+              <i className="ph-bold ph-check-circle mt-0.5" aria-hidden="true" />
+              <span>You have every glyph this needs.</span>
+            </p>
+          ))}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              copyText(shown, `Copied the portal address ${groupGlyphs(shown)}.`);
+            }}
+            className={TOOL}
+          >
+            <i className="ph-bold ph-copy" aria-hidden="true" />
+            Copy as hex
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const text = `${unknown ? '? ' : ''}${addressAsNames(table, unknown ? glyphs.slice(1) : glyphs)}`;
+              copyText(text, 'Copied the address as glyph names.');
+            }}
+            className={TOOL}
+          >
+            <i className="ph-bold ph-text-aa" aria-hidden="true" />
+            Copy as names
+          </button>
+        </div>
+        <a
+          href={`#dial/${encodeURIComponent(system.id)}`}
+          className="h-12 rounded-[14px] border border-ready-emerald-edge bg-ready-emerald-tint text-ready-emerald-text text-[15px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-ready-emerald-tint-hover"
+        >
+          <i className="ph-bold ph-circles-three-plus" aria-hidden="true" />
+          Dial at a portal
+        </a>
+      </div>
+      <p className="m-0 text-[11px] leading-normal text-ink-muted">
+        Names, and planet · star system · region, from the No Man’s Sky wiki (the Glyph pages and Portal address).
+      </p>
     </section>
   );
 }

@@ -3,7 +3,6 @@
 import { useEffect, useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import { economyType, starFromSpectral, strengthStars } from '@atlas/core/galaxy-map';
 import { WordCombobox, type WordGroup } from '../parts/WordCombobox.tsx';
-import { groupGlyphs } from '@atlas/core/location';
 import {
   CONFLICT_LEVELS,
   ECONOMIES,
@@ -16,12 +15,19 @@ import {
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { deleteSystem, saveSystem } from '../actions.ts';
 import { showToast } from '../../app/ui.ts';
-import { closeSystemPanel, dismissSystemPanel, openSystem, setCloseGuard, type EditorPreset } from './panel-store.ts';
+import {
+  closeSystemPanel,
+  dismissSystemPanel,
+  openSystem,
+  openSystemEditor,
+  setCloseGuard,
+  type EditorPreset
+} from './panel-store.ts';
 import { SheetGrab } from '../parts/Sheet.tsx';
 import { Button } from '../parts/Button.tsx';
 import { ArmButton } from '../parts/Gesture.tsx';
 import { goBack } from '../shell/section-store.ts';
-import { LocationBlock, locationGlyphs, type Location } from './LocationBlock.tsx';
+import { LocationBlock, locationGlyphs, locationOf, type Location } from './LocationBlock.tsx';
 import { FIELD, LABEL_FIELD, Segments, TagEditor, type Option } from './editor-parts.tsx';
 import { DiscoveryFields } from './DiscoveryFields.tsx';
 import { useAppState } from '../useAppState.ts';
@@ -48,12 +54,14 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
       planetCount: base.planetCount ? String(base.planetCount) : ''
     };
   });
-  const [location, setLocation] = useState<Location>(() => ({
-    galaxy: draft.galaxy,
-    format: 'portal',
-    address: draft.glyphs ? groupGlyphs(draft.glyphs) : '',
-    planet: draft.glyphs ? parseInt(draft.glyphs[0] ?? '0', 16) : 0
-  }));
+  const [location, setLocation] = useState<Location>(() => locationOf(draft, preset.way));
+  // Opened for its address (03d, 01b): Location comes into view.
+  useEffect(() => {
+    if (!preset.way) return;
+    const block = document.getElementById('sysLocation');
+    const scroller = document.getElementById('systemPanelScroll');
+    if (block && scroller) scroller.scrollTop = block.offsetTop - 72;
+  }, [preset.way]);
   const facts = useFacts();
   useEffect(() => {
     void loadFacts(); // the galaxy map's words, for the spectral class and economy pickers
@@ -99,21 +107,32 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
     }
     if (glyphs === null) {
       setError(
-        location.format === 'portal'
-          ? 'A portal address is 12 characters, 0–9 and A–F, or leave it empty.'
-          : 'Galactic coordinates are four groups like 046A:0081:0D6D:0038, or leave them empty.'
+        location.way === 'booster'
+          ? 'Galactic coordinates are four groups like 046A:0081:0D6D:0038, or leave them empty.'
+          : 'The portal address needs all 12 glyphs (glyph 1 may wait for Photo Mode), or none.'
       );
-      document.getElementById('sysAddress')?.focus();
+      document.getElementById('sysLocation')?.scrollIntoView({ block: 'nearest' });
       return;
     }
     const system = normalizeSystem({
       ...draft,
-      glyphs,
+      ...glyphs,
       tags: allTags,
       galaxy: location.galaxy.trim() || 'Euclid',
       planetCount: Number(draft.planetCount) || 0
     });
     saveSystem(system, { arrived: isNew && arrived });
+    // Logged without its address (01b): one tap to add it, read from Photo Mode.
+    if (isNew && !system.glyphs)
+      showToast('System logged', {
+        detail: system.name,
+        action: {
+          label: 'Add its address',
+          run: () => {
+            openSystemEditor(system.id, { way: 'photo' });
+          }
+        }
+      });
     // A new system opens on its own screen; an edited one is already showing under the sheet.
     if (isNew) openSystem(system.id);
     else closeSystemPanel();

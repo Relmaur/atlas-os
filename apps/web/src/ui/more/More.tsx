@@ -142,7 +142,7 @@ export function More() {
           : 'Everything you log stays on this device until you export it or turn on sync.'}
       </p>
 
-      <Accounts accounts={state.accounts} />
+      <Accounts accounts={state.accounts} myGlyphs={state.myGlyphs} />
 
       <section aria-labelledby="keysTitle" className="hidden lg:block">
         <h2 id="keysTitle" className="text-label uppercase text-ink-label px-1 pb-2">
@@ -333,7 +333,7 @@ function Alerts() {
 }
 
 // The names the player plays under, on any platform: a planet's "Discovered by" offers them as Me.
-function Accounts({ accounts }: { accounts: string[] }) {
+function Accounts({ accounts, myGlyphs }: { accounts: string[]; myGlyphs: string[] }) {
   const [name, setName] = useState('');
   const add = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -362,6 +362,15 @@ function Accounts({ accounts }: { accounts: string[] }) {
           </button>
         </li>
       ))}
+      <li>
+        <a href="#glyphs" className={LINK_ROW}>
+          <Tile icon="ph-circles-three-plus" />
+          <Text title="My glyphs">
+            {myGlyphs.length ? `${String(myGlyphs.length)} of 16 found` : 'The portal glyphs you’ve found'}
+          </Text>
+          <Chevron />
+        </a>
+      </li>
       {accounts.length < MAX_ACCOUNTS && (
         <li className="px-4 py-3">
           <form onSubmit={add} className="flex gap-2 pl-[46px]">

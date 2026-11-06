@@ -102,10 +102,13 @@ test('a system with nothing logged says so, and Add opens the editor for its por
   expect(screen.queryByText('You are here')).toBeNull();
   expect(screen.getAllByText('Not logged').length).toBeGreaterThan(4);
   expect(screen.getByText('No visits yet. Log a visit when you’re here.')).toBeTruthy();
-  await userEvent.click(
-    within(screen.getByRole('region', { name: 'Portal address' })).getByRole('button', { name: 'Add' })
-  );
-  expect(getPanel()).toMatchObject({ open: true, mode: 'edit', systemId: 'sys-b' });
+  // 03d: no address yet, and the three ways to read one, Photo Mode first.
+  const address = within(screen.getByRole('region', { name: 'Portal address' }));
+  expect(address.getByText(/before you ever use a portal/)).toBeTruthy();
+  await userEvent.click(address.getByRole('button', { name: 'Add from Photo Mode' }));
+  expect(getPanel()).toMatchObject({ open: true, mode: 'edit', systemId: 'sys-b', preset: { way: 'photo' } });
+  await userEvent.click(address.getByRole('button', { name: 'Signal Booster' }));
+  expect(getPanel()).toMatchObject({ preset: { way: 'booster' } });
 });
 
 test('back, favourite, edit and Log a visit', async () => {

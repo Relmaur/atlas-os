@@ -29,6 +29,8 @@ import { PlanetMarker } from '../parts/StarChart.tsx';
 import { WordCombobox, type WordGroup } from '../parts/WordCombobox.tsx';
 import { FIELD, LABEL_FIELD, Segments } from './editor-parts.tsx';
 import { DiscoveryFields } from './DiscoveryFields.tsx';
+import { AddressEditor, GlyphPad, Tip, useGlyphTable } from '../portal/glyph-parts.tsx';
+import { addressAsNames, glyphName } from '@atlas/core/portal';
 
 export const codexHref = (path: string): string => `wiki/#/a/${encodeURIComponent(path)}`;
 const unique = (items: string[]) => [...new Set(items.filter(Boolean))];
@@ -133,6 +135,9 @@ interface Draft {
   sentinels: string;
   temperature: string;
   hazard: string;
+  portalGlyph: string;
+  /** For a system without an address: the whole one read on this planet (35c). */
+  address: string[];
   resources: string[];
   discoveredBy: string;
   discoveredOn: string;
@@ -155,6 +160,8 @@ const draftOf = (planet: Planet | undefined): Draft => ({
   // Shown with a true minus, the way the game writes it; saving reads either.
   temperature: planet?.temperature == null ? '' : String(planet.temperature).replace('-', '−'),
   hazard: planet?.hazard ?? '',
+  portalGlyph: planet?.portalGlyph ?? '',
+  address: Array<string>(12).fill(''),
   resources: planet?.resources ?? [],
   discoveredBy: planet?.discoveredBy ?? '',
   discoveredOn: planet?.discoveredOn ?? '',
@@ -189,6 +196,7 @@ export function PlanetForm({
   onDone: (deleted: boolean) => void;
 }) {
   const wiki = facts?.planets ?? null;
+  const glyphTable = useGlyphTable();
   const [draft, setDraft] = useState(() => draftOf(planet));
   // The biome follows the description only while the player hasn't chosen one (a biome already logged counts).
   const [biomeChosen, setBiomeChosen] = useState(Boolean(planet?.biome));
@@ -323,8 +331,10 @@ export function PlanetForm({
         discoveredOn: draft.discoveredOn,
         discoveredTime: draft.discoveredTime,
         // Only a moon orbits a planet; switching back to Planet unties it.
-        orbits: draft.body === 'moon' ? draft.orbits : ''
-      }
+        orbits: draft.body === 'moon' ? draft.orbits : '',
+        portalGlyph: system.glyphs ? draft.portalGlyph : (draft.address[0] ?? '')
+      },
+      ...(!system.glyphs && draft.address.every(Boolean) ? { address: draft.address.join('') } : {})
     });
     onDone(false);
   };
@@ -483,6 +493,57 @@ export function PlanetForm({
             lead={<PlanetMarker family={family} relic={relic} size={18} unlogged={unlogged} />}
             placeholder="Pick, or let the description set it"
           />
+        </Group>
+
+        <Group title="Portal glyph" caption="this planet’s glyph 1">
+          {system.glyphs ? (
+            <>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-ground border border-hairline">
+                <div
+                  aria-hidden="true"
+                  className={`w-[84px] shrink-0 h-[52px] rounded-[10px] border px-2 flex flex-col justify-center ${
+                    draft.portalGlyph ? 'border-scanner-cyan-glow' : 'border-dashed border-control-edge'
+                  }`}
+                >
+                  <span className="truncate text-xs font-semibold text-ink-bright">
+                    {draft.portalGlyph ? glyphName(glyphTable, draft.portalGlyph) : '?'}
+                  </span>
+                  <span className="font-mono text-[11px] text-ink-muted">{draft.portalGlyph || 'planet'}</span>
+                </div>
+                <p className="m-0 flex-1 min-w-0 text-xs leading-snug text-ink-muted">
+                  {draft.portalGlyph ? `${glyphName(glyphTable, draft.portalGlyph)}, then ` : 'Then '}
+                  <b className="text-ink-soft">{addressAsNames(glyphTable, system.glyphs.slice(1, 4))}</b> and the
+                  region, from the system’s address
+                </p>
+              </div>
+              <Tip>
+                In Photo Mode on this planet, the <b>first</b> glyph in the bottom-left corner is this planet’s. The
+                other 11 are the system’s, already logged.
+              </Tip>
+              <GlyphPad
+                table={glyphTable}
+                selected={draft.portalGlyph}
+                verb="Use"
+                onPick={digit => {
+                  set({ portalGlyph: draft.portalGlyph === digit ? '' : digit });
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <Tip>
+                The system has no address yet. In Photo Mode on this planet, read all 12 glyphs in the bottom-left
+                corner: the first is this planet’s, and the rest become the system’s.
+              </Tip>
+              <AddressEditor
+                slots={draft.address}
+                table={glyphTable}
+                onChange={address => {
+                  set({ address });
+                }}
+              />
+            </>
+          )}
         </Group>
 
         <Group title="The scan" caption="in the game’s order">

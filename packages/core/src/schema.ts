@@ -57,7 +57,8 @@ export const StateDocumentSchema = object({
   notes: list(object({})).nullish(),
   devices: list(object({})).nullish(),
   runs: list(object({})).nullish(),
-  accounts: list(z.unknown()).nullish() // names; buildState() drops anything that isn't one
+  accounts: list(z.unknown()).nullish(), // names; buildState() drops anything that isn't one
+  myGlyphs: list(z.unknown()).nullish() // digits; the same
 });
 
 export type StateDocument = z.infer<typeof StateDocumentSchema>;

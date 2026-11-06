@@ -6,6 +6,21 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.30.0] - 2026-11-06
+Design round 5, "Portals": from your first hour to your first jump.
+
+### Added
+- **Where did you read it?** The system editor's Location reads a portal address three ways. *Photo Mode*, the default, is for players who can't use a portal yet: the glyphs in the bottom-left corner of a screenshot, tapped in by name. *Signal Booster* takes the galactic coordinates and converts them with the wiki's table. A booster gives the system but not the planet, so glyph 1 stays unknown until Photo Mode gives it, never guessed. *Written down* takes digits or names, typed or pasted.
+- **The glyph keypad:** 16 tiles in glyph order, each with its name, its second name, its digit, and a link to its wiki page to see the real glyph. The address builds in 12 named slots, labelled planet, star system and region. Tap a filled slot to replace it; Backspace and Clear (with Undo) are there too. From a computer, 0–9 and A–F type glyphs. An address the wiki says can't exist (region Y = 80, X or Z = 800) is flagged, naming the glyphs to check.
+- **System detail's address:** the 12 named slots, "Glyph 1, Face, takes you to planet 2: Hogaw 24/K5", Copy as hex and Copy as names, and Dial at a portal. A system without an address offers the three ways, Photo Mode first, and so does the toast after you log a new system ("Add its address").
+- **A planet's portal glyph:** the planet sheet records the planet's own glyph 1. It fills a Signal Booster address's unknown planet, and lets System detail name the planet an address takes you to. A system with no address can take all 12 glyphs read on one of its planets.
+- **My glyphs**, under Settings › In the game: a switch for each glyph you've found. It only says which glyphs an address still needs ("You need Bird and Voxel"), and never blocks anything.
+- **Dialling:** a full-screen mode for standing at a portal, one glyph at a time and large. Step by button, arrow key or swipe, with the screen kept on where the browser allows. A glyph you haven't marked as found gets a note.
+- No glyph is drawn anywhere: a glyph is its name and digit, with a link to the wiki. Screen readers hear names, never digits.
+
+### Notes
+- Additive: a system gains `planetGlyphUnknown`, a planet gains `portalGlyph`, and the log gains `myGlyphs`, a set of digits merged as a set in sync. Older logs read as known planets, no portal glyphs, and no glyphs found. Addresses already logged from coordinates are kept as they were.
+
 ## [3.29.0] - 2026-11-06
 ### Added
 - Your game accounts, in Settings under "In the game": the names you play under. A planet's Discovered by offers each as **Me**, one tap to fill it in. Without any, it says where to add them.

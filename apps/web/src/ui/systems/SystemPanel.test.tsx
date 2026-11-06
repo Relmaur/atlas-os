@@ -79,17 +79,20 @@ test('editor: validates the name and glyphs, normalises glyphs, adds tags, logs 
   expect(screen.getByRole('alert').textContent).toBe('The system needs a name.');
 
   await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), 'Test Prime');
+  // Photo Mode is the first way; an address written down takes digits.
+  expect(screen.getByRole('radio', { name: 'Photo Mode' }).getAttribute('aria-checked')).toBe('true');
+  await userEvent.click(screen.getByRole('radio', { name: 'Written down' }));
   await userEvent.type(screen.getByRole('textbox', { name: 'Portal address' }), '1a2b');
-  await userEvent.click(screen.getByRole('button', { name: 'Add system' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Add system\b/ }));
   expect(screen.getByRole('alert').textContent).toBe(
-    'A portal address is 12 characters, 0–9 and A–F, or leave it empty.'
+    'The portal address needs all 12 glyphs (glyph 1 may wait for Photo Mode), or none.'
   );
 
   await userEvent.type(screen.getByRole('textbox', { name: 'Portal address' }), '3c4d5e6f');
   const tags = screen.getByRole('textbox', { name: 'Tags' });
   await userEvent.type(tags, 'Mining Base{Enter}scrap,temp');
   await userEvent.type(tags, '{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}');
-  await userEvent.click(screen.getByRole('button', { name: 'Add system' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Add system\b/ }));
 
   const added = appState.systems.find(item => item.name === 'Test Prime');
   expect(added?.glyphs).toBe('1A2B3C4D5E6F');
@@ -175,10 +178,11 @@ test('location: pick a galaxy, type galactic coordinates, see the portal address
   await userEvent.selectOptions(galaxy, 'Hilbert Dimension');
   expect(screen.getByText('2 of 256')).toBeTruthy();
 
-  await userEvent.click(screen.getByRole('radio', { name: 'Galactic coordinates' }));
+  await userEvent.click(screen.getByRole('radio', { name: 'Signal Booster' }));
   await userEvent.type(screen.getByRole('textbox', { name: 'Galactic coordinates' }), 'HUKYA:046A:0081:0D6D:0038');
-  // The wiki's worked example: this booster string is portal address 0038 0256 EC6B.
-  expect(document.getElementById('sysAddressConverted')?.textContent).toContain('0038 0256 EC6B');
+  // The wiki's worked example: this booster string is portal address ?038 0256 EC6B. Its planet isn't known.
+  expect(document.getElementById('sysAddressConverted')?.textContent).toContain('?038 0256 EC6B');
+  expect(screen.getByText('Planet not known.')).toBeTruthy();
   screen.getByRole('img', { name: /^Preview: this system sits 6\d\dk ly from the centre of Hilbert Dimension$/ });
 
   await userEvent.type(screen.getByRole('textbox', { name: 'Planets & moons' }), '5');
@@ -189,19 +193,24 @@ test('location: pick a galaxy, type galactic coordinates, see the portal address
   expect(system('sys-a')).toMatchObject({
     galaxy: 'Hilbert Dimension',
     glyphs: '00380256EC6B',
+    planetGlyphUnknown: true,
     planetCount: 5,
     notes: 'New notes'
   });
 
-  // Back in the editor the address shows as a portal address, and switching keeps it.
+  // Back in the editor it reopens on the booster's coordinates; Photo Mode then asks only for the planet's glyph.
   act(() => {
     openSystemEditor('sys-a');
   });
-  expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Portal address' }).value).toBe('0038 0256 EC6B');
-  await userEvent.click(screen.getByRole('radio', { name: 'Galactic coordinates' }));
   expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Galactic coordinates' }).value).toBe(
     '046A:0081:0D6D:0038'
   );
+  await userEvent.click(screen.getByRole('button', { name: 'Add from Photo Mode' }));
+  expect(screen.getByRole('group', { name: 'Portal address, 11 of 12' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: /^Glyph 1: empty\b/ }).getAttribute('aria-pressed')).toBe('true');
+  await userEvent.click(screen.getByRole('button', { name: /^Add 2\b/ }));
+  await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+  expect(system('sys-a')).toMatchObject({ glyphs: '20380256EC6B', planetGlyphUnknown: false });
 });
 
 test('race, wealth and conflict clear when their segment is tapped again', async () => {
@@ -312,7 +321,7 @@ test('06c: your colour and stars are kept; the wiki’s reading is offered, and 
     openSystemEditor('sys-a');
   });
   await userEvent.click(
-    within(screen.getByRole('group', { name: 'Star' })).getByRole('button', { name: 'Use yellow' })
+    within(screen.getByRole('group', { name: 'Star' })).getByRole('button', { name: /^Use yellow\b/ })
   );
   await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
   expect(system('sys-a')?.star).toBe('yellow');

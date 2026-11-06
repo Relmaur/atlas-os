@@ -7,6 +7,7 @@ import { gearFromFleet, normalizeGear, type GearItem } from './gear.ts';
 import { normalizeNotes, type Note } from './notes.ts';
 import { normalizeDevices, type SyncDevice } from './devices.ts';
 import { normalizeRuns, type PlayerRun } from './runs.ts';
+import { normalizeMyGlyphs } from './portal.ts';
 
 export interface OutlawSettings {
   restockHours: number;
@@ -32,6 +33,7 @@ export interface AppState {
   devices: SyncDevice[]; // the devices that sync this log, each written by itself
   runs: PlayerRun[]; // runs the player made (Outlaw stations is built in)
   accounts: string[]; // the names the player plays under (3.29): "Discovered by" offers them as Me
+  myGlyphs: string[]; // the portal glyphs the player has found, as digits (3.30): only tells them what they can dial
 }
 const OUTLAW_KEYS = ['restockHours', 'packetsPerVisit', 'runSize', 'unitsPerPacket', 'nanitesPerPacket'] as const;
 
@@ -126,6 +128,7 @@ export function buildState(...layers: unknown[]): AppState {
   state.devices = normalizeDevices(state.devices); // added in the redesign: a log from before has none
   state.runs = normalizeRuns(state.runs); // added in the redesign; a damaged run is dropped, not the log
   state.accounts = normalizeAccounts(state.accounts); // added in 3.29: a log from before has none
+  state.myGlyphs = normalizeMyGlyphs(state.myGlyphs); // added in 3.30: none found yet
   const outlaw = state.outlaw as Record<string, unknown>; // made an object two lines up; migrateToSystems keeps it one
   for (const key of OUTLAW_KEYS) {
     const value = Number(outlaw[key]);

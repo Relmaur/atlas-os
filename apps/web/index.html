@@ -28,7 +28,8 @@
     <!-- Toast Notification Banner -->
     <div id="toastBanner" role="status" aria-live="polite" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-[70] hidden items-center gap-3 px-4 py-3 rounded-xl bg-slate-900 border border-cyan-400/40 text-cyan-100 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.8)] text-xs">
         <i class="ph-fill ph-check-circle text-lg text-emerald-400 shrink-0"></i>
-        <span id="toastMessage">Action completed</span>
+        <span class="flex-1 min-w-0 flex flex-col"><span id="toastMessage">Action completed</span><span id="toastDetail" class="hidden text-slate-400"></span></span>
+        <button id="toastAction" type="button" class="hidden shrink-0 h-11 px-3.5 rounded-xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-100 font-semibold text-[13px]"></button>
     </div>
 
     <!-- Top header: logo, search, Export/Import (React: src/ui/shell/Header.tsx) -->
@@ -91,6 +92,12 @@
             <!-- One system (#system/<id>), design 03 -->
             <section id="sec-system" class="book-section hidden">
                 <!-- Rendered by React (src/ui/systems/SystemDetails.tsx) --><div id="systemDetailRoot"></div>
+            </section>
+            <section id="sec-glyphs" class="book-section hidden max-w-2xl">
+                <!-- My glyphs, #glyphs, under Settings (React: src/ui/portal/MyGlyphs.tsx) --><div id="myGlyphsRoot"></div>
+            </section>
+            <section id="sec-dial" class="book-section hidden">
+                <!-- Dialling, #dial/<system> (React: src/ui/portal/Dialling.tsx) --><div id="diallingRoot"></div>
             </section>
             <section id="sec-planet" class="book-section hidden">
                 <!-- A planet's own view, #planet/<system>/<planet> (React: src/ui/systems/PlanetDetails.tsx) --><div id="planetDetailRoot"></div>

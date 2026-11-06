@@ -2,6 +2,7 @@
 // State lives in nms_state.json → systems[] + outlaw{} (docs/state-schema.md).
 import { asString, isPlainObject, SAFE_ID, toText } from './util.ts';
 import { formatDuration } from './format.ts';
+import { normalizePortalGlyph } from './portal.ts';
 
 export interface Visit {
   at: string;
@@ -41,6 +42,8 @@ export interface Planet {
   discoveredTime: string;
   /** For a moon: the id of the planet it orbits in this system, or ''. Added in 3.28. Read through `moonParent()`. */
   orbits: string;
+  /** This body's portal glyph (glyph 1 of an address here, from Photo Mode on it): one digit, or ''. Added in 3.30. */
+  portalGlyph: string;
 }
 /** What a planet's colour is read from: its biome, and its description for a Reliquary world or an unset biome. */
 export type PlanetLike = Pick<Planet, 'biome' | 'descriptor'>;
@@ -53,6 +56,11 @@ export interface System {
   galaxy: string;
   region: string;
   glyphs: string;
+  /**
+   * The address came from a Signal Booster, which gives the system but not the planet (the wiki): its first glyph
+   * is a stand-in until Photo Mode gives the real one. Added in 3.30; an older log reads false.
+   */
+  planetGlyphUnknown: boolean;
   star: StarClass | '';
   race: Race | '';
   economy: string;
@@ -233,7 +241,8 @@ export function normalizePlanetScan(
       Number.isFinite(temperature) && Math.abs(temperature) < 1000 ? Math.round(temperature * 10) / 10 : null,
     hazard: word(planet.hazard).toLowerCase().slice(0, 20),
     ...discoveryOf(planet),
-    orbits: typeof planet.orbits === 'string' && SAFE_ID.test(planet.orbits) ? planet.orbits : ''
+    orbits: typeof planet.orbits === 'string' && SAFE_ID.test(planet.orbits) ? planet.orbits : '',
+    portalGlyph: normalizePortalGlyph(planet.portalGlyph)
   };
 }
 
@@ -256,6 +265,8 @@ export function normalizeSystem(raw: Record<string, unknown>): System {
     galaxy: toText(raw.galaxy, 'Euclid'),
     region: toText(raw.region, ''),
     glyphs: normalizeGlyphs(raw.glyphs),
+    // Only meaningful with an address to stand in for.
+    planetGlyphUnknown: raw.planetGlyphUnknown === true && normalizeGlyphs(raw.glyphs).length === 12,
     star: oneOf(STAR_CLASSES, raw.star),
     race: oneOf(RACES, raw.race),
     economy: toText(raw.economy, ''),

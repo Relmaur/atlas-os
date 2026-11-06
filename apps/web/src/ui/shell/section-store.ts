@@ -56,6 +56,7 @@ const SHORTCUTS = new Set(['new-system', 'search']);
 const PARAM_SECTIONS: Record<string, string> = {
   system: 'systems',
   planet: 'systems', // #planet/<system>/<planet>: a planet's own view (36)
+  dial: 'systems', // #dial/<system>: dialling its address at a portal (39)
   ship: 'gear',
   note: 'notes',
   plan: 'calculators',

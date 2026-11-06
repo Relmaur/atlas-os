@@ -1,5 +1,6 @@
 // Store actions shared by React screens: mutate the live state, save, and confirm to the person.
 import { normalizeAccounts, type OutlawSettings } from '@atlas/core/state';
+import { HEX, normalizeMyGlyphs } from '@atlas/core/portal';
 import { newId, normalizePlanetScan, normalizeSystem, tagSlug, type System } from '@atlas/core/systems-model';
 import { clampOutlawSetting } from '@atlas/core/outlaw';
 import { MAX_SESSIONS, type PastSession } from '@atlas/core/session';
@@ -80,6 +81,8 @@ export interface PlanetFields {
   tags: string;
   notes: string;
   /** The scan, as the form's fields hold it: words, a comma-separated resource list, a temperature in °C. */
+  /** A whole address read on this planet (35c), for a system that has none yet. */
+  address?: string;
   scan?: Partial<
     Record<
       | 'descriptor'
@@ -95,7 +98,8 @@ export interface PlanetFields {
       | 'discoveredOn'
       | 'discoveredTime'
       | 'orbits'
-      | 'hazard',
+      | 'hazard'
+      | 'portalGlyph',
       string
     >
   >;
@@ -123,6 +127,17 @@ export function savePlanet(systemId: string, planetId: string | null, fields: Pl
   const planet = system.planets.find(item => item.id === planetId);
   if (planet) Object.assign(planet, values);
   else system.planets.push({ id: newId('pl'), ...normalizePlanetScan({}), ...values });
+  const glyph = values.portalGlyph ?? '';
+  // A system without an address takes the one read on this planet (35c), all 12 glyphs of it.
+  if (!system.glyphs && fields.address && /^[0-9A-F]{12}$/.test(fields.address)) {
+    system.glyphs = fields.address;
+    system.planetGlyphUnknown = false;
+  }
+  // A Signal Booster's address had no planet: this planet's glyph is one (the "?" fills itself, 35c).
+  if (system.planetGlyphUnknown && glyph && system.glyphs.length === 12) {
+    system.glyphs = glyph + system.glyphs.slice(1);
+    system.planetGlyphUnknown = false;
+  }
   saveAppState();
 }
 
@@ -144,6 +159,20 @@ export function addAccount(name: string): boolean {
 
 export function removeAccount(name: string): void {
   appState.accounts = appState.accounts.filter(item => item !== name);
+  saveAppState();
+}
+
+// My glyphs (38): the glyphs the player has found. Only used to say what an address still needs; never blocks anything.
+export function setGlyphFound(digit: string, found: boolean): void {
+  const mine = new Set(appState.myGlyphs);
+  if (found) mine.add(digit.toUpperCase());
+  else mine.delete(digit.toUpperCase());
+  appState.myGlyphs = normalizeMyGlyphs([...mine]);
+  saveAppState();
+}
+
+export function setAllGlyphsFound(): void {
+  appState.myGlyphs = normalizeMyGlyphs(Array.from(HEX));
   saveAppState();
 }
 

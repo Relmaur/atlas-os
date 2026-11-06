@@ -557,6 +557,8 @@ label,
       [data-section='guides'],
       [data-section^='book'],
       [data-section='more'],
+      [data-section='glyphs'],
+      [data-section='dial'],
       [data-section='card'],
       [data-section='cards'],
       [data-section='frontier']
@@ -603,11 +605,16 @@ label,
       [data-section='outlaw'],
       [data-section='guides'],
       [data-section^='book'],
-      [data-section='more']
+      [data-section='more'],
+      [data-section='glyphs']
     )
     #sessionBarRoot:not(:has([data-live='true'])) {
     display: none;
   }
+}
+/* Dialling (39) is the whole screen: no tab bar or session bar over the glyph being dialled. */
+body[data-section='dial'] :is(#tabBarRoot, #sessionBarRoot) {
+  display: none;
 }
 /* The Session screen is what the session bar opens, so the bar isn't shown on it. */
 body[data-section='session'] #sessionBarRoot {
