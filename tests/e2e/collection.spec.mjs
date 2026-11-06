@@ -67,3 +67,26 @@ test('Frontier: what’s still out there, accessible, and shareable', async ({ p
   await page.getByRole('button', { name: 'Share my Frontier' }).click();
   await expect(page.getByRole('dialog', { name: 'Share my Frontier' }).locator('#shareSize')).toHaveText('1080 × 1350');
 });
+
+test('on a computer the cards run the full width, and dragging with the mouse moves to the next', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'a mouse drag is the desktop swipe');
+  await page.goto('./#cards');
+  await expect(page.locator('#collectionPosition')).toHaveText(/^1 of \d+$/);
+  const rail = await page.locator('#cardRail').boundingBox();
+  const main = await page.locator('main').boundingBox();
+  expect(rail.width).toBeGreaterThan(main.width - 10);
+  // The cards beside the one in view draw their art too.
+  await expect(page.locator('#cardRail .snap-center').nth(2).locator('svg.card-lay-0')).toHaveCount(1);
+
+  const y = rail.y + rail.height / 2;
+  const x = rail.x + rail.width / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x - 120, y, { steps: 8 });
+  await page.mouse.up();
+  await expect(page.locator('#collectionPosition')).toHaveText(/^2 of \d+$/);
+  // The drag didn't flip the card it ended on.
+  await expect(page.locator('#cardRail section[aria-label$="front"]:not([inert])')).toHaveCount(1);
+});

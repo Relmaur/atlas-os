@@ -6,6 +6,10 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.30.1] - 2026-11-06
+### Fixed
+- On a computer, the card collection runs across the whole screen, and every card on screen draws its picture, not just the one in view and its neighbours. Dragging with the mouse moves to the next card, as a swipe does on a phone; a drag never flips the card it ends on. The hint under the cards says "drag or use ← →" where there's a mouse.
+
 ## [3.30.0] - 2026-11-06
 Design round 5, "Portals": from your first hour to your first jump.
 

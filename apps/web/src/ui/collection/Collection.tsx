@@ -1,6 +1,7 @@
 // The Card viewer (#cards, #cards/<id>; design 27): the collection one card at a time, with its neighbours peeking.
-// Swipe for the next, tilt to inspect, tap to flip. Only the card in view and its neighbours draw their art, since a
-// rosette is thousands of points and a log can hold hundreds of cards.
+// Swipe for the next, tilt to inspect, tap to flip. On a wide screen the rail runs the full width and a mouse drags it
+// like a swipe. Only the cards on screen draw their art, since a rosette is thousands of points and a log can hold
+// hundreds of cards.
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { collection, groupAddress, type CollectionCard } from '@atlas/core/collectible';
 import { planetFamily } from '@atlas/core/facts';
@@ -22,6 +23,10 @@ const BADGE: Record<string, string> = {
   first: 'text-[#fde68a] border-[rgba(251,191,36,0.5)] bg-[rgba(245,158,11,0.12)]',
   fleet: 'text-[#fde68a] border-[rgba(251,191,36,0.5)] bg-[rgba(245,158,11,0.12)]'
 };
+// Everything but the rail keeps the phone's width, centred.
+const COLUMN = 'w-full max-w-md mx-auto';
+// A drag shorter than this is a tap (flip), not a swipe.
+const DRAG = 6;
 const RARITY: Record<string, string> = {
   logged: 'text-ink-label',
   addressed: 'text-scanner-cyan-pale',
@@ -109,6 +114,9 @@ export function Collection() {
   const [flipped, setFlipped] = useState(false);
   const [sharing, setSharing] = useState(false);
   const rail = useRef<HTMLDivElement>(null);
+  // How many cards either side of the one in view are on screen: 1 on a phone, more across a desktop.
+  const [reach, setReach] = useState(1);
+  const drag = useRef<{ x: number; left: number; from: number; moved: boolean } | null>(null);
   const closeShare = useCallback(() => {
     setSharing(false);
   }, []);
@@ -125,9 +133,24 @@ export function Collection() {
     if (at >= 0) goTo(at, false); // the rail's scroll then says which card is in view
   }, [param, cards, goTo]);
 
-  const onScroll = () => {
+  useEffect(() => {
     const box = rail.current;
-    if (!box) return;
+    if (!box || typeof ResizeObserver === 'undefined') return;
+    const measure = () => {
+      const slide = box.firstElementChild;
+      const width = slide instanceof HTMLElement ? slide.offsetWidth : 0;
+      setReach(width ? Math.max(1, Math.ceil(box.clientWidth / width / 2)) : 1);
+    };
+    const watch = new ResizeObserver(measure);
+    watch.observe(box);
+    return () => {
+      watch.disconnect();
+    };
+  }, [shown, cards.length]);
+
+  const nearest = () => {
+    const box = rail.current;
+    if (!box) return 0;
     const middle = box.scrollLeft + box.clientWidth / 2;
     let best = 0;
     let bestGap = Infinity;
@@ -139,10 +162,50 @@ export function Collection() {
         best = i;
       }
     });
+    return best;
+  };
+  const onScroll = () => {
+    const best = nearest();
     if (best !== index) {
       setIndex(best);
       setFlipped(false);
     }
+  };
+  // A mouse has no swipe: dragging the rail moves it, and letting go settles on a card, at least the next one over.
+  const onRailDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    drag.current = { x: event.clientX, left: event.currentTarget.scrollLeft, from: index, moved: false };
+  };
+  const onRailMove = (event: PointerEvent<HTMLDivElement>) => {
+    const held = drag.current;
+    if (!held) return;
+    const dx = event.clientX - held.x;
+    if (!held.moved && Math.abs(dx) < DRAG) return;
+    if (!held.moved) {
+      held.moved = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      event.currentTarget.style.scrollSnapType = 'none'; // snapping would fight the hand
+    }
+    event.currentTarget.scrollLeft = held.left - dx;
+  };
+  const onRailUp = (event: PointerEvent<HTMLDivElement>) => {
+    const held = drag.current;
+    drag.current = null;
+    if (!held?.moved) return;
+    event.currentTarget.style.scrollSnapType = '';
+    const dx = event.clientX - held.x;
+    let next = nearest();
+    if (next === held.from && Math.abs(dx) > 40) next = held.from + (dx < 0 ? 1 : -1);
+    goTo(Math.max(0, Math.min(next, cards.length - 1)));
+    // The click that ends a drag isn't a tap on a card.
+    const swallow = (click: MouseEvent) => {
+      click.stopPropagation();
+      click.preventDefault();
+    };
+    window.addEventListener('click', swallow, { capture: true, once: true });
+    setTimeout(() => {
+      window.removeEventListener('click', swallow, { capture: true });
+    }, 0);
   };
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const box = event.currentTarget.getBoundingClientRect();
@@ -162,7 +225,7 @@ export function Collection() {
   const version = facts?.game?.version ?? '';
 
   const top = (
-    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+    <div className={`grid grid-cols-[auto_1fr_auto] items-center gap-3 ${COLUMN}`}>
       <button
         type="button"
         aria-label="Back"
@@ -199,7 +262,7 @@ export function Collection() {
   const first = Math.max(0, Math.min(index - 2, cards.length - 5));
   const dots = cards.slice(first, first + 5);
   return (
-    <div className="flex flex-col gap-3 max-w-md mx-auto pt-[env(safe-area-inset-top)]">
+    <div className="flex flex-col gap-3 pt-[env(safe-area-inset-top)]">
       {top}
       <div
         ref={rail}
@@ -208,18 +271,22 @@ export function Collection() {
         tabIndex={0}
         role="group"
         aria-label="Your cards"
+        onPointerDown={onRailDown}
+        onPointerMove={onRailMove}
+        onPointerUp={onRailUp}
+        onPointerCancel={onRailUp}
         onKeyDown={event => {
           if (event.key === 'ArrowRight') goTo(Math.min(index + 1, cards.length - 1));
           else if (event.key === 'ArrowLeft') goTo(Math.max(index - 1, 0));
           else return;
           event.preventDefault();
         }}
-        className="card-rail relative -mx-4 px-[9%] flex gap-3 overflow-x-auto"
+        className="card-rail relative -mx-4 sm:-mx-6 lg:-mx-8 px-[9%] sm:px-[calc(50%-170px)] lg:px-[calc(50%-150px)] flex gap-3 overflow-x-auto"
       >
         {cards.map((item, i) => {
           const active = i === index;
           return (
-            <div key={item.id} className="snap-center shrink-0 w-[82%]">
+            <div key={item.id} className="snap-center shrink-0 w-[82%] sm:w-[340px] lg:w-[300px]">
               <div
                 onPointerMove={active ? onPointerMove : undefined}
                 onClick={event => {
@@ -237,7 +304,7 @@ export function Collection() {
                     inert={!active || flipped}
                     className={`card-side absolute inset-0 rounded-[20px] finish-${item.kind}`}
                   >
-                    <Front card={item} near={Math.abs(i - index) <= 1} active={active} />
+                    <Front card={item} near={Math.abs(i - index) <= reach} active={active} />
                   </section>
                   <section
                     aria-label={`${item.title}, back`}
@@ -253,7 +320,7 @@ export function Collection() {
           );
         })}
       </div>
-      <div className="flex justify-center items-center gap-2" aria-hidden="true">
+      <div className={`flex justify-center items-center gap-2 ${COLUMN}`} aria-hidden="true">
         {dots.map(item => (
           <span
             key={item.id}
@@ -261,10 +328,15 @@ export function Collection() {
           />
         ))}
       </div>
-      <p className="text-caption text-ink-muted text-center">Tilt to inspect · tap to flip · swipe for the next card</p>
+      <p className={`text-caption text-ink-muted text-center ${COLUMN}`}>
+        <span className="pointer-fine:hidden">Tilt to inspect · tap to flip · swipe for the next card</span>
+        <span className="hidden pointer-fine:inline">
+          Tilt to inspect · click to flip · drag or use ← → for the next card
+        </span>
+      </p>
       <div
         id="cardTrust"
-        className="rounded-card border border-hairline bg-panel-glass px-3.5 py-3 flex items-center justify-between gap-3"
+        className={`rounded-card border border-hairline bg-panel-glass px-3.5 py-3 flex items-center justify-between gap-3 ${COLUMN}`}
       >
         <span className="flex flex-col gap-0.5 min-w-0">
           <span className={`text-label uppercase ${RARITY[card.kind] ?? ''}`}>{card.trust}</span>
@@ -276,7 +348,7 @@ export function Collection() {
           </span>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid grid-cols-3 gap-2 ${COLUMN}`}>
         <button
           type="button"
           onClick={() => {
@@ -312,6 +384,7 @@ export function Collection() {
       <Button
         variant="ghost"
         icon="ph-compass"
+        className={COLUMN}
         onClick={() => {
           location.hash = '#frontier';
         }}
