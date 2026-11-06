@@ -192,3 +192,18 @@ test('d06: on the Workbench each run is a row, Outlaw stations under Built in, a
   await userEvent.click(add);
   expect(screen.getByRole('dialog')).toBeTruthy();
 });
+
+test('d07: on the Workbench the editor says how to leave, and Ctrl+Enter saves the run', async () => {
+  setWide(true);
+  useCatalog([PUMP]);
+  render(<Runs />);
+  await userEvent.click(screen.getByRole('button', { name: 'New run' }));
+  const editor = within(screen.getByRole('dialog', { name: 'New run' }));
+  expect(editor.getByText('Steps from your log or the wiki · Esc or the grab bar closes')).toBeTruthy();
+  await userEvent.type(editor.getByRole('textbox', { name: 'Name' }), 'Quick loop');
+  await userEvent.click(editor.getByRole('button', { name: 'Add a step' }));
+  await userEvent.type(editor.getByRole('combobox', { name: 'Step 1: system' }), 'Somewhere');
+  await userEvent.keyboard('{Control>}{Enter}{/Control}');
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(appState.runs.map(run => run.name)).toEqual(['Quick loop']);
+});

@@ -125,6 +125,12 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') latest.current();
+      // Ctrl+Enter (⌘↵) saves, as in the system editor (d07, d14).
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        const form = document.getElementById('runEditor');
+        if (form instanceof HTMLFormElement) form.requestSubmit();
+      }
     };
     document.addEventListener('keydown', onKey);
     document.body.classList.add('overflow-hidden');
@@ -165,7 +171,10 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
         <PanelGrab onClose={dismiss} label="Close run editor" />
         <form id="runEditor" onSubmit={submit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            <div data-sheet-grab className="sticky top-0 z-10 bg-slate-deep/95 backdrop-blur px-5 pt-3 lg:pt-5 pb-3">
+            <div
+              data-sheet-grab
+              className="sticky top-0 z-10 bg-slate-deep/95 backdrop-blur px-5 pt-3 lg:pt-5 pb-3 lg:border-b lg:border-hairline"
+            >
               <SheetGrab onClose={dismiss} label="Close run editor" />
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
@@ -176,41 +185,50 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
                     {existing ? 'Edit run' : 'New run'}
                   </h2>
                   <p className="text-sub text-ink-muted">
-                    Your own route to Units, Nanites or items. Each step is checked against the game data, so you’ll
-                    know when an update changes it.
+                    <span className="lg:hidden">
+                      Your own route to Units, Nanites or items. Each step is checked against the game data, so you’ll
+                      know when an update changes it.
+                    </span>
+                    {/* From lg (d07): where steps come from, and how to leave. */}
+                    <span className="hidden lg:inline">
+                      Steps from your log or the wiki · Esc or the grab bar closes
+                    </span>
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="px-5 pt-3.5 pb-6 flex flex-col gap-4">
-              <label className={LABEL_FIELD}>
-                Name
-                <input
-                  id="runName"
-                  required
-                  maxLength={80}
-                  autoFocus
-                  placeholder="e.g. Cryo-Pump loop"
-                  value={draft.name}
-                  onChange={event => {
-                    set({ name: event.target.value });
-                  }}
-                  className={FIELD}
-                />
-              </label>
-              <label className={LABEL_FIELD}>
-                One line about it
-                <input
-                  maxLength={140}
-                  placeholder="What it does, in a few words"
-                  value={draft.line}
-                  onChange={event => {
-                    set({ line: event.target.value });
-                  }}
-                  className={FIELD}
-                />
-              </label>
+              {/* From lg (d07) the name and its line sit side by side. */}
+              <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-2.5">
+                <label className={LABEL_FIELD}>
+                  Name
+                  <input
+                    id="runName"
+                    required
+                    maxLength={80}
+                    autoFocus
+                    placeholder="e.g. Cryo-Pump loop"
+                    value={draft.name}
+                    onChange={event => {
+                      set({ name: event.target.value });
+                    }}
+                    className={FIELD}
+                  />
+                </label>
+                <label className={LABEL_FIELD}>
+                  One line about it
+                  <input
+                    maxLength={140}
+                    placeholder="What it does, in a few words"
+                    value={draft.line}
+                    onChange={event => {
+                      set({ line: event.target.value });
+                    }}
+                    className={FIELD}
+                  />
+                </label>
+              </div>
               <Segments
                 label="It earns"
                 value={draft.earns}
@@ -222,9 +240,12 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
 
               <section
                 aria-labelledby="runStepsTitle"
-                className="rounded-card border border-hairline bg-panel-glass p-4 flex flex-col gap-2.5"
+                className="rounded-card border border-hairline bg-panel-glass p-4 flex flex-col gap-2.5 lg:p-0 lg:border-0 lg:bg-transparent lg:rounded-none"
               >
-                <h3 id="runStepsTitle" className="font-display font-bold text-[15px] text-ink-bright">
+                <h3
+                  id="runStepsTitle"
+                  className="font-display font-bold text-[15px] text-ink-bright lg:font-sans lg:font-normal lg:text-caption lg:text-ink-soft"
+                >
                   Steps
                 </h3>
                 <ol id="runSteps" className="flex flex-col gap-2.5">
@@ -254,7 +275,7 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
                     onClick={() => {
                       set({ steps: [...draft.steps, blankStep(draft.steps.length ? 'do' : 'go')] });
                     }}
-                    className="h-12 rounded-control border border-dashed border-control-edge-hover text-ink flex items-center justify-center gap-2 text-[14px] font-semibold hover:border-scanner-cyan-edge-strong"
+                    className="h-12 rounded-control border border-dashed border-control-edge-hover text-ink flex items-center justify-center gap-2 text-[14px] font-semibold hover:border-scanner-cyan-edge-strong lg:self-start lg:h-11 lg:px-4 lg:border-solid lg:border-control-edge lg:bg-slate-ground"
                   >
                     <i className="ph-bold ph-plus" aria-hidden="true" />
                     Add a step
@@ -268,9 +289,9 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
 
               <section
                 aria-labelledby="runTimingTitle"
-                className="rounded-card border border-hairline bg-panel-glass p-4 flex flex-col gap-3"
+                className="rounded-card border border-hairline bg-panel-glass p-4 flex flex-col gap-3 lg:p-0 lg:border-0 lg:bg-transparent lg:rounded-none"
               >
-                <h3 id="runTimingTitle" className="font-display font-bold text-[15px] text-ink-bright">
+                <h3 id="runTimingTitle" className="font-display font-bold text-[15px] text-ink-bright lg:sr-only">
                   Timing
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -376,12 +397,15 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
                 {error}
               </p>
             )}
-            <div className="grid grid-cols-[1fr_2fr] gap-2.5">
+            <div className="grid grid-cols-[1fr_2fr] gap-2.5 lg:flex lg:justify-end">
               <Button size="L" onClick={closeRunEditor}>
                 Cancel
               </Button>
               <Button variant="primary" type="submit">
                 Save run
+                <kbd aria-hidden="true" className="hidden lg:inline nav-kbd ml-1.5">
+                  Ctrl ↵
+                </kbd>
               </Button>
             </div>
           </div>

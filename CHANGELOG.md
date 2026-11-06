@@ -6,6 +6,11 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.35.0] - 2026-11-06
+### Changed
+- The system editor on a computer is a two-column form: Name beside Region, the star's class beside Water and Dissonant, the economy's name beside its strength, Race beside Conflict, and Planets & moons beside your rating. Its groups sit flat in the panel. Phones are unchanged.
+- The run editor on a computer has its name and line side by side, the steps and timing flat in the panel, and Save run on the right with Ctrl ↵; Ctrl+Enter saves.
+
 ## [3.34.0] - 2026-11-06
 ### Changed
 - The Codex on a computer has the app's floating nav and command bar (with the Codex marked, and what's live from your log), the search and results in a list pane with one-line excerpts, the article in its own pane at reading width with its sections as headed blocks, and On this page in a third pane from 1280px. Search in the command bar goes to the Codex's own field.

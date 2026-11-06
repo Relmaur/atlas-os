@@ -217,3 +217,50 @@ test('d01, d19, d20: the Systems workbench at 1024, 1440 and 1920 has no text ou
     expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
   }
 });
+
+test('d14: the system editor panel at 1024, 1440 and 1920 pairs its fields, keeps text in its boxes and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./#system/sys-ekwa');
+    await page.reload(); // the same hash doesn't reload, and the last width's editor would still be open
+    await page.getByRole('button', { name: 'Edit system' }).click();
+    await expect(page.locator('#systemPanel')).toBeInViewport({ ratio: 1 });
+    // Measured together, once the panel has slid in: Name | Region and Race | Conflict share a row.
+    const rows = await page.evaluate(() => {
+      const box = el => el.getBoundingClientRect();
+      const field = name =>
+        [...document.querySelectorAll('#systemEditor label')].find(l => l.firstChild?.textContent?.trim() === name);
+      const group = name =>
+        document.querySelector(
+          `#systemEditor [role=radiogroup][aria-labelledby="${[...document.querySelectorAll('#systemEditor p')].find(p => p.textContent === name)?.id}"]`
+        );
+      return [
+        [field('Name'), field('Region')],
+        [group('Dominant race'), group('Conflict')]
+      ]
+        .map(([a, b]) => [box(a), box(b)])
+        .map(([a, b]) => ({ sameRow: Math.abs(a.y - b.y) < 2, apart: b.x >= a.right }));
+    });
+    expect(rows).toEqual([
+      { sameRow: true, apart: true },
+      { sameRow: true, apart: true }
+    ]);
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#systemEditor *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).include('#systemPanel').analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
+});

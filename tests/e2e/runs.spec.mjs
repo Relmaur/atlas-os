@@ -58,3 +58,35 @@ test('d06: Runs on the Workbench at 1024, 1440 and 1920 has no text out of its b
     expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
   }
 });
+
+test('d07: the run editor panel at 1024, 1440 and 1920 pairs its fields, keeps text in its boxes and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./#runs');
+    await page.reload(); // the same hash doesn't reload, and the last width's editor would still be open
+    await page.getByRole('button', { name: 'New run' }).click();
+    const editor = page.getByRole('dialog', { name: 'New run' });
+    await editor.getByRole('button', { name: 'Add a step' }).click();
+    const name = await editor.getByRole('textbox', { name: 'Name' }).boundingBox();
+    const line = await editor.getByRole('textbox', { name: 'One line about it' }).boundingBox();
+    expect(line.y).toBe(name.y);
+    expect(line.x).toBeGreaterThan(name.x + name.width);
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#runEditor *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).include('#runEditor').analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
+});

@@ -137,7 +137,7 @@ export function LocationBlock({
     <section
       id="sysLocation"
       aria-labelledby={headingId}
-      className="flex flex-col gap-3 p-3.5 rounded-2xl border border-hairline bg-panel scroll-mt-20"
+      className="flex flex-col gap-3 p-3.5 rounded-2xl border border-hairline bg-panel scroll-mt-20 lg:p-0 lg:border-0 lg:bg-transparent lg:rounded-none"
     >
       <div className="flex items-baseline justify-between gap-3">
         <h3 id={headingId} className="font-display font-bold text-[13px] text-ink-bright">

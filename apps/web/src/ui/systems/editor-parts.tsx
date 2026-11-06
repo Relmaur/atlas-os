@@ -20,7 +20,8 @@ export function Segments({
   options,
   onChange,
   clearable = false,
-  rows = 1
+  rows = 1,
+  dense = false
 }: {
   label: string;
   hideLabel?: boolean;
@@ -29,6 +30,8 @@ export function Segments({
   onChange: (value: string) => void;
   clearable?: boolean;
   rows?: number;
+  /** Tighter type, for four segments in half a desktop panel (d14's Race | Conflict). */
+  dense?: boolean;
 }) {
   const labelId = useId();
   const perRow = Math.ceil(options.length / rows);
@@ -53,7 +56,7 @@ export function Segments({
                   onClick={() => {
                     onChange(on && clearable ? '' : key);
                   }}
-                  className={`flex-1 min-w-0 h-9 px-1 rounded-segment flex items-center justify-center gap-1.5 text-[13px] font-semibold transition-colors ${
+                  className={`flex-1 min-w-0 h-9 px-1 rounded-segment flex items-center justify-center gap-1.5 ${dense ? 'text-[12px]' : 'text-[13px]'} font-semibold transition-colors ${
                     on
                       ? 'bg-[rgba(16,185,129,0.18)] text-[#d1fae5] shadow-[inset_0_0_0_1px_rgba(52,211,153,0.45)]'
                       : 'text-ink-soft hover:text-ink-bright'
