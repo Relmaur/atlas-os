@@ -3,11 +3,14 @@
 // log. Below lg the tab bar does this job. Search opens the palette (Ctrl K).
 import { formatAgo } from '@atlas/core/format';
 import { lastVisit, type System } from '@atlas/core/systems-model';
+import { placeSystem } from '@atlas/core/map';
+import { BOOKS } from '@atlas/core/guides';
 import type { ReactNode } from 'react';
 import { useSyncStatus } from '../../app/sync.ts';
 import { useAppState } from '../useAppState.ts';
 import { StarDot } from '../parts/SystemBits.tsx';
 import { openRunEditor } from '../runs/run-editor-store.ts';
+import { setSystemFilter, useSystemFilter } from '../systems/panel-store.ts';
 import { useLoaded, useOutlawReady } from './counts.ts';
 import { toggleNav, useNavOpen } from './nav-store.ts';
 import { toggleSearch, useSearchOpen } from './Search.tsx';
@@ -37,6 +40,7 @@ function useGroups(): Group[] {
   const { ready } = useOutlawReady();
   const count = (n: number) => (loaded ? n.toLocaleString() : undefined);
   const live = timers.length + (session ? 1 : 0);
+  const codexPages = Number(import.meta.env.VITE_CODEX_PAGES ?? 0);
   return [
     {
       label: 'Now',
@@ -62,7 +66,13 @@ function useGroups(): Group[] {
           sections: ['systems', 'system', 'planet', 'dial'],
           count: count(systems.length)
         },
-        { href: '#map', icon: 'ph-map-trifold', label: 'Map', sections: ['map'] },
+        {
+          href: '#map',
+          icon: 'ph-map-trifold',
+          label: 'Map',
+          sections: ['map'],
+          count: count(systems.filter(system => placeSystem(system)).length) // the ones with an address, so drawn
+        },
         {
           href: '#gear',
           icon: 'ph-rocket-launch',
@@ -91,12 +101,19 @@ function useGroups(): Group[] {
     {
       label: 'Knowledge',
       items: [
-        { href: 'wiki/', icon: 'ph-books', label: 'Codex', sections: ['codex'] },
+        {
+          href: 'wiki/',
+          icon: 'ph-books',
+          label: 'Codex',
+          sections: ['codex'],
+          count: codexPages ? codexPages.toLocaleString() : undefined
+        },
         {
           href: '#guides',
           icon: 'ph-book-open-text',
           label: 'Guides',
-          sections: ['guides', 'book1', 'book2', 'book3', 'book4', 'book5', 'book6']
+          sections: ['guides', 'book1', 'book2', 'book3', 'book4', 'book5', 'book6'],
+          count: String(BOOKS.length)
         }
       ]
     },
@@ -182,6 +199,9 @@ function Link({ item, open, at, children }: { item: Item; open: boolean; at: str
 function RecentSystems() {
   const { systems } = useAppState();
   const recent = [...systems].sort((a, b) => latest(b).localeCompare(latest(a))).slice(0, 3);
+  const favourites = systems.filter(system => system.favorite).length;
+  const filter = useSystemFilter();
+  const section = useSection();
   return (
     <>
       {recent.map((system, i) => (
@@ -191,6 +211,21 @@ function RecentSystems() {
           <span className="nav-count">{i === 0 ? 'here' : short(latest(system))}</span>
         </a>
       ))}
+      {favourites > 0 && (
+        // The Systems list's own Favourites filter (d02), from wherever in Systems you are.
+        <a
+          href={appHref('#systems')}
+          aria-current={filter.favorites && section === 'systems' ? 'true' : undefined}
+          onClick={() => {
+            setSystemFilter({ favorites: true });
+          }}
+          className="nav-link nav-sub"
+        >
+          <i className="ph-bold ph-star" aria-hidden="true" />
+          <span className="nav-name">Favourites</span>
+          <span className="nav-count">{favourites.toLocaleString()}</span>
+        </a>
+      )}
     </>
   );
 }

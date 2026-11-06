@@ -6,6 +6,10 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.36.0] - 2026-11-06
+### Added
+- The sidebar on a computer counts the systems on your Map, the Codex's articles and the six guides, and Favourites under Systems opens the list with only your favourites.
+
 ## [3.35.0] - 2026-11-06
 ### Changed
 - The system editor on a computer is a two-column form: Name beside Region, the star's class beside Water and Dissonant, the economy's name beside its strength, Race beside Conflict, and Planets & moons beside your rating. Its groups sit flat in the panel. Phones are unchanged.

@@ -9,11 +9,17 @@ import { Sidebar } from './Sidebar.tsx';
 import { TabBar, tabOf } from './TabBar.tsx';
 import { StorageBanner, reportStorage } from './StorageBanner.tsx';
 import { showSection } from './section-store.ts';
+import { toggleNav } from './nav-store.ts';
+import { setSystemFilter, useSystemFilter } from '../systems/panel-store.ts';
 import { setWikiEntries } from './wiki-index.ts';
 import { prepare } from '@atlas/core/search';
 import { setWide } from '../test-media.ts';
 
-vi.mock('../systems/panel-store.ts', () => ({ openSystem: vi.fn(), openSystemEditor: vi.fn() }));
+vi.mock('../systems/panel-store.ts', async importOriginal => ({
+  ...(await importOriginal<typeof import('../systems/panel-store.ts')>()),
+  openSystem: vi.fn(),
+  openSystemEditor: vi.fn()
+}));
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -225,4 +231,45 @@ test('d15: on a computer the palette groups your log, the Codex and actions, and
   expect(actions[0]?.id).toBe('search-hit-2');
   await userEvent.keyboard('{Tab}');
   expect(input.getAttribute('aria-activedescendant')).toBe('search-hit-0');
+});
+
+test('d02: the sidebar counts the Map, the Codex and the Guides, and Favourites under Systems sets its filter', async () => {
+  vi.stubEnv('VITE_CODEX_PAGES', '3717');
+  const state = buildState({
+    systems: [
+      { id: 'sys-ekwa', name: 'Ekwa Nexus', favorite: true, glyphs: '10A2F9C3B4D1' },
+      { id: 'sys-hesper', name: 'Hesper Drift' }
+    ]
+  });
+  act(() => {
+    setAppState(state);
+  });
+  let favourites = false;
+  function Filter() {
+    favourites = useSystemFilter().favorites;
+    return null;
+  }
+  render(
+    <>
+      <Sidebar />
+      <Filter />
+    </>
+  );
+  const rail = screen.getByRole('navigation', { name: 'Primary' });
+  expect(within(rail).getByRole('link', { name: 'Map, 1' })).toBeTruthy(); // only Ekwa has an address
+  expect(within(rail).getByRole('link', { name: 'Codex, 3,717' })).toBeTruthy();
+  expect(within(rail).getByRole('link', { name: 'Guides, 6' })).toBeTruthy();
+  act(() => {
+    toggleNav();
+    void showSection('systems');
+  });
+  const link = screen.getByRole('link', { name: /^Favourites/ });
+  expect(link.textContent).toContain('1');
+  await userEvent.click(link);
+  expect(favourites).toBe(true);
+  act(() => {
+    toggleNav();
+    setSystemFilter({ favorites: false });
+  });
+  vi.unstubAllEnvs();
 });

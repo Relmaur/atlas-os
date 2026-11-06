@@ -35,6 +35,11 @@ function contentSecurityPolicy(relay: string): Plugin {
 }
 
 // The newest update (updates/*.md), for Home's "What's new" card. A new file there is what makes a new card appear.
+function codexPages(): number {
+  const index: unknown = JSON.parse(readFileSync(new URL('../../wiki/index.json', import.meta.url), 'utf8'));
+  return Array.isArray(index) ? index.length : 0;
+}
+
 function latestUpdate() {
   const dir = new URL('../../updates/', import.meta.url);
   const index: unknown = JSON.parse(readFileSync(new URL('../../wiki/index.json', import.meta.url), 'utf8'));
@@ -67,7 +72,9 @@ export default defineConfig(({ mode }) => ({
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(version),
     'import.meta.env.VITE_APP_COMMIT': JSON.stringify(commit()),
     'import.meta.env.VITE_APP_BUILT': JSON.stringify(new Date().toISOString().slice(0, 10)),
-    'import.meta.env.VITE_LATEST_UPDATE': JSON.stringify(JSON.stringify(latestUpdate()))
+    'import.meta.env.VITE_LATEST_UPDATE': JSON.stringify(JSON.stringify(latestUpdate())),
+    // The sidebar's Codex count (d02): the mirror's articles, counted here so the app never loads the index for it.
+    'import.meta.env.VITE_CODEX_PAGES': JSON.stringify(String(codexPages()))
   },
   plugins: [
     contentSecurityPolicy(loadEnv(mode, import.meta.dirname, 'VITE_').VITE_SYNC_URL ?? ''),
