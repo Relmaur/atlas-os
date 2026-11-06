@@ -183,7 +183,7 @@ test('the page is listed under its real address', async ({ page }) => {
   expect(await page.locator('meta[name="robots"]').count()).toBe(0);
 });
 
-test('the Updates list: both updates, newest first, gold on the latest, and a link back from the product page', async ({
+test('the Updates list: every update, newest first, gold on the latest, and a link back from the product page', async ({
   page
 }) => {
   const offsite = [];
@@ -195,18 +195,19 @@ test('the Updates list: both updates, newest first, gold on the latest, and a li
   await expect(page.locator('footer').getByRole('link', { name: 'Updates' })).toHaveAttribute('href', '/updates/');
   await page.goto('./updates/');
   await expect(page).toHaveTitle(/What's new in ATLAS:OS/);
-  await expect(page.locator('.update-name')).toHaveText(['First Light', 'Where it started']);
+  await expect(page.locator('.update-name')).toHaveText(['Survey', 'First Light', 'Where it started']);
   await expect(page.locator('.rel').first().locator('.latest')).toHaveText('Latest');
   await expect(page.locator('.rel').nth(1).locator('.latest')).toHaveCount(0);
-  await expect(page.locator('.rel').first().locator('.ver')).toHaveText('3.21');
+  await expect(page.locator('.rel').first().locator('.ver')).toHaveText('3.27');
   await expect(page.locator('.rel').first().locator('.h')).toHaveCount(4);
-  await expect(page.locator('.rel').first().locator('.lede')).toContainText(/\d,\d{3} pages/);
+  // First Light's lede carries the page count, filled in at build time.
+  await expect(page.locator('.rel').nth(1).locator('.lede')).toContainText(/\d,\d{3} pages/);
   expect(await page.locator('body').innerText()).not.toContain('{{');
   await expect(page.locator('.rel').first().locator('details')).toHaveCount(2);
   const { violations } = await new AxeBuilder({ page }).analyze();
   expect(violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  const banner = page.locator('.banner-fig img');
+  const banner = page.locator('.banner-fig img').first();
   await banner.scrollIntoViewIfNeeded();
   await expect.poll(() => banner.evaluate(img => img.naturalWidth)).toBe(1600);
   expect(offsite).toEqual([]);
@@ -248,21 +249,23 @@ test('Copy link gives the update its own address, or shows it if the clipboard r
   const button = page.locator('.rel').first().locator('[data-copy]'); // its name changes when clicked
   await button.click();
   await expect(button).toHaveText('Link copied');
-  expect(await page.evaluate(() => window.copied)).toBe('https://atlas-os.cloud/updates/first-light/');
+  expect(await page.evaluate(() => window.copied)).toBe('https://atlas-os.cloud/updates/survey/');
 
   await page.evaluate(() => {
     navigator.clipboard.writeText = () => Promise.reject(new Error('refused'));
   });
-  const second = page.locator('.rel').nth(1).locator('[data-copy]');
-  await second.click();
-  await expect(page.locator('.rel').nth(1).locator('.copy-url')).toHaveText('https://atlas-os.cloud/updates/origins/');
+  const oldest = page.locator('.rel').last().locator('[data-copy]');
+  await oldest.click();
+  await expect(page.locator('.rel').last().locator('.copy-url')).toHaveText('https://atlas-os.cloud/updates/origins/');
 });
 
 test('the feed lists every update, and later updates rise in on scroll', async ({ page, request }) => {
   const feed = await (await request.get('./updates.xml')).text();
   expect(feed).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
+  expect(feed).toContain('<id>https://atlas-os.cloud/updates/survey/</id>');
   expect(feed).toContain('<id>https://atlas-os.cloud/updates/first-light/</id>');
   expect(feed).toContain('<id>https://atlas-os.cloud/updates/origins/</id>');
+  expect(feed.indexOf('survey')).toBeLessThan(feed.indexOf('first-light'));
   expect(feed.indexOf('first-light')).toBeLessThan(feed.indexOf('origins'));
   expect(feed).not.toContain('{{');
 
