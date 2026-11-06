@@ -336,3 +336,27 @@ test('deleting a planet from its own view takes two taps and leaves for its syst
   expect(replace).toHaveBeenCalledWith('#system/sys-a');
   replace.mockRestore();
 });
+
+test('37: from lg a planet row opens the panel beside System detail, and the row says Editing', async () => {
+  const wide = vi.spyOn(window, 'matchMedia').mockImplementation(
+    query =>
+      ({
+        matches: query === '(min-width: 1024px)',
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {}
+      }) as unknown as MediaQueryList // only `matches` is read on a click
+  );
+  render(
+    <>
+      <SystemDetails />
+      <PlanetSheet />
+    </>
+  );
+  const row = screen.getByRole('link', { name: /^Hogaw 24\/K5/ });
+  await userEvent.click(row);
+  expect(getPlanetSheet()).toMatchObject({ open: true, systemId: 'sys-a', planetId: 'pl-h' });
+  expect(screen.getByRole('link', { name: /^Hogaw 24\/K5/ }).textContent).toContain('Editing');
+  expect(location.hash).not.toContain('#planet/'); // the panel opened; the page stayed on System detail
+  wide.mockRestore();
+});

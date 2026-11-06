@@ -29,6 +29,7 @@ import type { FactsFile } from '@atlas/core/facts';
 const HERO_BUTTON =
   'w-10 h-10 rounded-control bg-[rgba(5,8,17,0.7)] border border-hairline grid place-items-center text-ink hover:border-control-edge transition-colors duration-[var(--duration-micro)]';
 const LABEL = 'text-label uppercase text-ink-label';
+const WIDE = '(min-width: 1024px)'; // lg: sheets are right-hand panels (design/desktop-direction)
 const SECTION_TITLE = 'font-display text-sm font-bold tracking-[0.04em] text-ink-bright';
 
 export function SystemDetails() {
@@ -155,6 +156,9 @@ export function SystemDetails() {
                 href={planetHref(system.id, planet.id)}
                 facts={facts}
                 editing={planetSheet.open && planetSheet.systemId === system.id && planetSheet.planetId === planet.id}
+                onEdit={() => {
+                  openPlanetSheet(system.id, planet.id);
+                }}
               />
             </li>
           ))}
@@ -402,12 +406,14 @@ function PlanetRow({
   planet,
   href,
   facts,
-  editing
+  editing,
+  onEdit
 }: {
   planet: Planet;
   href: string;
   facts: FactsFile | null;
   editing: boolean;
+  onEdit: () => void;
 }) {
   const base = planet.tags.includes('base');
   const { family, relic } = planetFamily(facts, planet);
@@ -415,6 +421,14 @@ function PlanetRow({
   return (
     <a
       href={href}
+      onClick={event => {
+        // From lg the planet opens in the panel beside System detail (37; owner, 2026-11-06); below lg, its own view.
+        // A modified click still opens the view in a new tab, as a link does.
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        if (!matchMedia(WIDE).matches) return;
+        event.preventDefault();
+        onEdit();
+      }}
       className="w-full px-4 py-3.5 flex items-center gap-3.5 text-left hover:bg-slate-ground transition-colors duration-[var(--duration-micro)]"
     >
       <span className="w-12 h-12 grid place-items-center shrink-0">

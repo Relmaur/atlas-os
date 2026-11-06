@@ -11,7 +11,7 @@ CI runs typecheck + lint + unit tests only (owner's decision: browser tests run 
 - The Updates page has **Survey** (3.22–3.27; `updates/2026-11-06-survey.md`), banner from `scripts/site-banners.mjs` with the invented log, which now carries a scan. The older banners were left as published.
 - Deviations for the owner (design or code?):
   - The scan's "Resources" level has no wiki list, so its combobox offers the levels already in the player's log (design: a wiki list). Design wrong, probably.
-  - 37 draws the panel over System detail, but rows now open the planet view, so the pencil opens the panel over the planet view; "Editing" shows on System detail only when Add planet opened it. Design question.
+  - 37: settled by the owner (2026-11-06, "it must open the panel"): from lg a row opens the panel over System detail with "Editing" (3.27.1); below lg it opens the planet view.
   - A new planet doesn't preselect "Planet" (35b does): it would be a guess. Code follows the rules; design to confirm.
   - The orbit diagram doesn't draw the relic ring (markers in rows, the view and the sheet do).
   - A planet row no longer shows the first line of its notes; the design's row has only the scan line.

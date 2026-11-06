@@ -6,6 +6,10 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.27.1] - 2026-11-06
+### Changed
+- On a computer, a planet's row in System detail opens the planet panel beside it, and the row says "Editing", as design 37 draws it. On a phone a row still opens the planet's own page; a Ctrl- or ⌘-click opens that page in a new tab on a computer.
+
 ## [3.27.0] - 2026-11-06
 Design round 4, "Planets & the scan".
 
