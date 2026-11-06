@@ -4,7 +4,7 @@
 // word combobox fed by the wiki's lists (wiki/facts.json → planets); what the player types is kept as typed.
 // Temperature, the resources level and the discoverer are the player's own entries (ADR-0003).
 import { useState, type ReactNode, type RefObject, type SubmitEvent } from 'react';
-import { planetFamily, type FactsFile } from '@atlas/core/facts';
+import { getFact, hazardReading, planetFamily, readingText, type FactsFile } from '@atlas/core/facts';
 import {
   SENTINEL_LEVELS,
   SENTINEL_SHORT,
@@ -28,6 +28,7 @@ import { SeverityPill } from '../parts/SeverityPill.tsx';
 import { PlanetMarker } from '../parts/StarChart.tsx';
 import { WordCombobox, type WordGroup } from '../parts/WordCombobox.tsx';
 import { FIELD, LABEL_FIELD, Segments } from './editor-parts.tsx';
+import { DiscoveryFields } from './DiscoveryFields.tsx';
 
 export const codexHref = (path: string): string => `wiki/#/a/${encodeURIComponent(path)}`;
 const unique = (items: string[]) => [...new Set(items.filter(Boolean))];
@@ -39,7 +40,7 @@ export function planetKind(planet: Pick<Planet, 'descriptor' | 'body'>): string 
 }
 
 /** The row's one scan line (03b): "Frostbound Planet · Icy Blasts" and "−60.8 °C", or what's still missing. */
-export function planetScanLine(planet: Planet): { text: string; temperature: string } {
+export function planetScanLine(planet: Planet, facts: FactsFile | null): { text: string; temperature: string } {
   const kind = planetKind(planet) || planet.biome;
   if (!scanLogged(planet).rows) {
     // A description or biome is a start; "Planet" alone is nothing logged yet (03b).
@@ -49,8 +50,7 @@ export function planetScanLine(planet: Planet): { text: string; temperature: str
       temperature: ''
     };
   }
-  const temperature = planet.temperature === null ? '' : `${String(planet.temperature).replace('-', '−')} °C`;
-  return { text: [kind, planet.weather].filter(Boolean).join(' · '), temperature };
+  return { text: [kind, planet.weather].filter(Boolean).join(' · '), temperature: readingText(facts, planet) };
 }
 
 /** Whether nothing at all is logged about a planet beyond its name: its marker is dashed (36c, 03b). */
@@ -132,6 +132,7 @@ interface Draft {
   flora: string;
   sentinels: string;
   temperature: string;
+  hazard: string;
   resources: string[];
   discoveredBy: string;
   discoveredOn: string;
@@ -151,7 +152,9 @@ const draftOf = (planet: Planet | undefined): Draft => ({
   fauna: planet?.fauna ?? '',
   flora: planet?.flora ?? '',
   sentinels: planet?.sentinels ?? '',
-  temperature: planet?.temperature == null ? '' : String(planet.temperature),
+  // Shown with a true minus, the way the game writes it; saving reads either.
+  temperature: planet?.temperature == null ? '' : String(planet.temperature).replace('-', '−'),
+  hazard: planet?.hazard ?? '',
   resources: planet?.resources ?? [],
   discoveredBy: planet?.discoveredBy ?? '',
   discoveredOn: planet?.discoveredOn ?? '',
@@ -170,6 +173,7 @@ export function PlanetForm({
   planet,
   facts,
   levels,
+  accounts = [],
   titleId,
   titleRef,
   onDone
@@ -178,6 +182,8 @@ export function PlanetForm({
   planet: Planet | undefined;
   facts: FactsFile | null;
   levels: string[];
+  /** The player's game accounts (Settings): Discovered by offers each as Me. */
+  accounts?: string[];
   titleId: string;
   titleRef: RefObject<HTMLHeadingElement | null>;
   onDone: (deleted: boolean) => void;
@@ -200,6 +206,13 @@ export function PlanetForm({
   // The draft's body is one of PLANET_BODIES' keys or '': the segments offer nothing else.
   const kind = planetKind({ descriptor: draft.descriptor, body: draft.body as Planet['body'] });
   // What a moon can orbit: the system's other planets that aren't moons themselves, in the log's order.
+  // The readings a scan can show, from the wiki; without it, only a temperature.
+  const reading = hazardReading(facts, draft.hazard);
+  const readings = getFact(facts, 'hazard-readings')?.value ?? [];
+  const flipSign = () => {
+    const value = draft.temperature.trim();
+    set({ temperature: /^[-−]/.test(value) ? value.slice(1) : `−${value}` });
+  };
   const hosts = system.planets.filter(other => other.id !== planet?.id && other.body !== 'moon');
   const subtitle = [kind, own?.name ?? draft.biome].filter(Boolean).join(' · ') || 'Nothing from the scan yet';
   const unlogged = !draft.biome && !draft.descriptor;
@@ -305,6 +318,7 @@ export function PlanetForm({
         abundance: draft.abundance,
         resources: [...draft.resources, ...(pending && !has(pending) ? [pending] : [])].join(','),
         temperature: draft.temperature,
+        hazard: draft.hazard,
         discoveredBy: draft.discoveredBy,
         discoveredOn: draft.discoveredOn,
         discoveredTime: draft.discoveredTime,
@@ -338,9 +352,7 @@ export function PlanetForm({
     : !draft.sentinels
       ? 'Sentinel levels from the wiki: Low, High, Aggressive or Corrupted.'
       : undefined;
-  const text = (
-    field: 'name' | 'tags' | 'notes' | 'temperature' | 'discoveredBy' | 'discoveredOn' | 'discoveredTime'
-  ) => ({
+  const text = (field: 'name' | 'tags' | 'notes' | 'temperature') => ({
     name: field,
     value: draft[field],
     onChange: (event: { target: { value: string } }) => {
@@ -365,7 +377,7 @@ export function PlanetForm({
               tabIndex={-1}
               className="font-display text-lg font-bold text-ink-bright focus:outline-hidden"
             >
-              {planet ? 'Edit planet' : 'Add a planet'}
+              {planet ? 'Edit body' : 'Add a body'}
             </h2>
             <p className="text-sub text-ink-muted truncate">
               {planet && <span className="hidden lg:inline">{`${draft.name || planet.name} · `}</span>}
@@ -530,27 +542,52 @@ export function PlanetForm({
             />
           </div>
           {sentinelHint && <p className="text-caption text-ink-muted -mt-1">{sentinelHint}</p>}
-          <label className={LABEL_FIELD}>
-            Temperature
-            <span className="relative block">
-              <input
-                inputMode="decimal"
-                maxLength={8}
-                pattern="[\-−]?[0-9]+([.,][0-9]+)?"
-                autoComplete="off"
-                aria-label="Temperature, °C"
-                placeholder="−60.8"
-                className={`${FIELD} pr-12`}
-                {...text('temperature')}
-              />
-              <span
-                aria-hidden="true"
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-muted"
-              >
-                °C
+          {readings.length > 1 && (
+            <Segments
+              label="Hazard"
+              value={reading.key}
+              options={readings.map(item => [item.name.toLowerCase(), item.name])}
+              onChange={hazard => {
+                set({ hazard });
+              }}
+            />
+          )}
+          <div className={LABEL_FIELD}>
+            <label htmlFor={`${titleId}-reading`}>{readings.length > 1 ? 'Reading' : reading.name}</label>
+            <span className="flex gap-2">
+              {reading.key === 'temperature' && (
+                // A phone's number pad has no minus key: this flips the sign.
+                <button
+                  type="button"
+                  onClick={flipSign}
+                  aria-label="Below zero"
+                  aria-pressed={/^[-−]/.test(draft.temperature.trim())}
+                  className="h-11 w-11 shrink-0 rounded-control border border-control-edge bg-slate-ground font-mono text-base text-ink-bright hover:border-control-edge-hover aria-pressed:border-scanner-cyan-edge aria-pressed:text-[#a5f3fc]"
+                >
+                  ±
+                </button>
+              )}
+              <span className="relative block flex-1 min-w-0">
+                <input
+                  id={`${titleId}-reading`}
+                  inputMode="decimal"
+                  maxLength={8}
+                  pattern="[\-−]?[0-9]+([.,][0-9]+)?"
+                  autoComplete="off"
+                  aria-label={[reading.name, reading.unit].filter(Boolean).join(', ')}
+                  placeholder={reading.key === 'temperature' ? '−60.8' : '4.2'}
+                  className={`${FIELD} pr-12`}
+                  {...text('temperature')}
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-sm text-ink-muted"
+                >
+                  {reading.unit}
+                </span>
               </span>
             </span>
-          </label>
+          </div>
         </Group>
 
         <Group
@@ -613,37 +650,7 @@ export function PlanetForm({
         </Group>
 
         <Group title="Discovery" caption="the top of the scan">
-          <label className={LABEL_FIELD}>
-            Discovered by
-            <input
-              maxLength={80}
-              autoComplete="off"
-              placeholder="A Traveller’s name"
-              className={FIELD}
-              {...text('discoveredBy')}
-            />
-          </label>
-          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-3">
-            <label className={LABEL_FIELD}>
-              On
-              {/* iOS draws date and time fields at their own minimum width, centred: without appearance they fit. */}
-              <input
-                type="date"
-                aria-label="Discovered on"
-                className={`${FIELD} min-w-0 block appearance-none text-left`}
-                {...text('discoveredOn')}
-              />
-            </label>
-            <label className={LABEL_FIELD}>
-              At
-              <input
-                type="time"
-                aria-label="Discovered at"
-                className={`${FIELD} min-w-0 block appearance-none text-left font-mono`}
-                {...text('discoveredTime')}
-              />
-            </label>
-          </div>
+          <DiscoveryFields value={draft} onChange={set} accounts={accounts} />
         </Group>
 
         <label className={LABEL_FIELD}>
@@ -658,7 +665,7 @@ export function PlanetForm({
         </label>
         {planet && (
           <ArmButton
-            label="Delete planet"
+            label="Delete body"
             armedLabel="Tap again to delete"
             onConfirm={() => {
               deletePlanet(system.id, planet.id);
@@ -677,7 +684,7 @@ export function PlanetForm({
           Cancel
         </Button>
         <Button variant="primary" type="submit">
-          {planet ? 'Save planet' : 'Add planet'}
+          {planet ? 'Save body' : 'Add body'}
         </Button>
       </div>
     </form>

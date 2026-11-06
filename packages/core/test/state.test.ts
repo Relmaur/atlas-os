@@ -110,3 +110,14 @@ test('a damaged timer is dropped on load, the rest of the log kept', () => {
 test('an export is named for the app and the moment, in local time', () => {
   assert.equal(exportFileName(new Date(2026, 9, 31, 7, 5, 9)), 'atlas_os_2026-10-31_07-05-09.json');
 });
+
+test('game accounts: an older log has none; names are trimmed, kept once in any case, and capped', async () => {
+  const { buildState: build, normalizeAccounts, MAX_ACCOUNTS } = await import('../src/state.ts');
+  const { mergeStates } = await import('../src/sync.ts');
+  assert.deepEqual(build({ systems: [] }).accounts, []);
+  assert.deepEqual(normalizeAccounts([' Marco ', 'marco', 3, '', 'PSN-Marco']), ['Marco', 'PSN-Marco']);
+  assert.equal(normalizeAccounts(Array.from({ length: 20 }, (_, i) => `n${String(i)}`)).length, MAX_ACCOUNTS);
+  // Added on two devices, both kept; removed on one, gone.
+  const merged = mergeStates({ accounts: ['A'] }, { accounts: ['A', 'B'] }, { accounts: ['C'] });
+  assert.deepEqual(merged.accounts, ['B', 'C']);
+});

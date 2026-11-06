@@ -4,6 +4,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { glyphNames } from '@atlas/core/glyphs';
+import { readingText } from '@atlas/core/facts';
 import { CATEGORIES, search } from '@atlas/core/search';
 import { buildPlan, findItem } from '@atlas/core/planner';
 import { haulValue } from '@atlas/core/calc';
@@ -349,8 +350,8 @@ export function createServer({ loadWiki, loadLog, logSetupError, now = Date.now 
       title: 'One of my systems',
       description:
         'Everything the player logged about one system: planets (with what their scan showed: description, biome, ' +
-        'weather, sentinels, flora, fauna, resources, temperature in °C, discoverer, and for a moon the planet it orbits), visits (with packets), tags and notes, and its ' +
-        'portal address with each glyph’s name from the wiki, in dialling order.',
+        'weather, sentinels, flora, fauna, resources, hazard reading (temperature in °C, radiation in Rad or toxicity in Tox, as `reading`), discoverer, and for a moon the planet it orbits), visits (with packets), tags and notes, and its ' +
+        'portal address with each glyph’s name from the wiki, in dialling order, and who discovered it and when.',
       inputSchema: { name: z.string().min(1).max(120) },
       annotations: READ_ONLY
     },
@@ -359,7 +360,8 @@ export function createServer({ loadWiki, loadLog, logSetupError, now = Date.now 
       const system = state.systems.find(s => s.name.toLowerCase() === lower) ?? searchSystems(state.systems, name)[0];
       if (!system) throw new LogError(`No system in the log matches “${name}”.`);
       // Without the game data the address is still there, just without names.
-      const named = glyphNames(system.glyphs, (await gameData())?.facts?.glyphs ?? null);
+      const facts = (await gameData())?.facts ?? null;
+      const named = glyphNames(system.glyphs, facts?.glyphs ?? null);
       // Ids are the app's own bookkeeping; JSON leaves the undefined ones out.
       return {
         ...system,
@@ -369,7 +371,9 @@ export function createServer({ loadWiki, loadLog, logSetupError, now = Date.now 
         planets: system.planets.map(planet => ({
           ...planet,
           id: undefined,
-          orbits: moonParent(system.planets, planet)?.name
+          orbits: moonParent(system.planets, planet)?.name,
+          // The number is in `hazard`'s unit: "−60.8 °C", "4.2 Rad", "50.5 Tox".
+          reading: readingText(facts, planet) || undefined
         }))
       };
     })

@@ -6,6 +6,22 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.29.0] - 2026-11-06
+### Added
+- Your game accounts, in Settings under "In the game": the names you play under. A planet's Discovered by offers each as **Me**, one tap to fill it in. Without any, it says where to add them.
+- A planet's hazard reading can be Temperature, Radiation or Toxicity, each in its unit (°C, Rad, Tox), from the wiki's Heads-Up Display page. A ± button beside a temperature gives it a minus sign, which a phone's number pad lacks.
+- In System detail, a moon tied to its planet sits inside that planet's row, indented.
+- A system has its own Discovery too: who discovered it, on what day and at what time, with the same Me chips. System detail shows it once logged.
+
+### Fixed
+- On a phone, a sheet no longer slides down behind the keyboard when you tap a field near its top, and a field lower down no longer ends up above the screen. Bringing the field into view now scrolls the sheet alone, clear of its sticky header and footer, never the page under it.
+
+### Changed
+- Planets and moons are both "bodies" in the actions: Add body, Save body, Edit body, Delete body. The list in System detail is "Planets & moons", and so is the editor's count.
+
+### Notes
+- Additive: the log gains `accounts` (names, merged as a set in sync) a planet gains `hazard` (which reading its number is), and a system gains `discoveredBy`, `discoveredOn` and `discoveredTime`. Older logs read as no accounts, and their numbers stay temperatures.
+
 ## [3.28.0] - 2026-11-06
 ### Added
 - A moon can say which planet it orbits: choose Moon in the planet sheet and an Orbits picker lists the system's other planets. In the system's diagram the moon leaves the star's orbits and circles its planet, small, on a faint ring of its own (still under reduced motion). The moon's own page says "orbits" with a link to the planet, the diagram's description for screen readers says it, and an AI assistant connected through the MCP server gets the planet's name.

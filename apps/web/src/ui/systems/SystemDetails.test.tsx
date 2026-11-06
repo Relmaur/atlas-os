@@ -86,7 +86,7 @@ test('the system leads with its orbit, where you are, its place and what the gam
   });
   expect(facts).not.toHaveProperty('Wealth');
   expect(facts).not.toHaveProperty('On the map'); // shown only when the map says Water or Dissonant
-  expect(screen.getByRole('heading', { name: 'Planets · 2' })).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'Planets & moons · 2' })).toBeTruthy();
   // A row opens the planet's own view (36).
   const buya = screen.getByRole('link', { name: /^Buya 90\/K4/ });
   expect(buya.textContent).toContain('Frozen · not scanned yet');
@@ -149,4 +149,16 @@ test('its linked notes list on its screen, and New note starts one pinned to it'
   await userEvent.click(within(linked).getByRole('button', { name: 'New note' }));
   const id = decodeURIComponent(location.hash.replace('#note/', ''));
   expect(freshNote(id)?.pins).toEqual(['system:sys-a']);
+});
+
+test('who discovered a system shows once logged, and not before', () => {
+  const { unmount } = render(<SystemDetails />);
+  expect(screen.queryByText('Discovered')).toBeNull();
+  unmount();
+  const logged = system('sys-a');
+  if (logged) Object.assign(logged, { discoveredBy: 'marck94', discoveredOn: '2026-11-06', discoveredTime: '12:12' });
+  render(<SystemDetails />);
+  const cell = screen.getByText('Discovered').closest('div');
+  expect(cell?.textContent).toContain('marck94');
+  expect(cell?.textContent).toContain('12:12');
 });

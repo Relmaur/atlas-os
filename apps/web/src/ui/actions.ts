@@ -1,5 +1,5 @@
 // Store actions shared by React screens: mutate the live state, save, and confirm to the person.
-import type { OutlawSettings } from '@atlas/core/state';
+import { normalizeAccounts, type OutlawSettings } from '@atlas/core/state';
 import { newId, normalizePlanetScan, normalizeSystem, tagSlug, type System } from '@atlas/core/systems-model';
 import { clampOutlawSetting } from '@atlas/core/outlaw';
 import { MAX_SESSIONS, type PastSession } from '@atlas/core/session';
@@ -94,7 +94,8 @@ export interface PlanetFields {
       | 'discoveredBy'
       | 'discoveredOn'
       | 'discoveredTime'
-      | 'orbits',
+      | 'orbits'
+      | 'hazard',
       string
     >
   >;
@@ -129,6 +130,20 @@ export function deletePlanet(systemId: string, planetId: string): void {
   const system = find(systemId);
   if (!system) return;
   system.planets = system.planets.filter(planet => planet.id !== planetId);
+  saveAppState();
+}
+
+// The names the player plays under (Settings): "Discovered by" offers them as Me. Returns whether it was added.
+export function addAccount(name: string): boolean {
+  const next = normalizeAccounts([...appState.accounts, name]);
+  if (next.length === appState.accounts.length) return false; // empty, a repeat, or the list is full
+  appState.accounts = next;
+  saveAppState();
+  return true;
+}
+
+export function removeAccount(name: string): void {
+  appState.accounts = appState.accounts.filter(item => item !== name);
   saveAppState();
 }
 

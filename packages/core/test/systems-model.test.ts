@@ -228,3 +228,26 @@ test('a moon’s planet: kept as stored, read only when it is a planet of the sa
     ''
   );
 });
+
+test('the hazard reading: an older log’s number is a temperature; a new one says which reading it is', async () => {
+  const { hazardReading, readingText } = await import('../src/facts.ts');
+  const [old] = normalizeSystem({ planets: [{ id: 'p', name: 'A', temperature: -60.8 }] }).planets;
+  expect(old).toMatchObject({ temperature: -60.8, hazard: '' });
+  expect(old && readingText(null, old)).toBe('−60.8 °C');
+  const [rad] = normalizeSystem({ planets: [{ id: 'p', name: 'A', temperature: 4.2, hazard: 'Radiation' }] }).planets;
+  expect(rad?.hazard).toBe('radiation');
+  // Without the wiki's list a reading keeps its name but has no unit to show.
+  expect(hazardReading(null, 'radiation')).toEqual({ key: 'radiation', name: 'Radiation', unit: '' });
+  expect(rad && readingText(null, rad)).toBe('4.2');
+});
+
+test('a system’s discovery: an older log reads it as empty; damaged values read as not logged', () => {
+  expect(normalizeSystem({ name: 'Old' })).toMatchObject({ discoveredBy: '', discoveredOn: '', discoveredTime: '' });
+  expect(
+    normalizeSystem({ name: 'A', discoveredBy: ' marck94 ', discoveredOn: '2026-11-06', discoveredTime: '12:12' })
+  ).toMatchObject({ discoveredBy: 'marck94', discoveredOn: '2026-11-06', discoveredTime: '12:12' });
+  expect(normalizeSystem({ name: 'A', discoveredOn: '6/11/2026', discoveredTime: '25:00' })).toMatchObject({
+    discoveredOn: '',
+    discoveredTime: ''
+  });
+});

@@ -181,7 +181,7 @@ test('location: pick a galaxy, type galactic coordinates, see the portal address
   expect(document.getElementById('sysAddressConverted')?.textContent).toContain('0038 0256 EC6B');
   screen.getByRole('img', { name: /^Preview: this system sits 6\d\dk ly from the centre of Hilbert Dimension$/ });
 
-  await userEvent.type(screen.getByRole('textbox', { name: 'Planets' }), '5');
+  await userEvent.type(screen.getByRole('textbox', { name: 'Planets & moons' }), '5');
   const notes = screen.getByRole('textbox', { name: 'Notes' });
   await userEvent.clear(notes);
   await userEvent.type(notes, 'New notes');
@@ -316,4 +316,24 @@ test('06c: your colour and stars are kept; the wiki’s reading is offered, and 
   );
   await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
   expect(system('sys-a')?.star).toBe('yellow');
+});
+
+test('a system’s discovery: Me fills in your game account, with the day and time, and System detail shows it', async () => {
+  appState.accounts = ['marck94'];
+  render(<SystemPanel />);
+  act(() => {
+    openSystemEditor('sys-a');
+  });
+  const discovery = screen.getByRole('region', { name: 'Discovery' });
+  await userEvent.click(within(discovery).getByRole('button', { name: 'Me (marck94)' }));
+  fireEvent.change(within(discovery).getByLabelText('Discovered on'), { target: { value: '2026-11-06' } });
+  fireEvent.change(within(discovery).getByLabelText('Discovered at'), { target: { value: '12:12' } });
+  await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+  expect(system('sys-a')).toMatchObject({
+    discoveredBy: 'marck94',
+    discoveredOn: '2026-11-06',
+    discoveredTime: '12:12',
+    notes: 'Old notes' // the rest as it was
+  });
+  appState.accounts = [];
 });

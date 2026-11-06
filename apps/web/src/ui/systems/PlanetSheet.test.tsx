@@ -30,7 +30,22 @@ const fact = (biome: string, family: string) => ({
 });
 const FACTS: FactsFile = {
   schema: 1,
-  facts: { 'biome-frozen': fact('Frozen', 'frozen'), 'biome-scorched': fact('Scorched', 'hot') },
+  facts: {
+    'biome-frozen': fact('Frozen', 'frozen'),
+    'biome-scorched': fact('Scorched', 'hot'),
+    'hazard-readings': {
+      page: 'Heads-Up Display',
+      path: 'h',
+      url: 'u',
+      revId: 1,
+      quote: 'q',
+      value: [
+        { name: 'Temperature', unit: '°C' },
+        { name: 'Radiation', unit: 'Rad' },
+        { name: 'Toxicity', unit: 'Tox' }
+      ]
+    }
+  },
   planets: {
     biomes: [
       {
@@ -182,9 +197,9 @@ test('35: a new planet in the scan’s order; the description sets the biome; re
       <PlanetSheet />
     </>
   );
-  await userEvent.click(screen.getByRole('button', { name: /^Add planet/ }));
+  await userEvent.click(screen.getByRole('button', { name: /^Add body/ }));
   const sheet = within(document.getElementById('planetSheet') as HTMLElement);
-  expect(sheet.getByRole('heading', { name: 'Add a planet' })).toBeTruthy();
+  expect(sheet.getByRole('heading', { name: 'Add a body' })).toBeTruthy();
   expect(sheet.getByText('Nothing from the scan yet')).toBeTruthy();
   await userEvent.type(sheet.getByRole('textbox', { name: 'Name' }), 'Hogaw 24/K5');
   const box = (name: string) => sheet.getByRole('combobox', { name });
@@ -221,7 +236,7 @@ test('35: a new planet in the scan’s order; the description sets the biome; re
   await userEvent.type(sheet.getByRole('textbox', { name: 'Discovered by' }), 'Marco');
   await userEvent.type(sheet.getByLabelText('Discovered on'), '2026-11-05');
   await userEvent.type(sheet.getByLabelText('Discovered at'), '19:49');
-  await userEvent.click(sheet.getByRole('button', { name: 'Add planet' }));
+  await userEvent.click(sheet.getByRole('button', { name: 'Add body' }));
   expect(appState.systems[0]?.planets.at(-1)).toMatchObject({
     name: 'Hogaw 24/K5',
     descriptor: 'Frostbound',
@@ -248,7 +263,7 @@ test('35: an older planet keeps its words; a shared prefix leaves the biome to t
       <PlanetSheet />
     </>
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Edit planet' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Edit body' }));
   const sheet = within(document.getElementById('planetSheet') as HTMLElement);
   const box = (name: string) => sheet.getByRole<HTMLInputElement>('combobox', { name });
   expect(box('Biome').value).toBe('Hot Moon');
@@ -293,7 +308,7 @@ test('36: a planet’s own view, in the game’s order, each resource with why i
   ]);
   expect(screen.getByRole('region', { name: 'Discovery' }).textContent).toMatch(/Marco.*2026 · 19:49/);
   expect(screen.queryByText(/Not logged yet/)).toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'Edit planet' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Edit body' }));
   expect(getPlanetSheet()).toMatchObject({ open: true, systemId: 'sys-a', planetId: 'pl-h' });
 });
 
@@ -327,9 +342,9 @@ test('deleting a planet from its own view takes two taps and leaves for its syst
       <PlanetSheet />
     </>
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Edit planet' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Edit body' }));
   const sheet = within(document.getElementById('planetSheet') as HTMLElement);
-  await userEvent.click(sheet.getByRole('button', { name: 'Delete planet' }));
+  await userEvent.click(sheet.getByRole('button', { name: 'Delete body' }));
   expect(planet('pl-g')).toBeTruthy();
   await userEvent.click(sheet.getByRole('button', { name: 'Tap again to delete' }));
   expect(planet('pl-g')).toBeUndefined();
@@ -376,7 +391,7 @@ test('a moon can be tied to a planet of its system; its view names that planet; 
     'Old one'
   ]);
   await userEvent.selectOptions(orbits, 'Hogaw 24/K5');
-  await userEvent.click(sheet.getByRole('button', { name: 'Save planet' }));
+  await userEvent.click(sheet.getByRole('button', { name: 'Save body' }));
   expect(planet('pl-l')?.orbits).toBe('pl-h');
   expect(planet('pl-l')?.weather).toBe('Inferno Winds'); // the rest of the moon is as it was
 
@@ -391,6 +406,69 @@ test('a moon can be tied to a planet of its system; its view names that planet; 
   });
   await userEvent.click(sheet.getByRole('radio', { name: 'Planet' }));
   expect(sheet.queryByRole('combobox', { name: 'Orbits' })).toBeNull();
-  await userEvent.click(sheet.getByRole('button', { name: 'Save planet' }));
+  await userEvent.click(sheet.getByRole('button', { name: 'Save body' }));
   expect(planet('pl-l')?.orbits).toBe('');
+});
+
+test('Discovered by: Me fills in your game account; without one, it says where to add it', async () => {
+  render(<PlanetSheet />);
+  act(() => {
+    openPlanetSheet('sys-a', 'pl-g');
+  });
+  const sheet = within(document.getElementById('planetSheet') as HTMLElement);
+  expect(sheet.getByText(/Add the names you play under in Settings/)).toBeTruthy();
+  act(() => {
+    closePlanetSheet();
+    appState.accounts = ['marck94'];
+    openPlanetSheet('sys-a', 'pl-g');
+  });
+  await userEvent.click(sheet.getByRole('button', { name: 'Me (marck94)' }));
+  expect(sheet.getByRole<HTMLInputElement>('textbox', { name: 'Discovered by' }).value).toBe('marck94');
+  await userEvent.click(sheet.getByRole('button', { name: 'Save body' }));
+  expect(planet('pl-g')?.discoveredBy).toBe('marck94');
+  appState.accounts = [];
+});
+
+test('a moon tied to its planet sits inside that planet’s row in System detail', () => {
+  const moon = planet('pl-l');
+  if (moon) moon.orbits = 'pl-h';
+  render(<SystemDetails />);
+  const moons = screen.getByRole('list', { name: 'Moons of Hogaw 24/K5' });
+  expect(within(moons).getByRole('link', { name: /^Leforntow/ })).toBeTruthy();
+  expect(moons.closest('li')?.querySelector('a')?.textContent).toContain('Hogaw 24/K5');
+  if (moon) moon.orbits = '';
+});
+
+test('the hazard reading: Temperature, Radiation or Toxicity from the wiki, each in its unit; ± for below zero', async () => {
+  render(<PlanetSheet />);
+  act(() => {
+    openPlanetSheet('sys-a', 'pl-g');
+  });
+  const sheet = within(document.getElementById('planetSheet') as HTMLElement);
+  const hazard = sheet.getByRole('radiogroup', { name: 'Hazard' });
+  expect(within(hazard).getByRole('radio', { name: 'Temperature' }).getAttribute('aria-checked')).toBe('true');
+  await userEvent.type(sheet.getByRole('textbox', { name: 'Temperature, °C' }), '60.8');
+  await userEvent.click(sheet.getByRole('button', { name: 'Below zero' }));
+  expect(sheet.getByRole<HTMLInputElement>('textbox', { name: 'Temperature, °C' }).value).toBe('−60.8');
+  await userEvent.click(sheet.getByRole('button', { name: 'Save body' }));
+  expect(planet('pl-g')).toMatchObject({ temperature: -60.8, hazard: '' });
+
+  act(() => {
+    openPlanetSheet('sys-a', 'pl-g');
+  });
+  await userEvent.click(
+    within(sheet.getByRole('radiogroup', { name: 'Hazard' })).getByRole('radio', { name: 'Radiation' })
+  );
+  expect(sheet.queryByRole('button', { name: 'Below zero' })).toBeNull(); // radiation is never below zero
+  const rad = sheet.getByRole<HTMLInputElement>('textbox', { name: 'Radiation, Rad' });
+  await userEvent.clear(rad);
+  await userEvent.type(rad, '4,2');
+  await userEvent.click(sheet.getByRole('button', { name: 'Save body' }));
+  expect(planet('pl-g')).toMatchObject({ temperature: 4.2, hazard: 'radiation' });
+
+  section = 'planet';
+  param = 'sys-a/pl-g';
+  render(<PlanetDetails />);
+  const scan = screen.getByRole('region', { name: 'The scan' });
+  expect(scan.textContent).toContain('Radiation4.2 Rad');
 });

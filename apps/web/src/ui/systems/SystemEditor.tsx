@@ -23,6 +23,8 @@ import { ArmButton } from '../parts/Gesture.tsx';
 import { goBack } from '../shell/section-store.ts';
 import { LocationBlock, locationGlyphs, type Location } from './LocationBlock.tsx';
 import { FIELD, LABEL_FIELD, Segments, TagEditor, type Option } from './editor-parts.tsx';
+import { DiscoveryFields } from './DiscoveryFields.tsx';
+import { useAppState } from '../useAppState.ts';
 
 type Draft = Omit<System, 'wealth' | 'planetCount'> & { wealth: string; planetCount: string };
 type TextField = 'name' | 'region' | 'economy' | 'economyStrength' | 'notes';
@@ -65,6 +67,8 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
   const [typed, setTyped] = useState('');
   const [arrived, setArrived] = useState(true);
   const [error, setError] = useState('');
+  const { accounts } = useAppState();
+  const discoveryId = useId();
   const set = (changes: Partial<Draft>) => {
     setDraft(current => ({ ...current, ...changes }));
   };
@@ -200,7 +204,7 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
             <input maxLength={80} placeholder="e.g. Aeushne Sector" className={FIELD} {...text('region')} />
           </label>
           <label className={LABEL_FIELD}>
-            Planets
+            Planets & moons
             <input
               name="planetCount"
               inputMode="numeric"
@@ -370,6 +374,19 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
             set({ rating });
           }}
         />
+
+        <section
+          aria-labelledby={discoveryId}
+          className="flex flex-col gap-3 p-3.5 rounded-2xl border border-hairline bg-panel"
+        >
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 id={discoveryId} className="font-display font-bold text-[13px] text-ink-bright">
+              Discovery
+            </h3>
+            <span className="text-[11px] text-ink-muted text-right">As the system’s discovery page shows it</span>
+          </div>
+          <DiscoveryFields value={draft} onChange={set} accounts={accounts} />
+        </section>
 
         <TagEditor tags={tags} onTags={setTags} typed={typed} onTyped={setTyped} />
         <label className={LABEL_FIELD}>

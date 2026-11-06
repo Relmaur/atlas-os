@@ -27,8 +27,13 @@ export interface Planet {
   abundance: string;
   /** The resources the scan lists, in its order: "Copper", "Dioxite". */
   resources: string[];
-  /** °C as the player read it (it changes with day and night); null when not logged. */
+  /**
+   * The scan's hazard reading as the player read it (it changes with day and night); null when not logged. Named for
+   * what it held before 3.29: its unit is `hazard`'s.
+   */
   temperature: number | null;
+  /** Which reading `temperature` is: "radiation", "toxicity", or "temperature"; '' (every older log) is temperature. */
+  hazard: string;
   discoveredBy: string;
   /** The day the game says it was discovered (YYYY-MM-DD), or ''. */
   discoveredOn: string;
@@ -63,6 +68,10 @@ export interface System {
   economyStrength: string;
   /** How many planets and moons the game lists for the system (0: not logged); the logged ones are in `planets`. */
   planetCount: number;
+  // Who discovered the system and when, as its discovery page shows (added in 3.29; an older log reads them as empty).
+  discoveredBy: string;
+  discoveredOn: string;
+  discoveredTime: string;
   conflict: ConflictLevel | '';
   tags: string[];
   favorite: boolean;
@@ -192,6 +201,15 @@ const isDate = (value: unknown): value is string => typeof value === 'string' &&
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+// Who discovered a planet or system, and when: a name, a day (YYYY-MM-DD) and a time (HH:MM); anything else is ''.
+function discoveryOf(raw: Record<string, unknown>): Pick<Planet, 'discoveredBy' | 'discoveredOn' | 'discoveredTime'> {
+  return {
+    discoveredBy: toText(raw.discoveredBy, '').trim().slice(0, 80),
+    discoveredOn: typeof raw.discoveredOn === 'string' && DAY.test(raw.discoveredOn) ? raw.discoveredOn : '',
+    discoveredTime: typeof raw.discoveredTime === 'string' && TIME.test(raw.discoveredTime) ? raw.discoveredTime : ''
+  };
+}
+
 // The scan fields: each missing or damaged one reads as empty, never as a guess.
 export function normalizePlanetScan(
   planet: Record<string, unknown>
@@ -210,13 +228,11 @@ export function normalizePlanetScan(
       0,
       12
     ),
-    // The game's coldest and hottest worlds stay within a few hundred degrees; anything else is a typing slip.
+    // The game's readings stay within a few hundred (°C, Rad or Tox); anything else is a typing slip.
     temperature:
       Number.isFinite(temperature) && Math.abs(temperature) < 1000 ? Math.round(temperature * 10) / 10 : null,
-    discoveredBy: word(planet.discoveredBy),
-    discoveredOn: typeof planet.discoveredOn === 'string' && DAY.test(planet.discoveredOn) ? planet.discoveredOn : '',
-    discoveredTime:
-      typeof planet.discoveredTime === 'string' && TIME.test(planet.discoveredTime) ? planet.discoveredTime : '',
+    hazard: word(planet.hazard).toLowerCase().slice(0, 20),
+    ...discoveryOf(planet),
     orbits: typeof planet.orbits === 'string' && SAFE_ID.test(planet.orbits) ? planet.orbits : ''
   };
 }
@@ -249,6 +265,7 @@ export function normalizeSystem(raw: Record<string, unknown>): System {
     dissonant: raw.dissonant === true,
     economyStrength: toText(raw.economyStrength, '').trim().slice(0, 40),
     planetCount: clampInt(raw.planetCount, 0, 15), // a portal's planet index is one hex digit
+    ...discoveryOf(raw),
     conflict: oneOf(CONFLICT_LEVELS, raw.conflict),
     tags: tagList(raw.tags),
     favorite: !!raw.favorite,

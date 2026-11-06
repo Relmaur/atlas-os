@@ -7,10 +7,10 @@ const openEditor = async page => {
   await page.locator('#systemList').getByText('Ekwa Nexus').click();
   await page.getByRole('button', { name: 'Edit system' }).click();
 };
-const openPlanet = page => page.getByRole('button', { name: /^Add planet/ }).click();
+const openPlanet = page => page.getByRole('button', { name: /^Add body/ }).click();
 // The planet sheet from a planet's own view, with the weather's word list open (c14).
 const openWeatherList = async page => {
-  await page.locator('#sec-planet').getByRole('button', { name: 'Edit planet' }).click();
+  await page.locator('#sec-planet').getByRole('button', { name: 'Edit body' }).click();
   await page.locator('#planetSheet').getByRole('combobox', { name: 'Weather' }).click();
   await page.locator('#planetSheet').getByRole('listbox', { name: 'Weather' }).waitFor();
 };

@@ -82,3 +82,16 @@ test('About says ATLAS is fan-made and links to the issues for feedback', () => 
   expect(document.body.textContent).toContain('Not affiliated with Hello Games');
   expect(document.body.textContent).toContain('CC BY-NC-SA 3.0');
 });
+
+test('your game accounts: added from Settings, once each, and removed with their own button', async () => {
+  render(<More />);
+  const input = screen.getByRole('textbox', { name: 'Add a game account' });
+  await userEvent.type(input, ' marck94{Enter}');
+  await userEvent.type(input, 'MARCK94{Enter}'); // the same name in another case is kept once
+  expect((input as HTMLInputElement).value).toBe('MARCK94'); // not added, so it stays to be fixed
+  await userEvent.clear(input);
+  await userEvent.type(input, 'Marco-PSN{Enter}');
+  expect(appState.accounts).toEqual(['marck94', 'Marco-PSN']);
+  await userEvent.click(screen.getByRole('button', { name: 'Remove marck94' }));
+  expect(appState.accounts).toEqual(['Marco-PSN']);
+});

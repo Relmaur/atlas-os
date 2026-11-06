@@ -3,7 +3,7 @@
 // what's logged shows: a partly filled planet lists what's missing on one dashed line, an unscanned one offers to
 // fill it in from the scan.
 import { useEffect, type ReactNode } from 'react';
-import { planetFamily } from '@atlas/core/facts';
+import { hazardReading, planetFamily, readingText } from '@atlas/core/facts';
 import { biomeFor, resourceSource, scanLogged } from '@atlas/core/planets';
 import { moonParent } from '@atlas/core/systems-model';
 import { useAppState } from '../useAppState.ts';
@@ -14,6 +14,7 @@ import { Button } from '../parts/Button.tsx';
 import { PlanetMarker } from '../parts/StarChart.tsx';
 import { SentinelPill, WeatherPill, codexHref, nothingLogged, planetKind } from './PlanetScan.tsx';
 import { openPlanetSheet, planetHref } from './planet-sheet-store.ts';
+import { discoveryWhen } from './DiscoveryFields.tsx';
 
 const HEAD_BUTTON =
   'w-10 h-10 rounded-control bg-[rgba(5,8,17,0.7)] border border-hairline grid place-items-center text-ink hover:border-control-edge transition-colors duration-[var(--duration-micro)]';
@@ -30,14 +31,6 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 }
 
 // "5 Nov 2026", as the player's locale writes a day, from the stored YYYY-MM-DD (read as a calendar day, not UTC).
-const dayLabel = (day: string) => {
-  const [y, m, d] = day.split('-').map(Number);
-  return new Date(y ?? 0, (m ?? 1) - 1, d ?? 1).toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-};
 
 export function PlanetDetails() {
   const state = useAppState();
@@ -52,7 +45,7 @@ export function PlanetDetails() {
   if (!system || !planet) {
     return (
       <div className="flex flex-col items-start gap-section pt-[env(safe-area-inset-top)]">
-        <h1 className="font-display text-screen-title text-ink-bright">Planet not found</h1>
+        <h1 className="font-display text-screen-title text-ink-bright">Planet or moon not found</h1>
         <p className="text-sub text-ink-muted">It may have been deleted, or the link is from another device’s log.</p>
         <Button
           onClick={() => {
@@ -74,14 +67,15 @@ export function PlanetDetails() {
   const biomeName = biomeFor(wiki, planet.biome)?.name ?? planet.biome;
   const kind = planetKind(planet);
   const parent = moonParent(system.planets, planet);
-  const temperature = planet.temperature === null ? '' : `${String(planet.temperature).replace('-', '−')} °C`;
+  const temperature = readingText(facts, planet);
+  const reading = hazardReading(facts, planet.hazard);
   const missing = [
     !planet.weather && 'weather',
     !planet.abundance && 'resources level',
     !planet.fauna && 'fauna',
     !planet.flora && 'flora',
     !planet.sentinels && 'sentinels',
-    planet.temperature === null && 'temperature',
+    planet.temperature === null && reading.name.toLowerCase(),
     !planet.resources.length && 'what it lists',
     !planet.discoveredBy && !planet.discoveredOn && 'discovery'
   ].filter((item): item is string => Boolean(item));
@@ -102,7 +96,7 @@ export function PlanetDetails() {
           <i className="ph-bold ph-caret-left text-lg" aria-hidden="true" />
         </button>
         <p className="text-sub text-ink-muted text-center truncate">{system.name}</p>
-        <button type="button" onClick={edit} aria-label="Edit planet" className={HEAD_BUTTON}>
+        <button type="button" onClick={edit} aria-label="Edit body" className={HEAD_BUTTON}>
           <i className="ph-bold ph-pencil-simple text-lg" aria-hidden="true" />
         </button>
       </div>
@@ -187,7 +181,7 @@ export function PlanetDetails() {
                   </Row>
                 )}
                 {temperature && (
-                  <Row label="Temperature">
+                  <Row label={reading.name}>
                     <span className="font-mono">{temperature}</span>
                   </Row>
                 )}
@@ -240,10 +234,7 @@ export function PlanetDetails() {
                 {planet.discoveredBy && <Row label="Discovered by">{planet.discoveredBy}</Row>}
                 {planet.discoveredOn && (
                   <Row label="On">
-                    <span className="font-mono">
-                      {dayLabel(planet.discoveredOn)}
-                      {planet.discoveredTime && ` · ${planet.discoveredTime}`}
-                    </span>
+                    <span className="font-mono">{discoveryWhen(planet.discoveredOn, planet.discoveredTime)}</span>
                   </Row>
                 )}
               </dl>

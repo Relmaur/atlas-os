@@ -118,6 +118,16 @@ export const FACTS = {
     quote: 'however they depends on the main biome of the planet',
     value: true
   },
+  // What the scanner reads out for a planet's hazard, and in what unit (the app shows °C, the wiki's first).
+  'hazard-readings': {
+    page: 'Heads-Up Display',
+    quote: 'temperature in °C/°F/K, radiation level in Rad, and toxicity level in Tox',
+    value: [
+      { name: 'Temperature', unit: '°C' },
+      { name: 'Radiation', unit: 'Rad' },
+      { name: 'Toxicity', unit: 'Tox' }
+    ]
+  },
   'region-light-years': {
     page: 'Portal address',
     quote: 'the proportions of each region are roughly 400ly x 400 ly x 400 ly',

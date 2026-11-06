@@ -31,6 +31,7 @@ export interface AppState {
   notes: Note[]; // the player's own Markdown notes
   devices: SyncDevice[]; // the devices that sync this log, each written by itself
   runs: PlayerRun[]; // runs the player made (Outlaw stations is built in)
+  accounts: string[]; // the names the player plays under (3.29): "Discovered by" offers them as Me
 }
 const OUTLAW_KEYS = ['restockHours', 'packetsPerVisit', 'runSize', 'unitsPerPacket', 'nanitesPerPacket'] as const;
 
@@ -92,6 +93,20 @@ export function migrateLegacyState(legacy: Record<string, unknown>): Record<stri
   };
 }
 
+export const MAX_ACCOUNTS = 8;
+/** The player's game accounts as typed, trimmed, without repeats (any case counts as one), in their order. */
+export function normalizeAccounts(value: unknown): string[] {
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const item of Array.isArray(value) ? value : []) {
+    const name = typeof item === 'string' ? item.trim().slice(0, 60) : '';
+    if (!name || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    names.push(name);
+  }
+  return names.slice(0, MAX_ACCOUNTS);
+}
+
 export function buildState(...layers: unknown[]): AppState {
   const state = layers
     .filter(isPlainObject)
@@ -110,6 +125,7 @@ export function buildState(...layers: unknown[]): AppState {
   state.notes = normalizeNotes(state.notes);
   state.devices = normalizeDevices(state.devices); // added in the redesign: a log from before has none
   state.runs = normalizeRuns(state.runs); // added in the redesign; a damaged run is dropped, not the log
+  state.accounts = normalizeAccounts(state.accounts); // added in 3.29: a log from before has none
   const outlaw = state.outlaw as Record<string, unknown>; // made an object two lines up; migrateToSystems keeps it one
   for (const key of OUTLAW_KEYS) {
     const value = Number(outlaw[key]);

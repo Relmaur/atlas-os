@@ -53,6 +53,8 @@ export const FACT_VALUES = {
   'biome-marsh': BiomeFamilySchema,
   'biome-waterworld': BiomeFamilySchema,
   'reliquary-main-biome': z.literal(true),
+  // The hazard readings a scan can show (Temperature °C, Radiation Rad, Toxicity Tox).
+  'hazard-readings': z.array(z.object({ name: z.string().min(1), unit: z.string() })).min(1),
   // Light years per region (one step of a portal address's X, Y or Z): distances from a galaxy's centre.
   'region-light-years': z.int().positive()
 } as const;
@@ -146,4 +148,24 @@ export function planetFamily(
   const picked = biomeFamily(file, planet.biome);
   const main = reliquaryMainBiome(planets, planet.descriptor ?? '');
   return { family: picked ?? (main ? biomeFamily(file, main.name) : null), relic };
+}
+
+/**
+ * The reading a planet's number is in: its `hazard` ('' is temperature, as in every log before 3.29) with the unit
+ * the wiki gives. Without the wiki's list, a temperature still reads in °C and anything else keeps its name, unitless.
+ */
+export function hazardReading(file: FactsFile | null, hazard: string): { key: string; name: string; unit: string } {
+  const key = hazard.trim().toLowerCase() || 'temperature';
+  const found = getFact(file, 'hazard-readings')?.value.find(reading => reading.name.toLowerCase() === key);
+  if (found) return { key, ...found };
+  return key === 'temperature'
+    ? { key, name: 'Temperature', unit: '°C' }
+    : { key, name: key.charAt(0).toUpperCase() + key.slice(1), unit: '' };
+}
+
+/** "−60.8 °C", "4.2 Rad": a planet's reading as the game shows it, with a true minus sign; '' when not logged. */
+export function readingText(file: FactsFile | null, planet: { hazard: string; temperature: number | null }): string {
+  if (planet.temperature === null) return '';
+  const { unit } = hazardReading(file, planet.hazard);
+  return [String(planet.temperature).replace('-', '−'), unit].filter(Boolean).join(' ');
 }

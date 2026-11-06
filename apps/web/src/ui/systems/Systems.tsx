@@ -74,7 +74,7 @@ export function Systems() {
           onChange={event => {
             setSystemFilter({ q: event.target.value });
           }}
-          placeholder="Search systems, planets, notes, tags"
+          placeholder="Search systems, planets, moons, notes, tags"
           aria-label="Search systems"
           className="w-full h-[42px] rounded-control border border-control-edge focus:border-scanner-cyan-edge-strong bg-slate-ground pl-10 pr-3 text-base md:text-sm text-ink-bright placeholder:text-ink-disabled focus:outline-hidden"
         />

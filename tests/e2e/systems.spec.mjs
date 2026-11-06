@@ -24,12 +24,12 @@ test('a system opens on its own screen; planets added there persist across a rel
   await expect(page).toHaveURL(/#system\/sys-ekwa$/);
   await expect(page.locator('#systemTitle')).toHaveText('Ekwa Nexus');
 
-  await page.getByRole('button', { name: /^Add planet/ }).click();
+  await page.getByRole('button', { name: /^Add body/ }).click();
   const sheet = page.locator('#planetSheet');
   await sheet.getByRole('textbox', { name: 'Name' }).fill('Verdant IV');
-  await sheet.getByRole('button', { name: 'Add planet' }).click();
+  await sheet.getByRole('button', { name: 'Add body' }).click();
   await expect(sheet).toHaveAttribute('aria-hidden', 'true');
-  await expect(page.getByRole('heading', { name: 'Planets · 1' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Planets & moons · 1' })).toBeVisible();
   // From lg a row opens the planet panel beside System detail (37); on a phone, the planet's own view (36).
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
     await page.getByRole('link', { name: /^Verdant IV/ }).click();

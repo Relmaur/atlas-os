@@ -1,7 +1,8 @@
 // Settings (design 20, the section is still #more): reached from the gear in Home's header. Your data (sync, Export,
 // Import), this device (keep-awake, timer alerts, the offline Codex, install, storage protection), past play sessions,
 // a way to support the app, and what it is.
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode, type SubmitEvent } from 'react';
+import { MAX_ACCOUNTS } from '@atlas/core/state';
 import { formatAgo, formatDuration } from '@atlas/core/format';
 import { sessionRecap } from '@atlas/core/session';
 import { exportState, importState, undoImport, useImportUndo } from '../../app/backup.ts';
@@ -14,6 +15,8 @@ import { AlertsSwitch } from '../session/AlertsSwitch.tsx';
 import { usePushStatus } from '../../app/push.ts';
 import { goBack } from '../shell/section-store.ts';
 import { SyncSheet, openSyncSheet } from './SyncSheet.tsx';
+import { addAccount, removeAccount } from '../actions.ts';
+import { FIELD } from '../systems/editor-parts.tsx';
 
 const TOP_BUTTON =
   'w-11 h-11 rounded-control bg-slate-ground border border-control-edge grid place-items-center text-ink hover:border-control-edge-hover';
@@ -138,6 +141,8 @@ export function More() {
           ? 'Everything you log stays on this device, plus the encrypted copy sync keeps for your devices.'
           : 'Everything you log stays on this device until you export it or turn on sync.'}
       </p>
+
+      <Accounts accounts={state.accounts} />
 
       <section aria-labelledby="keysTitle" className="hidden lg:block">
         <h2 id="keysTitle" className="text-label uppercase text-ink-label px-1 pb-2">
@@ -324,6 +329,66 @@ function Alerts() {
         <AlertsSwitch id="morePushSwitch" />
       </div>
     </li>
+  );
+}
+
+// The names the player plays under, on any platform: a planet's "Discovered by" offers them as Me.
+function Accounts({ accounts }: { accounts: string[] }) {
+  const [name, setName] = useState('');
+  const add = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (addAccount(name)) setName('');
+  };
+  return (
+    <Group title="In the game">
+      <li className={ROW}>
+        <Tile icon="ph-user-circle" lit />
+        <Text title="Your game accounts">
+          The names you play under. A planet’s Discovered by fills them in with one tap, as Me.
+        </Text>
+      </li>
+      {accounts.map(account => (
+        <li key={account} className={`${ROW} min-h-[52px]`}>
+          <span className="flex-1 min-w-0 pl-[46px] text-row text-ink-bright break-words">{account}</span>
+          <button
+            type="button"
+            onClick={() => {
+              removeAccount(account);
+            }}
+            aria-label={`Remove ${account}`}
+            className="w-9 h-9 rounded-control grid place-items-center text-ink-muted hover:text-ink-bright hover:bg-slate-ground"
+          >
+            <i className="ph-bold ph-x" aria-hidden="true" />
+          </button>
+        </li>
+      ))}
+      {accounts.length < MAX_ACCOUNTS && (
+        <li className="px-4 py-3">
+          <form onSubmit={add} className="flex gap-2 pl-[46px]">
+            <input
+              aria-label="Add a game account"
+              value={name}
+              onChange={event => {
+                setName(event.target.value);
+              }}
+              maxLength={60}
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              placeholder={accounts.length ? 'Another account' : 'e.g. your PSN, Steam or Xbox name'}
+              className={`${FIELD} flex-1 min-w-0`}
+            />
+            <button
+              type="submit"
+              disabled={!name.trim()}
+              className="h-11 px-4 rounded-control border border-control-edge bg-slate-ground text-caption font-semibold text-ink-bright hover:border-control-edge-hover disabled:text-ink-disabled disabled:hover:border-control-edge"
+            >
+              Add
+            </button>
+          </form>
+        </li>
+      )}
+    </Group>
   );
 }
 

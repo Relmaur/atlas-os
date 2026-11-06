@@ -1,6 +1,6 @@
 // System detail (design 03): a system's own screen at #system/<id>. Its orbit diagram (XL, the side view) leads,
 // then what the game shows, the portal address, the planets, the journal (your notes and visits), and Log a visit.
-// The rest is edited in the editor sheet (06). A planet row opens the planet's own view (36); Add planet opens the
+// The rest is edited in the editor sheet (06). A planet row opens the planet's own view (36); Add body opens the
 // planet sheet (35), and the orbit diagram draws from the planets.
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { planetFamily } from '@atlas/core/facts';
@@ -8,7 +8,15 @@ import { economyType, strengthStars } from '@atlas/core/galaxy-map';
 import { homeSummary } from '@atlas/core/home';
 import { notesForSystem, systemPin } from '@atlas/core/notes';
 import { systemOrbit } from '@atlas/core/orbit';
-import { CONFLICT_LEVELS, RACES, STAR_CLASSES, lastVisit, type Planet, type System } from '@atlas/core/systems-model';
+import {
+  CONFLICT_LEVELS,
+  RACES,
+  STAR_CLASSES,
+  lastVisit,
+  moonParent,
+  type Planet,
+  type System
+} from '@atlas/core/systems-model';
 import { logVisit, toggleFavorite } from '../actions.ts';
 import { useAppState } from '../useAppState.ts';
 import { useNow } from '../useNow.ts';
@@ -23,6 +31,7 @@ import { newNote } from '../notes/note-nav.ts';
 import { openSystemEditor } from './panel-store.ts';
 import { GlyphPlate } from './GlyphPlate.tsx';
 import { DangerPills, nothingLogged, planetScanLine } from './PlanetScan.tsx';
+import { discoveryWhen } from './DiscoveryFields.tsx';
 import { openPlanetSheet, planetHref, usePlanetSheet } from './planet-sheet-store.ts';
 import type { FactsFile } from '@atlas/core/facts';
 
@@ -146,22 +155,42 @@ export function SystemDetails() {
 
       <section aria-labelledby="planetsTitle" className="flex flex-col gap-2">
         <h2 id="planetsTitle" className={SECTION_TITLE}>
-          Planets · {system.planets.length}
+          Planets & moons · {system.planets.length}
         </h2>
         <ul className="rounded-card bg-panel border border-hairline divide-y divide-hairline overflow-hidden">
-          {system.planets.map(planet => (
-            <li key={planet.id}>
-              <PlanetRow
-                planet={planet}
-                href={planetHref(system.id, planet.id)}
-                facts={facts}
-                editing={planetSheet.open && planetSheet.systemId === system.id && planetSheet.planetId === planet.id}
-                onEdit={() => {
-                  openPlanetSheet(system.id, planet.id);
-                }}
-              />
-            </li>
-          ))}
+          {/* A moon tied to its planet sits inside that planet's row, indented; the rest keep the log's order. */}
+          {system.planets
+            .filter(planet => !moonParent(system.planets, planet))
+            .map(planet => {
+              const row = (body: Planet, moon: boolean) => (
+                <PlanetRow
+                  planet={body}
+                  href={planetHref(system.id, body.id)}
+                  facts={facts}
+                  moon={moon}
+                  editing={planetSheet.open && planetSheet.systemId === system.id && planetSheet.planetId === body.id}
+                  onEdit={() => {
+                    openPlanetSheet(system.id, body.id);
+                  }}
+                />
+              );
+              const moons = system.planets.filter(other => moonParent(system.planets, other) === planet);
+              return (
+                <li key={planet.id}>
+                  {row(planet, false)}
+                  {moons.length > 0 && (
+                    <ul
+                      aria-label={`Moons of ${planet.name}`}
+                      className="border-t border-hairline divide-y divide-hairline"
+                    >
+                      {moons.map(moon => (
+                        <li key={moon.id}>{row(moon, true)}</li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
           <li>
             <button
               type="button"
@@ -173,7 +202,9 @@ export function SystemDetails() {
               <span className="w-10 h-10 rounded-full border border-dashed border-grab grid place-items-center shrink-0">
                 <i className="ph-bold ph-plus" aria-hidden="true" />
               </span>
-              {system.planets.length ? 'Add planet' : 'Add planet: the ones with bases, hotspots or crash sites'}
+              {system.planets.length
+                ? 'Add body'
+                : 'Add body: the planets and moons with bases, hotspots or crash sites'}
             </button>
           </li>
         </ul>
@@ -309,6 +340,21 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
       { tone: system.rating ? 'text-units-amber-text' : '' }
     ]
   ];
+  // Who discovered it shows once logged: an older system has no such line, and no gap where it would be.
+  if (system.discoveredBy || system.discoveredOn) {
+    cells.push([
+      'Discovered',
+      <span key="d" className="flex flex-col gap-1">
+        {system.discoveredBy && <span className="break-words">{system.discoveredBy}</span>}
+        {system.discoveredOn && (
+          <span className="text-sub text-ink-muted font-mono">
+            {discoveryWhen(system.discoveredOn, system.discoveredTime)}
+          </span>
+        )}
+      </span>,
+      { wide: true }
+    ]);
+  }
   // "Water" and "Dissonant" show only when the map says so: their absence isn't something the player logged.
   if (system.water || system.dissonant) {
     cells.splice(1, 0, [
@@ -407,17 +453,20 @@ function PlanetRow({
   href,
   facts,
   editing,
+  moon = false,
   onEdit
 }: {
   planet: Planet;
   href: string;
   facts: FactsFile | null;
   editing: boolean;
+  /** A moon inside its planet's row: indented, with a smaller marker. */
+  moon?: boolean;
   onEdit: () => void;
 }) {
   const base = planet.tags.includes('base');
   const { family, relic } = planetFamily(facts, planet);
-  const line = planetScanLine(planet);
+  const line = planetScanLine(planet, facts);
   return (
     <a
       href={href}
@@ -429,13 +478,14 @@ function PlanetRow({
         event.preventDefault();
         onEdit();
       }}
-      className="w-full px-4 py-3.5 flex items-center gap-3.5 text-left hover:bg-slate-ground transition-colors duration-[var(--duration-micro)]"
+      className={`w-full ${moon ? 'pl-10 pr-4 py-3' : 'px-4 py-3.5'} flex items-center gap-3.5 text-left hover:bg-slate-ground transition-colors duration-[var(--duration-micro)]`}
     >
-      <span className="w-12 h-12 grid place-items-center shrink-0">
+      {moon && <i className="ph ph-arrow-elbow-down-right -mr-2 text-ink-label shrink-0" aria-hidden="true" />}
+      <span className={`${moon ? 'w-9 h-9' : 'w-12 h-12'} grid place-items-center shrink-0`}>
         <PlanetMarker
           family={family}
           relic={relic}
-          size={base ? 28 : 26}
+          size={moon ? (base ? 18 : 16) : base ? 28 : 26}
           base={base}
           unlogged={nothingLogged(planet)}
         />

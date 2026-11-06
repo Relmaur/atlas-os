@@ -91,10 +91,10 @@ test('a failed planet save raises the banner and keeps the planet on screen', as
       return original.call(this, key, value);
     };
   });
-  await page.getByRole('button', { name: /^Add planet/ }).click();
+  await page.getByRole('button', { name: /^Add body/ }).click();
   const sheet = page.locator('#planetSheet');
   await sheet.getByRole('textbox', { name: 'Name' }).fill('Verdant IV');
-  await sheet.getByRole('button', { name: 'Add planet' }).click();
+  await sheet.getByRole('button', { name: 'Add body' }).click();
   await expect(page.locator('#storageBannerText')).toContainText('Not saved on this device');
   await expect(page.locator('#sec-system')).toContainText('Verdant IV'); // kept in memory, offered for export
 });
