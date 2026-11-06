@@ -13,6 +13,7 @@ export function onSection(key: string, run: () => void): void {
 const LIST_OF: Record<string, string> = {
   systems: 'systems',
   system: 'systems',
+  planet: 'systems',
   gear: 'gear',
   ship: 'gear',
   notes: 'notes',
@@ -54,6 +55,7 @@ const SHORTCUTS = new Set(['new-system', 'search']);
 // The section a parameter belongs to, and where the address goes without one (#map is the chain, #map/<galaxy> one).
 const PARAM_SECTIONS: Record<string, string> = {
   system: 'systems',
+  planet: 'systems', // #planet/<system>/<planet>: a planet's own view (36)
   ship: 'gear',
   note: 'notes',
   plan: 'calculators',
@@ -106,7 +108,8 @@ export function showSection(key: string): Promise<void> {
   listeners.forEach(listener => {
     listener();
   });
-  const hash = `#${section}${next ? `/${encodeURIComponent(next)}` : ''}`;
+  // Each part of a parameter is encoded on its own, so #planet/<system>/<planet> keeps its slash.
+  const hash = `#${section}${next ? `/${next.split('/').map(encodeURIComponent).join('/')}` : ''}`;
   if (location.hash !== hash) history.replaceState(null, '', hash);
   if (shortcut) hooks.get(shortcut)?.();
   hooks.get(section)?.();

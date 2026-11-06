@@ -137,7 +137,7 @@ test("a system's orbit: seeded by galaxy and address (or its id), bases ringed, 
       { id: 'p2', name: 'Dune', biome: 'Barren', tags: [] }
     ]
   });
-  const orbit = systemOrbit(system, biome => (biome === 'Frozen' ? 'frozen' : null));
+  const orbit = systemOrbit(system, planet => (planet.biome === 'Frozen' ? 'frozen' : null));
   assert.deepEqual(orbit.seed, ['Euclid', 'sys-1']);
   assert.deepEqual(orbit.planets, [
     { name: 'Hjalmar', family: 'frozen', size: 1, base: true },

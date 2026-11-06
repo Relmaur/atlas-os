@@ -6,6 +6,26 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.27.0] - 2026-11-06
+Design round 4, "Planets & the scan".
+
+On the Updates page this is **Survey**, covering 3.22 to 3.27, with a banner made from real screens of the invented log.
+
+### Added
+- A planet has its own screen: what you logged from its scan in the game's order (weather, resources level, fauna, flora, sentinels, temperature), the resources it lists with why each can be there and a Codex link, and its discovery. Only what's logged shows: a partly filled planet lists what's missing on one line, and an unscanned one offers to fill it in. A planet's row opens it; the pencil opens the sheet.
+- The planet sheet follows the game's scan: Identity (description, planet or moon, biome), the scan's rows, what the ship's scan lists, and the discovery, now with its time. The resources are toggle chips grouped by why the wiki says they can be there: the biome's own, the star's metal and its activated form, deposits, and finds, plus "Another resource…" for anything else.
+- Every word field is a new combobox with its list right under the field, above the keyboard on a phone: the planet's biome's words first, matching anywhere in the word, and a last row that keeps what you typed. It replaces the browser's own suggestion lists, which iOS shows as only three words.
+- Barren, Dead, Marsh and Waterworld planets have their own colours, each from what its wiki page says the biome looks like. A Reliquary world takes its main biome's colour with a broken ring around it. A planet with nothing logged is a dashed outline.
+
+### Changed
+- The game's danger is crimson, always with the word and a warning mark: extreme weather, aggressive or corrupted sentinels, and outlaw systems. Normal weather and low sentinels are quiet pills; nothing else turns red.
+- System detail shows the galaxy map's pairs as the map does: "Yellow F4", "On the map: Water", and "Prospecting // Opulent" with "Mining economy · ★★★ strength" (the Wealth cell is folded in). A planet's row is one scan line, with a red pill only for danger, naming what it's about.
+- The system editor groups the star and the economy as the galaxy map pairs them. When your star colour disagrees with the wiki's reading of the spectral class, an amber note says so and offers it; your choice stays. An economy name that isn't one of the wiki's is kept as typed, and its strength still sets the stars.
+- On a computer, a field no longer scrolls when it takes focus in a sheet; that's only for a phone's keyboard.
+
+### Kept
+- Every planet and system logged before this keeps what was typed. The new discovery time is empty until filled.
+
 ## [3.26.1] - 2026-11-05
 ### Fixed
 - The planet sheet no longer scrolls sideways on iPhone: the "Discovered on" date field fits its column.

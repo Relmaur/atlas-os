@@ -29,7 +29,24 @@ export function seedState() {
         name: 'Hesper Drift',
         star: 'green',
         tags: ['to-revisit'],
-        planets: [],
+        // A scanned planet in danger and one with nothing logged, for the planet view (36) and its states.
+        planets: [
+          {
+            id: 'pl-storm',
+            name: 'Storm Rock',
+            biome: 'Frozen',
+            descriptor: 'Frostbound',
+            body: 'planet',
+            weather: 'Deep Freeze',
+            sentinels: 'Frenzied',
+            temperature: -88.5,
+            resources: ['Frost Crystal', 'Emeril'],
+            discoveredBy: 'Test Traveller',
+            discoveredOn: '2026-11-05',
+            discoveredTime: '19:49'
+          },
+          { id: 'pl-blank', name: 'Geor Beta', body: 'planet' }
+        ],
         visits: [{ at: minutesAgo(2 * 24 * 60) }],
         createdAt: '2026-10-21T00:00:00.000Z'
       },

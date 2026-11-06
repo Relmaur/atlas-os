@@ -15,7 +15,7 @@ import {
   type PostcardOptions,
   type ShareFormat
 } from '@atlas/core/share';
-import { biomeFamily } from '@atlas/core/facts';
+import { planetFamily } from '@atlas/core/facts';
 import type { System } from '@atlas/core/systems-model';
 import { showToast } from '../../app/ui.ts';
 import { useFacts } from '../gear/facts-store.ts';
@@ -265,7 +265,7 @@ export function ShareSystemSheet({ system, open, onClose }: { system: System; op
   };
   const card = useMemo(() => postcard(system, options, game?.version ?? null), [system, options, game]);
   const draw = useMemo(() => {
-    const orbit = systemOrbit(system, biome => biomeFamily(facts, biome));
+    const orbit = systemOrbit(system, planet => planetFamily(facts, planet).family);
     const scene = {
       card,
       format,

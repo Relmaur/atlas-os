@@ -31,7 +31,7 @@ const GEAR = normalizeGear([
   { name: 'Ray', kind: 'starship', class: 'S', type: 'Interceptor', createdAt: '2026-10-02T00:00:00Z' },
   { name: 'Old', kind: 'multitool', class: 'B', createdAt: '2026-10-04T00:00:00Z' }
 ]);
-const family = (biome: string) => (biome === 'Frozen' ? ('frozen' as const) : null);
+const family = ({ biome }: { biome: string }) => (biome === 'Frozen' ? ('frozen' as const) : null);
 const LOG = { systems: SYSTEMS, gear: GEAR, notes: [], runs: [], checklists: {} };
 
 test('firsts are each kind’s earliest record, newest first; unknown races and the first galaxy earn none', () => {

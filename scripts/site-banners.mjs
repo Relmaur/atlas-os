@@ -14,6 +14,7 @@ const log = withTravels(160, 10);
 
 // `middle` is shown flat and large; the other two lean in from the sides.
 const BANNERS = {
+  survey: { left: '#system/vintam', middle: '#planet/vintam/p4', right: '#planet/vintam/p2' },
   'first-light': { left: '#home', middle: '#card', right: '#map' },
   origins: { left: '#systems', middle: '#system/vintam', right: '#session' }
 };

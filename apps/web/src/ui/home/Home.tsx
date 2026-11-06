@@ -3,7 +3,7 @@
 // stations moved to Runs, the fleet to Log › Fleet, and Keep screen on to Settings.
 import { WhatsNew } from './WhatsNew.tsx';
 import { useEffect } from 'react';
-import { biomeFamily } from '@atlas/core/facts';
+import { planetFamily } from '@atlas/core/facts';
 import { formatClock, formatCountdown } from '@atlas/core/format';
 import { heroPlace, heroStatus, homeSummary, homeTimers, isEmptyAtlas, warpBackLine } from '@atlas/core/home';
 import { systemOrbit } from '@atlas/core/orbit';
@@ -292,7 +292,7 @@ function Hero({ system, now }: { system: System | undefined; now: number }) {
       </section>
     );
   }
-  const orbit = systemOrbit(system, biome => biomeFamily(facts, biome));
+  const orbit = systemOrbit(system, planet => planetFamily(facts, planet).family);
   const note = system.notes.split('\n').find(line => line.trim());
   return (
     <section id="homeNow" aria-labelledby="homeSystemName" className="hero-card overflow-hidden">

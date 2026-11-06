@@ -1,7 +1,7 @@
 // The Systems log (design 02): every system warped to, searchable and filterable the way the in-game Discoveries
 // page isn't. A system with its star or planets logged draws its orbit strip; one without stays a compact card.
 import { useEffect } from 'react';
-import { biomeFamily } from '@atlas/core/facts';
+import { planetFamily } from '@atlas/core/facts';
 import { formatAgo } from '@atlas/core/format';
 import { homeSummary } from '@atlas/core/home';
 import { systemOrbit } from '@atlas/core/orbit';
@@ -15,7 +15,7 @@ import {
   type FilterChip,
   type SystemFilter
 } from '@atlas/core/systems-list';
-import { OUTLAW_TAG, SORTS, lastVisit, outlawStatus, type System } from '@atlas/core/systems-model';
+import { OUTLAW_TAG, SORTS, lastVisit, outlawStatus, type PlanetLike, type System } from '@atlas/core/systems-model';
 import { useAppState } from '../useAppState.ts';
 import { useNow } from '../useNow.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
@@ -42,7 +42,7 @@ export function Systems() {
   const current = homeSummary(state, now).current;
   // "You are here" only for a system actually visited, as on Home.
   const hereId = current && lastVisit(current) ? current.id : null;
-  const familyOf = (biome: string) => biomeFamily(facts, biome);
+  const familyOf = (planet: PlanetLike) => planetFamily(facts, planet).family;
   const logNew = () => {
     openSystemEditor();
   };
@@ -223,7 +223,7 @@ function SystemCard({
   here: boolean;
   now: number;
   restockHours: number;
-  familyOf: (biome: string) => string | null;
+  familyOf: (planet: PlanetLike) => string | null;
 }) {
   const open = useSectionParam() === system.id;
   const last = lastVisit(system);

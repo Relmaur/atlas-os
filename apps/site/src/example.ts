@@ -2,7 +2,7 @@
 // real player's. Galaxy names come from the wiki's list; a seed keeps the cards the same on every visit.
 import { firsts } from '@atlas/core/frontier';
 import { currentArt } from '@atlas/core/current';
-import { biomeFamily, type FactsFile } from '@atlas/core/facts';
+import { planetFamily, type FactsFile } from '@atlas/core/facts';
 import { normalizeGear } from '@atlas/core/gear';
 import type { Galaxy } from '@atlas/core/location';
 import { Rng, seedOf } from '@atlas/core/seed';
@@ -49,7 +49,7 @@ export function exampleTraveller(stage: Stage, galaxies: Galaxy[], facts: FactsF
       createdAt: at(i)
     }))
   );
-  const earned = firsts({ systems, gear }, biome => biomeFamily(facts, biome));
+  const earned = firsts({ systems, gear }, planet => planetFamily(facts, planet).family);
   const card = travellerCard({ systems, gear, notes: [], runs: [], checklists: {} }, earned, galaxies);
   return { card, art: currentArt(card.trip) };
 }

@@ -92,7 +92,8 @@ export interface PlanetFields {
       | 'resources'
       | 'temperature'
       | 'discoveredBy'
-      | 'discoveredOn',
+      | 'discoveredOn'
+      | 'discoveredTime',
       string
     >
   >;
@@ -112,7 +113,9 @@ export function savePlanet(systemId: string, planetId: string | null, fields: Pl
         ...fields.scan,
         resources: (fields.scan.resources ?? '').split(',').map(item => item.trim()),
         // "-60,8" is how half the world writes -60.8; an empty field is "not logged", never 0.
-        temperature: fields.scan.temperature?.trim() ? Number(fields.scan.temperature.replace(',', '.')) : null
+        temperature: fields.scan.temperature?.trim()
+          ? Number(fields.scan.temperature.replace(',', '.').replace('−', '-'))
+          : null
       }))
   };
   const planet = system.planets.find(item => item.id === planetId);

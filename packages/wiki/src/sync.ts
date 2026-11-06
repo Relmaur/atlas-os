@@ -37,7 +37,7 @@ import { InvalidDump, followRedirect, scanDump } from './dump.ts';
 import { discover, reportMarkdown } from './discover.ts';
 import { GlyphTableSchema, glyphPageDigit, parseGlyphNames, type Glyph, type GlyphTable } from '@atlas/core/glyphs';
 import { GalaxyMapFactsSchema, parseEconomyNames, parseEconomyStrength, parseSpectralClasses, type GalaxyMapFacts } from '@atlas/core/galaxy-map';
-import { PlanetFactsSchema, biomePageName, resourceLinks, parseBiomeDescriptors, parseBiomeWeather, parseLifeWords, parseSentinelWords, type PlanetFacts } from '@atlas/core/planets';
+import { PlanetFactsSchema, biomePageName, isDeposit, isScanFind, parseRuinedSets, parseStarMetals, resourceLinks, parseBiomeDescriptors, parseBiomeWeather, parseLifeWords, parseSentinelWords, type PlanetFacts } from '@atlas/core/planets';
 import { FACTS, checkFacts, currentGameVersion, type FactPage, type UpdatePage } from './facts.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -437,6 +437,29 @@ function planetFacts(articles: IndexedArticle[]): PlanetFacts | null {
       }
     ];
   });
+  // The Reliquary's name sets, each resolved to the biome it names ("Radioactive" is an Irradiated prefix).
+  const setBiome = (set: string) => {
+    const word = set.toLowerCase();
+    const byName = biomes.find(biome => biome.name.toLowerCase() === word);
+    const byPrefix = biomes.filter(biome => biome.descriptors.some(name => name.toLowerCase() === word));
+    return byName?.name ?? (byPrefix.length === 1 ? byPrefix[0]?.name : undefined);
+  };
+  for (const biome of biomes) {
+    const article = articles.find(item => item.title === biome.page && live(item));
+    const sets = article && live(article) ? parseRuinedSets(article.body) : [];
+    const ruined = sets.flatMap(set => {
+      const name = setBiome(set.set);
+      return name ? [{ biome: name, names: set.names }] : [];
+    });
+    if (ruined.length) Object.assign(biome, { ruined });
+  }
+  const starPage = articles.find(article => article.title === 'Star system' && live(article));
+  const metals = starPage && live(starPage) ? parseStarMetals(starPage.body) : {};
+  const deposits = articles
+    .filter(article => live(article) && (article as { category?: unknown }).category === 'resources' && isDeposit(article.body))
+    .map(source);
+  const finds = articles.filter(article => live(article) && isScanFind(article.body)).map(source);
+  if (!Object.keys(metals).length) console.warn('⚠️  Planets: the Star system page no longer says which metal each star colour gives.');
   const sentinelPage = articles.find(article => article.title === 'Sentinel' && live(article));
   const lifePage = articles.find(article => article.title === 'Planet - Discovery Menu' && live(article));
   const sentinels = sentinelPage && live(sentinelPage) ? parseSentinelWords(sentinelPage.body) : null;
@@ -452,7 +475,10 @@ function planetFacts(articles: IndexedArticle[]): PlanetFacts | null {
   return PlanetFactsSchema.parse({
     biomes: biomes.sort((a, b) => a.name.localeCompare(b.name)),
     sentinels: { ...source(sentinelPage), ...sentinels },
-    life: { ...source(lifePage), ...life }
+    life: { ...source(lifePage), ...life },
+    ...(starPage && Object.keys(metals).length ? { starMetals: { ...source(starPage), metals } } : {}),
+    deposits: deposits.sort((a, b) => a.page.localeCompare(b.page)),
+    finds: finds.sort((a, b) => a.page.localeCompare(b.page))
   });
 }
 

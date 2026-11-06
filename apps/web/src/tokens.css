@@ -85,8 +85,12 @@
   --color-danger-rose-edge: rgba(251, 113, 133, 0.5);
   --color-danger-rose-edge-armed: rgba(251, 113, 133, 0.8);
 
-  /* Crimson: the outlaw mark only, never an error colour */
+  /* Crimson: the game's danger (an outlaw system, extreme weather, aggressive or corrupted sentinels), always with a
+     word and the warning mark; never an error colour. Rose is the app's destructive actions. */
   --color-outlaw-crimson: #ef4444;
+  --color-danger-crimson-tint: rgba(239, 68, 68, 0.14);
+  --color-danger-crimson-edge: rgba(248, 113, 113, 0.5);
+  --color-danger-crimson-text: #fecaca;
 
   /* Data colours: a star's logged colour and a planet's biome family. They paint star and planet marks only, never
      controls or text. Stars: the disc, then its pale core. Biomes: the lit disc, then its shadowed crescent. */
@@ -112,6 +116,15 @@
   --color-biome-exotic-shade: #86198f;
   --color-biome-lush: #4ade80;
   --color-biome-lush-shade: #166534;
+  /* Round 4 (c01b): each cites its biome's page in packages/wiki/src/facts.ts. */
+  --color-biome-barren: #d4b483;
+  --color-biome-barren-shade: #7c5a2c;
+  --color-biome-dead: #a8a29e;
+  --color-biome-dead-shade: #44403c;
+  --color-biome-marsh: #5fb7a0;
+  --color-biome-marsh-shade: #134e4a;
+  --color-biome-ocean: #3b82f6;
+  --color-biome-ocean-shade: #1e3a8a;
   --color-orbit-line: rgba(103, 232, 249, 0.16);
   --color-orbit-line-unlogged: rgba(103, 232, 249, 0.1);
   --color-orbit-grid: rgba(103, 232, 249, 0.05);

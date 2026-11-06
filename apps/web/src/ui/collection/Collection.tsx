@@ -3,7 +3,8 @@
 // rosette is thousands of points and a log can hold hundreds of cards.
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { collection, groupAddress, type CollectionCard } from '@atlas/core/collectible';
-import { biomeFamily } from '@atlas/core/facts';
+import { planetFamily } from '@atlas/core/facts';
+import type { PlanetLike } from '@atlas/core/systems-model';
 import { shareFileName } from '@atlas/core/share';
 import { useAppState } from '../useAppState.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
@@ -96,7 +97,7 @@ export function Collection() {
   const facts = useFacts();
   const shown = useSection() === 'cards';
   const param = useSectionParam();
-  const family = useCallback((biome: string) => biomeFamily(facts, biome), [facts]);
+  const family = useCallback((planet: PlanetLike) => planetFamily(facts, planet).family, [facts]);
   const cards = useMemo(
     () => (shown ? collection({ systems: state.systems, gear: state.gear }, family) : []),
     [shown, state, family]

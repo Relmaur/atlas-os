@@ -125,3 +125,89 @@ test('weather severity comes from the biome’s own table, then any biome’s; s
   expect(sentinelLevel(FACTS, 'Frenzied')).toBe('aggressive');
   expect(sentinelLevel(FACTS, '')).toBeNull();
 });
+
+test('round 4: what a scan can list comes from the wiki’s own sentences, page by page', async () => {
+  const { isDeposit, isScanFind, parseRuinedSets, parseStarMetals } = await import('../src/planets.ts');
+  expect(parseStarMetals(await page('mechanics/Star_system.md'))).toMatchObject({
+    yellow: ['Copper', 'Activated Copper'],
+    red: ['Cadmium', 'Activated Cadmium'],
+    green: ['Emeril', 'Activated Emeril'],
+    blue: ['Indium', 'Activated Indium'],
+    purple: ['Quartzite', 'Activated Quartzite']
+  });
+  expect(isDeposit(await page('resources/Silver.md'))).toBe(true);
+  expect(isDeposit(await page('resources/Copper.md'))).toBe(false);
+  expect(isScanFind(await page('building/Ancient_Bones.md'))).toBe(true);
+  expect(isScanFind(await page('places/Salvageable_Scrap.md'))).toBe(true);
+  // The burial site's page names Ancient Bones as what the panel shows: the site itself isn't a find.
+  expect(isScanFind(await page('places/Natural_Burial_Site.md'))).toBe(false);
+  const sets = parseRuinedSets(await page('world/Biome_-_The_Reliquary.md'));
+  expect(sets.find(set => set.set === 'Frozen')?.names).toEqual(['Abandoned', 'Icy Ruin', 'Frozen Relic']);
+  expect(sets.map(set => set.set)).toContain('Radioactive');
+});
+
+test('round 4: resources grouped by why they can be there, and each one’s source', async () => {
+  const { resourceChoices, resourceSource } = await import('../src/planets.ts');
+  const facts: PlanetFacts = {
+    ...FACTS,
+    biomes: FACTS.biomes.map(biome =>
+      biome.name === 'Frozen' ? { ...biome, resources: ['Dioxite', 'Frost Crystal'] } : biome
+    ),
+    starMetals: { page: 'Star system', path: 's', revId: 1, metals: { yellow: ['Copper', 'Activated Copper'] } },
+    deposits: [{ page: 'Silver', path: 's', revId: 1 }],
+    finds: [{ page: 'Ancient Bones', path: 'a', revId: 1 }]
+  };
+  expect(resourceChoices(facts, 'Frostbound', 'yellow').map(group => [group.label, group.names])).toEqual([
+    ['Frozen biome', ['Dioxite', 'Frost Crystal']],
+    ['Yellow star', ['Copper', 'Activated Copper']],
+    ['Deposits', ['Silver']],
+    ['Finds', ['Ancient Bones']]
+  ]);
+  // No star logged: no star metal group; nothing about the biome: no biome group.
+  expect(resourceChoices(facts, 'My own words', '').map(group => group.group)).toEqual(['deposit', 'find']);
+  expect(resourceSource(facts, 'frost crystal', 'Frozen', 'yellow')).toBe('Frozen biome');
+  expect(resourceSource(facts, 'Copper', 'Frozen', 'yellow')).toBe('yellow star');
+  expect(resourceSource(facts, 'Silver', 'Frozen', 'yellow')).toBe('deposit');
+  expect(resourceSource(facts, 'Storm Crystal', 'Frozen', 'yellow')).toBeNull();
+});
+
+test('round 4: a Reliquary world takes its main biome’s colour from its name, with a relic ring', async () => {
+  const { planetFamily } = await import('../src/facts.ts');
+  const cite = (value: unknown) => ({ page: 'p', path: 'p', url: 'u', revId: 1, quote: 'q', value });
+  const file = {
+    schema: 1 as const,
+    facts: {
+      'biome-frozen': cite({ biome: 'Frozen', family: 'frozen' }),
+      'biome-barren': cite({ biome: 'Barren', family: 'barren' }),
+      'reliquary-main-biome': cite(true)
+    },
+    planets: {
+      ...FACTS,
+      biomes: [
+        ...FACTS.biomes,
+        {
+          page: 'Biome - The Reliquary',
+          path: 'r',
+          revId: 1,
+          name: 'The Reliquary',
+          descriptors: ['Frozen Relic', 'Abandoned'],
+          weather: weather([], [], []),
+          ruined: [
+            { biome: 'Frozen', names: ['Abandoned', 'Frozen Relic'] },
+            { biome: 'Barren', names: ['Abandoned'] }
+          ]
+        }
+      ]
+    }
+  };
+  expect(planetFamily(file, { biome: '', descriptor: 'Frozen Relic' })).toEqual({ family: 'frozen', relic: true });
+  // "Abandoned" fits several sets: slate, until the player picks the biome.
+  expect(planetFamily(file, { biome: 'The Reliquary', descriptor: 'Abandoned' })).toEqual({
+    family: null,
+    relic: true
+  });
+  expect(planetFamily(file, { biome: 'Frozen', descriptor: 'Frostbound' })).toEqual({ family: 'frozen', relic: false });
+  // Without the wiki's sentence, no Reliquary world borrows a colour.
+  const rest = Object.fromEntries(Object.entries(file.facts).filter(([id]) => id !== 'reliquary-main-biome'));
+  expect(planetFamily({ ...file, facts: rest }, { biome: '', descriptor: 'Frozen Relic' }).family).toBeNull();
+});

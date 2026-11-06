@@ -35,4 +35,11 @@ test('the keyboard’s cover and what it leaves become CSS variables, and the fo
   document.querySelector<HTMLInputElement>('#outside')?.focus();
   vi.advanceTimersByTime(400);
   expect(scroll).not.toHaveBeenCalled();
+
+  // With no keyboard up (a desktop, a hardware keyboard), a field stays where the player put it.
+  Object.assign(viewport, { height: 800, offsetTop: 0 });
+  viewport.dispatchEvent(new Event('resize'));
+  field.focus();
+  vi.advanceTimersByTime(400);
+  expect(scroll).not.toHaveBeenCalled();
 });

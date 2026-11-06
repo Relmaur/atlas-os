@@ -6,7 +6,8 @@ import { normalizeGear } from '../src/gear.ts';
 import { Rng, seedOf } from '../src/seed.ts';
 import { normalizeSystem } from '../src/systems-model.ts';
 
-const family = (biome: string) => (({ Lush: 'lush', Scorched: 'hot', Frozen: 'frozen' }) as const)[biome] ?? null;
+const family = ({ biome }: { biome: string }) =>
+  (({ Lush: 'lush', Scorched: 'hot', Frozen: 'frozen' }) as const)[biome] ?? null;
 const home = normalizeSystem({
   name: 'Masdalri Junction',
   region: 'Aeushne Sector',
@@ -100,7 +101,7 @@ test('Frontier says what’s still out there, in the design’s words', () => {
   assert.equal(view.next?.title, 'A purple star');
   assert.deepEqual(view.stars.have, ['yellow']);
   assert.equal(view.stars.note, 'All yellow so far.');
-  assert.deepEqual([view.biomes.have.length, view.biomes.total], [2, 6]);
+  assert.deepEqual([view.biomes.have.length, view.biomes.total], [2, 10]);
   assert.equal(view.races.note, 'Korvax in Masdalri Junction.');
   assert.deepEqual(view.ships.have, ['Sentinel Interceptor']);
   assert.match(view.ships.note, /^Two Sentinel Interceptors in your hangar/);

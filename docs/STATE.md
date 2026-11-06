@@ -2,11 +2,24 @@
 
 Read this before starting work; update it before ending any non-trivial task. Keep it current, not historical: completed work moves to `CHANGELOG.md`.
 
-_Last updated: 2026-11-05_
+_Last updated: 2026-11-06_
 
 CI runs typecheck + lint + unit tests only (owner's decision: browser tests run locally via `pnpm check` before pushing).
 
 ## In progress
+**Task P, design round 4 "Planets & the scan" (3.27.0, 2026-11-06).** Rebuilt 35 (planet sheet, now `PlanetSheet.tsx` + `PlanetForm` in `PlanetScan.tsx`, one sheet for the app via `planet-sheet-store.ts`), 03b and 06b/06c; built 36/36b/36c (`PlanetDetails.tsx`, `#planet/<system>/<planet>`) and 37 (the sheet is a 460px right panel from lg; a row shows "Editing"). Components: `WordCombobox` (c14 B, every `<datalist>` gone), `SeverityPill` (c15 A, crimson tokens), biome families c01b A (barren, dead, marsh, ocean tokens, cited facts; Reliquary main biome + relic ring via `planetFamily`). Wiki only: the star metals (Star system page), deposits ("found in underground planetary deposits"), finds (pages saying the information panel shows *them* after a scan) and the Reliquary's sets are all read from the archived pages; nothing from game data files. Planets gain `discoveredTime`.
+- The Updates page has **Survey** (3.22–3.27; `updates/2026-11-06-survey.md`), banner from `scripts/site-banners.mjs` with the invented log, which now carries a scan. The older banners were left as published.
+- Deviations for the owner (design or code?):
+  - The scan's "Resources" level has no wiki list, so its combobox offers the levels already in the player's log (design: a wiki list). Design wrong, probably.
+  - 37 draws the panel over System detail, but rows now open the planet view, so the pencil opens the panel over the planet view; "Editing" shows on System detail only when Add planet opened it. Design question.
+  - A new planet doesn't preselect "Planet" (35b does): it would be a guess. Code follows the rules; design to confirm.
+  - The orbit diagram doesn't draw the relic ring (markers in rows, the view and the sheet do).
+  - A planet row no longer shows the first line of its notes; the design's row has only the scan line.
+  - Frontier now counts 10 biome families (was 6).
+  - A pirate system's Conflict cell is a crimson "Pirate (outlaw)" pill (the round makes outlaw systems crimson; 03b doesn't draw one).
+  - 35b's Discovered-by placeholder shows an escaped entity in the design ("Traveller&#8217;s"); the app reads "A Traveller’s name".
+  - Exotic, Mega Exotic, Gas Giant and Waterworld weather has no severity on the wiki, so no pill there.
+
 **Richer planets and systems (3.26.0, 2026-11-05).** The owner, logging real discoveries, asked for what a scan shows. Done:
 - Mirror: the converter keeps `{{cols}}` lists and `{{Biome|X}}` links (89 pages fuller), and a sync never rolls a page back (newer revisions and pages written after the dump stay; `verification.json` → `newerThanDump`). Re-synced from the 29 Oct dump. Added the Spectral class, Economy and seven `… Economy` pages to `MECHANICS`.
 - `facts.json` gains `planets` (biome prefixes, weather by severity, linked resources, sentinel and life words) and `galaxyMap` (class letter → colour, economy names and strength words); `@atlas/core/planets`, `@atlas/core/galaxy-map`. Cited facts colour Mega Exotic (exotic) and Gas Giant (hot).

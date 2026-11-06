@@ -92,6 +92,9 @@
             <section id="sec-system" class="book-section hidden">
                 <!-- Rendered by React (src/ui/systems/SystemDetails.tsx) --><div id="systemDetailRoot"></div>
             </section>
+            <section id="sec-planet" class="book-section hidden">
+                <!-- A planet's own view, #planet/<system>/<planet> (React: src/ui/systems/PlanetDetails.tsx) --><div id="planetDetailRoot"></div>
+            </section>
 
             <!-- ===================================================================== -->
             <!-- YOUR GEAR AND NOTES (src/ui/gear, src/ui/notes · nms_state.json → gear, notes) -->
@@ -160,6 +163,8 @@
 
     <!-- System detail / editor: side panel from md, bottom sheet below. Rendered by React (src/ui/systems/SystemPanel.tsx) -->
     <div id="systemPanelRoot"></div>
+    <!-- The planet sheet: a bottom sheet below lg, a right panel from lg (React: src/ui/systems/PlanetSheet.tsx) -->
+    <div id="planetSheetRoot"></div>
     <!-- Session sheet: timers, add a timer, the recap (React: src/ui/session/SessionSheet.tsx) -->
     <div id="sessionSheetRoot"></div>
     <!-- Editors for your ships, Multi-Tools and notes (React: src/ui/PlayerEditors.tsx) -->

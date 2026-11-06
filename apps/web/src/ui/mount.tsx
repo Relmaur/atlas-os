@@ -6,6 +6,8 @@ import { Home } from './home/Home.tsx';
 import { Systems } from './systems/Systems.tsx';
 import { SystemPanel } from './systems/SystemPanel.tsx';
 import { SystemDetails } from './systems/SystemDetails.tsx';
+import { PlanetDetails } from './systems/PlanetDetails.tsx';
+import { PlanetSheet } from './systems/PlanetSheet.tsx';
 import { Outlaw } from './outlaw/Outlaw.tsx';
 import { Runs } from './runs/Runs.tsx';
 import { MapScreen } from './map/Map.tsx';
@@ -55,6 +57,7 @@ const SCREENS: [string, ReactNode][] = [
   ['homeRoot', <Home />],
   ['systemsRoot', <Systems />],
   ['systemDetailRoot', <SystemDetails />],
+  ['planetDetailRoot', <PlanetDetails />],
   ['sessionRoot', <Session />],
   ['mapRoot', <MapScreen />],
   ['cardRoot', <CardScreen />],
@@ -66,6 +69,7 @@ const SCREENS: [string, ReactNode][] = [
   ['planRoot', <PlanScreen />],
   ['craftsRoot', <BestCrafts />],
   ['systemPanelRoot', <SystemPanel />],
+  ['planetSheetRoot', <PlanetSheet />],
   ['guidesRoot', <Guides />],
   ...BOOKS.map(({ key }): [string, ReactNode] => [`${key}Root`, <Book book={key} />]),
   ['moreRoot', <More />],

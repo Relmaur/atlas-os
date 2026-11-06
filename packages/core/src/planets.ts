@@ -21,7 +21,9 @@ export const BiomeSchema = SourceSchema.extend({
   descriptors: z.array(z.string()),
   weather: WeatherSchema,
   // The resource pages the biome's article links to ("Dioxite", "Frost Crystal", "Radon"); an older file has none.
-  resources: z.array(z.string()).optional()
+  resources: z.array(z.string()).optional(),
+  // The Reliquary only: its names come in sets by the planet's main biome ("Frozen Relic" is a Frozen world's).
+  ruined: z.array(z.object({ biome: z.string(), names: z.array(z.string()) })).optional()
 });
 export type Biome = z.infer<typeof BiomeSchema>;
 
@@ -41,7 +43,16 @@ export const PlanetFactsSchema = z.object({
     aggressive: z.array(z.string()),
     corrupted: z.array(z.string())
   }),
-  life: SourceSchema.extend({ flora: z.array(z.string()), fauna: z.array(z.string()) })
+  life: SourceSchema.extend({ flora: z.array(z.string()), fauna: z.array(z.string()) }),
+  // What else a scan can list, each by the wiki's own words (an older file has none of these):
+  // the star's metal and its activated form ("Planets in these systems will have Copper or Activated Copper"),
+  starMetals: SourceSchema.extend({
+    metals: z.partialRecord(z.enum(['yellow', 'red', 'green', 'blue', 'purple']), z.array(z.string()))
+  }).optional(),
+  // the resources whose page says they're "found in underground planetary deposits" (Silver, Gold, Platinum),
+  deposits: z.array(SourceSchema).optional(),
+  // and the finds whose page says a planet's information panel shows them after a scan (Ancient Bones).
+  finds: z.array(SourceSchema).optional()
 });
 export type PlanetFacts = z.infer<typeof PlanetFactsSchema>;
 
@@ -287,3 +298,157 @@ export const sentinelWords = (facts: PlanetFacts | null): string[] =>
         ...facts.sentinels.corrupted
       ])
     : [];
+
+/** The Reliquary's name sets: "LUSH RUINED - Abandoned Paradise, Overgrown, …" → { set: "Lush", names }. */
+export function parseRuinedSets(body: string): { set: string; names: string[] }[] {
+  const out: { set: string; names: string[] }[] = [];
+  for (const line of section(body, /^name generation$/i)) {
+    const match = /^\s*[-*]\s+([A-Z][A-Z ]*?)\s+RUINED\s+-\s+(.+)$/.exec(line.replace(/\t+/g, ' '));
+    if (!match?.[1] || !match[2]) continue;
+    const set = match[1].charAt(0) + match[1].slice(1).toLowerCase();
+    out.push({ set, names: unique(match[2].split(',').map(clean)) });
+  }
+  return out;
+}
+
+/** The Star system page's metals by star colour: "Yellow star systems … will have [[Copper]] or [[Activated Copper]]". */
+export function parseStarMetals(
+  body: string
+): Partial<Record<'yellow' | 'red' | 'green' | 'blue' | 'purple', string[]>> {
+  const out: Partial<Record<'yellow' | 'red' | 'green' | 'blue' | 'purple', string[]>> = {};
+  for (const line of body.split('\n')) {
+    const colour = /^\s*[-*]\s+(Yellow|Red|Green|Blue|Purple)\b[^.]*star systems/.exec(line)?.[1];
+    const metals = /will have \[\[([^\]|]+)\]\] or \[\[([^\]|]+)\]\]/.exec(line);
+    if (colour && metals?.[1] && metals[2]) {
+      out[colour.toLowerCase() as keyof typeof out] = [metals[1].trim(), metals[2].trim()];
+    }
+  }
+  return out;
+}
+
+/** A resource page that says it's found in underground planetary deposits (Silver, Gold, Platinum). */
+export const isDeposit = (body: string): boolean => /found in underground planetary deposits/i.test(body);
+
+/**
+ * A page about something a planet's scan lists: it says the planet's information panel shows *it* ("It is indicated
+ * on the information panel of a planet…", "the information panel indicates it"). A page naming something else
+ * ("Ancient Bones will be indicated…" on the burial site's page) doesn't count.
+ */
+export const isScanFind = (body: string): boolean =>
+  /\bIt is indicated on the information panel of a (?:\[\[)?planet|information panel indicates it\b/i.test(body);
+
+export type ResourceGroup = 'biome' | 'star' | 'deposit' | 'find';
+export interface ResourceChoices {
+  group: ResourceGroup;
+  /** "Frozen biome", "Yellow star", "Deposits", "Finds". */
+  label: string;
+  names: string[];
+}
+
+const capital = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+
+/**
+ * What a planet's scan can list, grouped by why the wiki says it can be there: the biome's own resources, the star's
+ * metal and its activated form, the deposits and the finds. Groups the wiki says nothing about for this planet are
+ * left out (no biome or no star colour logged).
+ */
+export function resourceChoices(facts: PlanetFacts | null, biome: string, star: string): ResourceChoices[] {
+  if (!facts) return [];
+  const own = biomeFor(facts, biome);
+  const metals = star ? facts.starMetals?.metals[star as 'yellow'] : undefined;
+  const groups: ResourceChoices[] = [
+    { group: 'biome', label: own ? `${own.name} biome` : '', names: own?.resources ?? [] },
+    { group: 'star', label: `${capital(star)} star`, names: metals ?? [] },
+    { group: 'deposit', label: 'Deposits', names: (facts.deposits ?? []).map(page => page.page) },
+    { group: 'find', label: 'Finds', names: (facts.finds ?? []).map(page => page.page) }
+  ];
+  return groups.filter(group => group.names.length);
+}
+
+/** Why a resource can be on this planet, as a short label for its row: "Frozen biome", "yellow star", "deposit", "find". */
+export function resourceSource(facts: PlanetFacts | null, name: string, biome: string, star: string): string | null {
+  const group = resourceChoices(facts, biome, star).find(choice => choice.names.some(other => same(other, name)));
+  if (!group) return null;
+  if (group.group === 'biome') return group.label;
+  if (group.group === 'star') return `${star} star`;
+  return group.group;
+}
+
+/**
+ * A Reliquary world's main biome, from the set its name belongs to ("Frozen Relic" → Frozen); null when its name
+ * fits several sets ("Abandoned", "Ruined") or none. The player's own biome pick comes first, elsewhere.
+ */
+export function reliquaryMainBiome(facts: PlanetFacts | null, descriptor: string): Biome | null {
+  const reliquary = facts?.biomes.find(entry => entry.ruined?.length);
+  if (!facts || !reliquary || !descriptor.trim()) return null;
+  const sets = (reliquary.ruined ?? []).filter(set => set.names.some(name => same(name, descriptor)));
+  const biomes = unique(sets.map(set => set.biome));
+  return biomes.length === 1 ? (facts.biomes.find(entry => entry.name === biomes[0]) ?? null) : null;
+}
+
+/** Whether a planet is a Reliquary world: its biome says so, or its name belongs only to the Reliquary's sets. */
+export function isReliquary(facts: PlanetFacts | null, planet: { biome: string; descriptor?: string }): boolean {
+  const reliquary = facts?.biomes.find(entry => entry.ruined?.length);
+  if (!reliquary) return false;
+  if (same(planet.biome, reliquary.name)) return true;
+  return biomeFor(facts, planet.descriptor ?? '')?.name === reliquary.name;
+}
+
+/** The pill's word for a sentinel level: "Low", "High", "Aggressive", "Corrupted". */
+export const SENTINEL_SHORT: Record<SentinelLevel, string> = {
+  low: 'Low',
+  high: 'High',
+  aggressive: 'Aggressive',
+  corrupted: 'Corrupted'
+};
+export const WEATHER_SHORT: Record<Exclude<WeatherClass, 'other'>, string> = {
+  clear: 'Clear',
+  normal: 'Normal',
+  extreme: 'Extreme'
+};
+/** The game's danger, the only levels drawn in crimson (c15): extreme weather, aggressive or corrupted sentinels. */
+export const isDangerWeather = (cls: WeatherClass | null): boolean => cls === 'extreme';
+export const isDangerSentinels = (level: SentinelLevel | null): boolean =>
+  level === 'aggressive' || level === 'corrupted';
+
+/** A weather word's severity and the biome table that says so ("Icy Blasts" → Normal, from Frozen's). */
+export function weatherSource(
+  facts: PlanetFacts | null,
+  biome: string,
+  weather: string
+): { cls: Exclude<WeatherClass, 'other'>; biome: string } | null {
+  if (!facts || !weather.trim()) return null;
+  const find = (entry: Biome) =>
+    (['clear', 'normal', 'extreme'] as const).find(cls => entry.weather[cls].some(word => same(word, weather)));
+  const own = biomeFor(facts, biome);
+  const fromOwn = own && find(own);
+  if (own && fromOwn) return { cls: fromOwn, biome: own.name };
+  for (const entry of facts.biomes) {
+    const cls = find(entry);
+    if (cls) return { cls, biome: entry.name };
+  }
+  return null;
+}
+
+/** What of a planet's scan is logged: the rows of the game's scan, what it lists, and the discovery. */
+export function scanLogged(planet: {
+  weather: string;
+  abundance: string;
+  fauna: string;
+  flora: string;
+  sentinels: string;
+  temperature: number | null;
+  resources: string[];
+  discoveredBy: string;
+  discoveredOn: string;
+}): { rows: boolean; any: boolean } {
+  const rows = Boolean(
+    planet.weather ||
+    planet.abundance ||
+    planet.fauna ||
+    planet.flora ||
+    planet.sentinels ||
+    planet.temperature !== null
+  );
+  return { rows, any: rows || planet.resources.length > 0 || Boolean(planet.discoveredBy || planet.discoveredOn) };
+}

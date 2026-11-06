@@ -8,6 +8,12 @@ const openEditor = async page => {
   await page.getByRole('button', { name: 'Edit system' }).click();
 };
 const openPlanet = page => page.getByRole('button', { name: /^Add planet/ }).click();
+// The planet sheet from a planet's own view, with the weather's word list open (c14).
+const openWeatherList = async page => {
+  await page.locator('#sec-planet').getByRole('button', { name: 'Edit planet' }).click();
+  await page.locator('#planetSheet').getByRole('combobox', { name: 'Weather' }).click();
+  await page.locator('#planetSheet').getByRole('listbox', { name: 'Weather' }).waitFor();
+};
 
 const tickHalf = async page => {
   const boxes = await page.locator('#planCargo input[type="checkbox"]').all();
@@ -72,6 +78,9 @@ for (const [name, path, ready, region, setup] of [
   ['Outlaw stations', './#outlaw', '#outlawStationList', '#sec-outlaw'],
   ['System detail', './#system/sys-ekwa', '#sec-system [data-glyph-plate]', '#sec-system'],
   ['Planet sheet', './#system/sys-ekwa', '#systemTitle', '#planetSheet', openPlanet],
+  ['Planet sheet, word list open', './#planet/sys-hesper/pl-storm', '#planetTitle', '#planetSheet', openWeatherList],
+  ['Planet view', './#planet/sys-hesper/pl-storm', '#planetTitle', '#sec-planet'],
+  ['Planet view, nothing scanned', './#planet/sys-hesper/pl-blank', '#planetTitle', '#sec-planet'],
   ['System editor', './#systems', '#systemPanel [data-glyph-plate]', '#systemPanel', openEditor],
   ['Calculators', './#calculators', '#valueTotal', '#sec-calculators'],
   ['Recipe planner', './#plan/Stasis%20Device', '#planCargo', '#sec-plan'],

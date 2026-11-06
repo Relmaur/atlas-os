@@ -30,6 +30,13 @@ test('a system opens on its own screen; planets added there persist across a rel
   await sheet.getByRole('button', { name: 'Add planet' }).click();
   await expect(sheet).toHaveAttribute('aria-hidden', 'true');
   await expect(page.getByRole('heading', { name: 'Planets · 1' })).toBeVisible();
+  // A row opens the planet's own view; its pencil opens the sheet.
+  await page.getByRole('link', { name: /^Verdant IV/ }).click();
+  await expect(page).toHaveURL(/#planet\/sys-ekwa\/pl-/);
+  await expect(page.locator('#planetTitle')).toHaveText('Verdant IV');
+  await expect(page.locator('#sec-planet')).toContainText('Nothing scanned yet');
+  await page.locator('#sec-planet').getByRole('button', { name: 'Back to Ekwa Nexus' }).click();
+  await expect(page).toHaveURL(/#system\/sys-ekwa$/);
 
   await page.reload(); // the address opens the same system
   await expect(page.locator('#systemTitle')).toHaveText('Ekwa Nexus');

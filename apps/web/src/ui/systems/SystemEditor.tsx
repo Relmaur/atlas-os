@@ -1,7 +1,8 @@
 // Add or edit a system (design 06). The draft lives here until Save; the stored system changes only through
 // saveSystem().
 import { useEffect, useId, useState, type ReactNode, type SubmitEvent } from 'react';
-import { economyNames, economyType, starFromSpectral, strengthStars, strengthWords } from '@atlas/core/galaxy-map';
+import { economyType, starFromSpectral, strengthStars } from '@atlas/core/galaxy-map';
+import { WordCombobox, type WordGroup } from '../parts/WordCombobox.tsx';
 import { groupGlyphs } from '@atlas/core/location';
 import {
   CONFLICT_LEVELS,
@@ -114,6 +115,48 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
     else closeSystemPanel();
   };
 
+  // The galaxy map's words for the pairs (c14): the class letters with the colour each gives, the economy names
+  // by type, the strength words by stars.
+  const classStar = starFromSpectral(map, draft.spectralClass);
+  const classGroups: WordGroup[] = map
+    ? [
+        {
+          label: 'Spectral classes · wiki',
+          options: Object.entries(map.spectral.classes).map(([letter, star]) => ({
+            value: letter,
+            extra: (
+              <span className="inline-flex items-center gap-1.5 text-caption text-ink-muted">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: STAR_CLASSES[star].color }}
+                  aria-hidden="true"
+                />
+                {STAR_CLASSES[star].label}
+              </span>
+            )
+          }))
+        }
+      ]
+    : [];
+  const economyGroups: WordGroup[] = map
+    ? map.economy.types.map(type => ({ label: `${type.name} · wiki`, options: type.names.map(value => ({ value })) }))
+    : [{ options: ECONOMIES.map(value => ({ value })) }];
+  const strengthGroups: WordGroup[] = map
+    ? ([3, 2, 1] as const).map(n => ({
+        label: `${'★'.repeat(n)} · wiki`,
+        options: map.economy.strength[n].map(value => ({ value }))
+      }))
+    : [];
+  const type = economyType(map, draft.economy);
+  const strength = strengthStars(map, draft.economyStrength);
+  const economyNote =
+    draft.economy.trim() && map && !type
+      ? `“${draft.economy.trim()}” isn’t one of the wiki’s economy names; it’s kept as typed.${strength ? ' Strength still sets the stars.' : ''}`
+      : type || strength
+        ? `${type ? `A ${type} economy` : 'An economy'}${strength ? `, ${'★'.repeat(strength)} strength` : ''}.`
+        : '';
+  const setBy = strength !== null && draft.wealth === String(strength) && wealthFollows;
+
   const text = (field: TextField) => ({
     name: field,
     value: draft[field],
@@ -174,63 +217,6 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
 
         <LocationBlock value={location} star={draft.star} onChange={setLocation} />
 
-        <GalaxyMapPair
-          label="Star"
-          hint={spectralHint(draft.spectralClass, starFromSpectral(map, draft.spectralClass))}
-        >
-          <label className={`${LABEL_FIELD} flex-1 min-w-0`}>
-            <span className="sr-only">Spectral class</span>
-            <input
-              name="spectralClass"
-              aria-label="Spectral class"
-              maxLength={8}
-              autoComplete="off"
-              autoCapitalize="characters"
-              placeholder="F4"
-              value={draft.spectralClass}
-              onChange={event => {
-                const spectralClass = event.target.value;
-                const star = starFromSpectral(map, spectralClass);
-                set({ spectralClass, ...(starFollows ? { star: star ?? '' } : {}) });
-              }}
-              className={`${FIELD} font-mono uppercase`}
-            />
-          </label>
-          <Slashes />
-          <div className="flex gap-1.5 shrink-0">
-            <Toggle
-              label="Water"
-              on={draft.water}
-              onChange={water => {
-                set({ water });
-              }}
-            />
-            <Toggle
-              label="Dissonant"
-              on={draft.dissonant}
-              onChange={dissonant => {
-                set({ dissonant });
-              }}
-            />
-          </div>
-        </GalaxyMapPair>
-        <Segments
-          label="Star colour"
-          rows={2}
-          value={draft.star}
-          onChange={star => {
-            setStarFollows(false);
-            set({ star: star as Draft['star'] });
-          }}
-          options={[
-            ...Object.entries(STAR_CLASSES).map(([key, star]): Option => [
-              key,
-              star.label,
-              <span key="dot" className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: star.color }} />
-            ]),
-            ['', 'Unknown']
-          ]}
-        />
         <Segments
           label="Dominant race"
           clearable
@@ -240,46 +226,113 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
           }}
           options={draft.race === 'abandoned' ? [...RACE_OPTIONS, ['abandoned', 'Abandoned']] : RACE_OPTIONS}
         />
-        <GalaxyMapPair
-          label="Economy"
-          hint={economyHint(economyType(map, draft.economy), strengthStars(map, draft.economyStrength))}
-        >
-          <input
-            aria-label="Economy"
-            list="economyOptions"
-            maxLength={40}
-            autoComplete="off"
-            placeholder="Prospecting"
-            className={`${FIELD} flex-1 min-w-0`}
-            {...text('economy')}
-          />
-          <Slashes />
-          <input
-            aria-label="Economy strength"
-            list="strengthOptions"
-            maxLength={40}
-            autoComplete="off"
-            placeholder="Opulent"
-            className={`${FIELD} flex-1 min-w-0`}
-            {...text('economyStrength')}
-            onChange={event => {
-              const economyStrength = event.target.value;
-              const stars = strengthStars(map, economyStrength);
-              set({ economyStrength, ...(wealthFollows ? { wealth: String(stars ?? 0) } : {}) });
+
+        <PairCard title="Star" caption="as the galaxy map shows it">
+          <div className="flex items-end gap-2">
+            <WordCombobox
+              label="Class"
+              name="spectralClass"
+              value={draft.spectralClass}
+              onChange={spectralClass => {
+                const star = starFromSpectral(map, spectralClass);
+                set({ spectralClass, ...(starFollows ? { star: star ?? '' } : {}) });
+              }}
+              groups={classGroups}
+              placeholder="F4"
+              maxLength={8}
+              mono
+              className="flex-1"
+            />
+            <Slashes />
+            <div className="flex gap-1.5 shrink-0" role="group" aria-label="On the map">
+              <Toggle
+                label="Water"
+                on={draft.water}
+                onChange={water => {
+                  set({ water });
+                }}
+              />
+              <Toggle
+                label="Dissonant"
+                on={draft.dissonant}
+                onChange={dissonant => {
+                  set({ dissonant });
+                }}
+              />
+            </div>
+          </div>
+          {classStar && draft.star && draft.star !== classStar && (
+            // The player's colour disagrees with the wiki's reading of the class: theirs stays (06c).
+            <div className="rounded-control border border-[rgba(251,191,36,0.45)] bg-units-amber-tint px-3.5 py-3 flex items-center gap-3">
+              <p className="flex-1 text-sub text-units-amber-text">
+                {`You chose ${STAR_CLASSES[draft.star].label}. ${draft.spectralClass.trim().toUpperCase()} reads ${STAR_CLASSES[classStar].label.toLowerCase()} on the wiki; your choice stays.`}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setStarFollows(true);
+                  set({ star: classStar });
+                }}
+                className="h-10 px-3.5 rounded-control border border-[rgba(251,191,36,0.55)] text-units-amber-text text-sm font-semibold shrink-0 hover:bg-units-amber-tint"
+              >
+                {`Use ${STAR_CLASSES[classStar].label.toLowerCase()}`}
+              </button>
+            </div>
+          )}
+          <Segments
+            label="Star colour"
+            rows={2}
+            value={draft.star}
+            onChange={star => {
+              setStarFollows(false);
+              set({ star: star as Draft['star'] });
             }}
+            options={[
+              ...Object.entries(STAR_CLASSES).map(([key, star]): Option => [
+                key,
+                star.label,
+                <span key="dot" className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: star.color }} />
+              ]),
+              ['', 'Unknown']
+            ]}
           />
-          <datalist id="economyOptions">
-            {(map ? economyNames(map) : ECONOMIES).map(value => (
-              <option key={value} value={value} />
-            ))}
-          </datalist>
-          <datalist id="strengthOptions">
-            {strengthWords(map).map(value => (
-              <option key={value} value={value} />
-            ))}
-          </datalist>
-        </GalaxyMapPair>
-        <div className="grid grid-cols-2 gap-2.5">
+          {classStar && draft.star === classStar && starFollows && (
+            <p className="text-caption text-ink-muted">
+              {`${draft.spectralClass.trim().charAt(0).toUpperCase()} is a ${STAR_CLASSES[classStar].label.toLowerCase()} class on the wiki’s Spectral class page, so the colour follows. Pick another to override.`}
+            </p>
+          )}
+        </PairCard>
+
+        <PairCard title="Economy" caption="name // strength">
+          <div className="flex items-end gap-2">
+            <WordCombobox
+              label="Name"
+              name="economy"
+              value={draft.economy}
+              onChange={economy => {
+                set({ economy });
+              }}
+              groups={economyGroups}
+              placeholder="Prospecting"
+              maxLength={40}
+              className="flex-1"
+            />
+            <Slashes />
+            <WordCombobox
+              label="Strength"
+              name="economyStrength"
+              value={draft.economyStrength}
+              onChange={economyStrength => {
+                const stars = strengthStars(map, economyStrength);
+                set({ economyStrength, ...(wealthFollows ? { wealth: String(stars ?? 0) } : {}) });
+              }}
+              groups={strengthGroups}
+              placeholder="Opulent"
+              maxLength={40}
+              className="flex-1"
+            />
+          </div>
+          {economyNote && <p className="text-caption text-ink-soft">{economyNote}</p>}
           <Segments
             label="Wealth"
             clearable
@@ -294,13 +347,11 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
               ['3', '★★★', undefined, '3 of 3']
             ]}
           />
-          <Rating
-            value={draft.rating}
-            onChange={rating => {
-              set({ rating });
-            }}
-          />
-        </div>
+          {setBy && (
+            <p className="text-caption text-ink-muted">{`Set by “${draft.economyStrength.trim()}”. Change it if the game disagrees.`}</p>
+          )}
+        </PairCard>
+
         <Segments
           label="Conflict"
           clearable
@@ -312,6 +363,12 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
             key,
             key === 'pirate' ? 'Pirate' : label
           ])}
+        />
+        <Rating
+          value={draft.rating}
+          onChange={rating => {
+            set({ rating });
+          }}
         />
 
         <TagEditor tags={tags} onTags={setTags} typed={typed} onTyped={setTyped} />
@@ -407,25 +464,23 @@ function Rating({ value, onChange }: { value: number; onChange: (value: number) 
   );
 }
 
-// Two words the galaxy map shows as "first // second" ("F4 // Water", "Prospecting // Opulent"), side by side.
-function GalaxyMapPair({ label, hint, children }: { label: string; hint: string; children: ReactNode }) {
-  const hintId = useId();
+// A group of the editor as the galaxy map pairs it (06b): a card with its title and what it mirrors.
+function PairCard({ title, caption, children }: { title: string; caption: string; children: ReactNode }) {
   return (
-    <div role="group" aria-label={label} aria-describedby={hint ? hintId : undefined} className={LABEL_FIELD}>
-      <span aria-hidden="true">{label}</span>
-      <div className="flex items-center gap-2">{children}</div>
-      {hint && (
-        <span id={hintId} className="text-caption text-ink-muted">
-          {hint}
-        </span>
-      )}
-    </div>
+    <fieldset className="rounded-card bg-panel border border-hairline p-4 flex flex-col gap-3 min-w-0">
+      <legend className="sr-only">{title}</legend>
+      <div aria-hidden="true" className="flex items-baseline justify-between gap-3">
+        <span className="font-display text-sm font-bold text-ink-bright">{title}</span>
+        <span className="text-caption text-ink-muted">{caption}</span>
+      </div>
+      {children}
+    </fieldset>
   );
 }
 
 // The map's separator, for the eye only: the fields are named on their own.
 const Slashes = () => (
-  <span aria-hidden="true" className="font-mono text-sm text-ink-muted shrink-0">
+  <span aria-hidden="true" className="h-11 flex items-center font-mono text-lg text-ink-muted shrink-0">
     //
   </span>
 );
@@ -444,16 +499,8 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
           : 'bg-slate-ground border-control-edge text-ink-soft hover:text-ink-bright'
       }`}
     >
+      {on && <i className="ph-bold ph-check text-[11px] mr-1.5" aria-hidden="true" />}
       {label}
     </button>
   );
 }
-
-const spectralHint = (code: string, star: keyof typeof STAR_CLASSES | null) =>
-  star
-    ? `Class ${code.trim().charAt(0).toUpperCase()}: a ${STAR_CLASSES[star].label.toLowerCase()} star, by the wiki’s table.`
-    : '';
-
-const economyHint = (type: string | null, stars: 1 | 2 | 3 | null) =>
-  [type && `A ${type} economy`, stars && `${'★'.repeat(stars)} strength`].filter(Boolean).join(', ') +
-  (type || stars ? '.' : '');

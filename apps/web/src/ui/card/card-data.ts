@@ -1,7 +1,7 @@
 // Everything the Traveller Card shows, from the log and the wiki's small indexes (cited facts, the galaxy list).
 // Computed once per change of the log: the art traces a few thousand short steps.
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import { biomeFamily, getFact } from '@atlas/core/facts';
+import { getFact, planetFamily } from '@atlas/core/facts';
 import { firsts } from '@atlas/core/frontier';
 import { travellerCard } from '@atlas/core/traveller';
 import { currentArt } from '@atlas/core/current';
@@ -20,7 +20,7 @@ export function useTravellerCard() {
   }, []);
   return useMemo(() => {
     const { systems, gear, notes, runs, checklists } = appState;
-    const earned = firsts({ systems, gear }, biome => biomeFamily(facts, biome));
+    const earned = firsts({ systems, gear }, planet => planetFamily(facts, planet).family);
     const card = travellerCard({ systems, gear, notes, runs, checklists }, earned, galaxies);
     return {
       card,

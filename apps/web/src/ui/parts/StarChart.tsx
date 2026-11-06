@@ -134,15 +134,44 @@ export function StarMark({ colour, r = 6, label }: { colour: StarClass | ''; r?:
 export function PlanetMarker({
   family,
   size = 14,
-  base = false
+  base = false,
+  relic = false,
+  unlogged = false
 }: {
   family: string | null;
   size?: number;
   base?: boolean;
+  /** A Reliquary world: a broken ring around the disc says ruins (c01b). */
+  relic?: boolean;
+  /** Nothing logged about the planet yet: a dashed outline instead of a disc (36c). */
+  unlogged?: boolean;
 }) {
   const grain = useSvgId();
   const r = size / 2;
-  const half = base ? r + 6 : r;
+  const half = base || relic ? r + 6 : r;
+  if (unlogged && !isFamily(family)) {
+    const dash = Math.max(2, r * 0.32);
+    return (
+      <svg
+        width={half * 2}
+        height={half * 2}
+        viewBox={`${String(-half)} ${String(-half)} ${String(half * 2)} ${String(half * 2)}`}
+        className="shrink-0"
+        aria-hidden="true"
+      >
+        <circle
+          cx={0}
+          cy={0}
+          r={r - 1.5}
+          fill="none"
+          stroke="var(--color-ink-muted)"
+          strokeWidth={Math.max(1.5, r * 0.09)}
+          strokeDasharray={`${String(dash)} ${String(dash * 0.9)}`}
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
   return (
     <svg
       width={half * 2}
@@ -156,6 +185,19 @@ export function PlanetMarker({
       </defs>
       <PlanetShape cx={0} cy={0} r={r} family={family} grain={grain} />
       {base && <circle cx={0} cy={0} r={r + 5} fill="none" stroke="var(--color-scanner-cyan-glow)" strokeWidth={1.5} />}
+      {relic && !base && (
+        <circle
+          cx={0}
+          cy={0}
+          r={r + 4}
+          fill="none"
+          stroke={isFamily(family) ? `var(--color-biome-${family})` : 'var(--color-ink-muted)'}
+          strokeOpacity={0.75}
+          strokeWidth={1.25}
+          strokeDasharray={`${String((r + 4) * 1.1)} ${String((r + 4) * 0.45)}`}
+          strokeLinecap="round"
+        />
+      )}
     </svg>
   );
 }

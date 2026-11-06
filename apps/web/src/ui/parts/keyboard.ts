@@ -26,7 +26,11 @@ export function startKeyboardWatch(): void {
   const reveal = () => {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      sheetField()?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const field = sheetField();
+      // Only with a keyboard up: on a desktop, or with a hardware keyboard, the field is where the player put it.
+      if (!field || window.innerHeight - viewport.height - viewport.offsetTop < 1) return;
+      // A word combobox goes to the top of what's visible, so its list fits between it and the keyboard (c14).
+      field.scrollIntoView({ block: field.hasAttribute('data-combobox') ? 'start' : 'center', behavior: 'smooth' });
     }, SETTLE_MS);
   };
   document.addEventListener('focusin', reveal);

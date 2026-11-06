@@ -2,6 +2,7 @@
 // kind the game has a fixed set of. Each one is dated by the record that earned it, so the card can show the newest.
 // Only logged facts count: a star colour, a biome family (by the wiki's cited rules), a race met, a galaxy beyond the
 // first, an S-class ship or tool, a starship type.
+import type { PlanetLike } from './systems-model.ts';
 import type { BiomeFamily } from './facts.ts';
 import { classLetter, type GearItem } from './gear.ts';
 import { RACES, STAR_CLASSES, type StarClass, type System } from './systems-model.ts';
@@ -20,7 +21,11 @@ export const FAMILY_LABEL: Record<BiomeFamily, string> = {
   frozen: 'frozen',
   toxic: 'toxic',
   radioactive: 'radioactive',
-  exotic: 'exotic'
+  exotic: 'exotic',
+  barren: 'barren',
+  dead: 'dead',
+  marsh: 'marsh',
+  ocean: 'ocean'
 };
 
 /** When a system entered the log: created, or first visited if a visit is older. */
@@ -34,7 +39,7 @@ export function loggedAt(system: Pick<System, 'createdAt' | 'visits'>): number {
 /** Every first in the log, newest first. `family` maps a planet's biome to its family (from the cited facts). */
 export function firsts(
   log: { systems: System[]; gear: GearItem[] },
-  family: (biome: string) => BiomeFamily | null
+  family: (planet: PlanetLike) => BiomeFamily | null
 ): First[] {
   const found = new Map<string, First>();
   const earn = (key: string, label: string, at: number) => {
@@ -51,7 +56,7 @@ export function firsts(
     const galaxy = system.galaxy.trim() || 'Euclid';
     if (galaxy.toLowerCase() !== firstGalaxy) earn(`galaxy:${galaxy.toLowerCase()}`, galaxy, at);
     for (const planet of system.planets) {
-      const kind = family(planet.biome);
+      const kind = family(planet);
       if (kind) earn(`biome:${kind}`, `First ${FAMILY_LABEL[kind]} world`, at);
     }
   }
@@ -84,12 +89,12 @@ export interface Frontier {
 
 export function frontier(
   log: { systems: System[]; gear: GearItem[] },
-  family: (biome: string) => BiomeFamily | null
+  family: (planet: PlanetLike) => BiomeFamily | null
 ): Frontier {
   const stars = STAR_CHASE.filter(star => log.systems.some(system => system.star === star)).reverse();
   const families = Object.keys(FAMILY_LABEL) as BiomeFamily[];
   const biomes = families.filter(kind =>
-    log.systems.some(system => system.planets.some(planet => family(planet.biome) === kind))
+    log.systems.some(system => system.planets.some(planet => family(planet) === kind))
   );
   const races = PEOPLES.filter(race => log.systems.some(system => system.race === race));
   const shipGear = log.gear.filter(item => item.kind === 'starship' && item.type.trim());

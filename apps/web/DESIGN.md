@@ -282,11 +282,15 @@ The bar is a tool a player wants to thank: answer an in-game question in a glanc
 A cold void palette lit by a few signal hues, each with one meaning.
 
 ### Named Rules
-**The One Meaning Rule.** Cyan is an amount, focus or where you are (the active tab, a selected chip). Emerald is done, ready or the primary action. Amber is Units or caution. Purple is exotic. Rose is a destructive action. Crimson is the outlaw mark only, never an error colour. A new screen reuses the meaning, never the hue for decoration.
+**The One Meaning Rule.** Cyan is an amount, focus or where you are (the active tab, a selected chip). Emerald is done, ready or the primary action. Amber is Units or caution. Purple is exotic. Rose is a destructive action. Crimson is the game's danger (an outlaw system, extreme weather, aggressive or corrupted sentinels), always with a word and the warning mark, never an error colour (round 4, component c15). A new screen reuses the meaning, never the hue for decoration.
 
 **The Tint-and-Edge Rule.** A state or a button is a 12% fill (`*-tint`) with a 1px border at 35–55% (`*-edge`) of the same hue, and pale text in that hue (`*-text`). Hover deepens the tint to 18%, pressed to 22%. Solid colour appears only as state: the slide knob, the hold key, a switch that's on, a ticked milestone or done tick.
 
-**Data colours are a separate family.** A star's logged colour and a planet's biome family paint star and planet marks only, never controls or text. They join the tokens with the StarMark and PlanetMarker components.
+**Data colours are a separate family.** A star's logged colour and a planet's biome family paint star and planet marks only, never controls or text. They join the tokens with the StarMark and PlanetMarker components. Since round 4 there are ten biome families: toxic, hot, radioactive, frozen, exotic and lush, plus barren (#d4b483), dead (#a8a29e), marsh (#5fb7a0) and ocean (Waterworld, #3b82f6), each with a shade and each citing its biome's wiki page. A Reliquary world takes its main biome's family and a broken relic ring; slate means not scanned, and a dashed outline means nothing logged (component c01b).
+
+**Word combobox (c14, round 4).** Every field whose value comes from a wiki list is an ARIA combobox with its list anchored under the field (between it and the keyboard on a phone), the current context's words first, "contains" matching, five rows then scroll, and a last row that keeps what was typed. No native `<datalist>`: iOS shows it as three words on the keyboard bar.
+
+**Severity pill (c15, round 4).** Quiet (an edge, soft ink) for Clear, Normal, Low and High; crimson tint with the warning mark for Extreme, Aggressive and Corrupted. In a planet row the pill names its subject ("Extreme weather").
 
 ### Grounds and edges
 - **Void** (`void`): the page.

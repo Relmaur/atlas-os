@@ -1,29 +1,30 @@
 // System detail (design 03): a system's own screen at #system/<id>. Its orbit diagram (XL, the side view) leads,
 // then what the game shows, the portal address, the planets, the journal (your notes and visits), and Log a visit.
-// The rest is edited in the editor sheet (06). Planets are added and edited here, in a sheet of their own: the
-// design has no other place for them, and the orbit diagram draws from them.
-import { useCallback, useEffect, useRef, useState, type ReactNode, type SubmitEvent } from 'react';
-import { biomeFamily } from '@atlas/core/facts';
+// The rest is edited in the editor sheet (06). A planet row opens the planet's own view (36); Add planet opens the
+// planet sheet (35), and the orbit diagram draws from the planets.
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { planetFamily } from '@atlas/core/facts';
+import { economyType, strengthStars } from '@atlas/core/galaxy-map';
 import { homeSummary } from '@atlas/core/home';
 import { notesForSystem, systemPin } from '@atlas/core/notes';
 import { systemOrbit } from '@atlas/core/orbit';
 import { CONFLICT_LEVELS, RACES, STAR_CLASSES, lastVisit, type Planet, type System } from '@atlas/core/systems-model';
-import { deletePlanet, logVisit, savePlanet, toggleFavorite } from '../actions.ts';
+import { logVisit, toggleFavorite } from '../actions.ts';
 import { useAppState } from '../useAppState.ts';
 import { useNow } from '../useNow.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { goBack, useSectionParam } from '../shell/section-store.ts';
 import { Button } from '../parts/Button.tsx';
-import { ArmButton } from '../parts/Gesture.tsx';
-import { PanelGrab, SheetGrab, useSheetDrag, useSheetOpen } from '../parts/Sheet.tsx';
+import { SeverityPill } from '../parts/SeverityPill.tsx';
 import { OrbitDiagram, PlanetMarker } from '../parts/StarChart.tsx';
 import { copyText, ShareSystemSheet } from '../share/ShareSheet.tsx';
 import { LinkedNoteRows } from '../notes/note-bits.tsx';
 import { newNote } from '../notes/note-nav.ts';
 import { openSystemEditor } from './panel-store.ts';
 import { GlyphPlate } from './GlyphPlate.tsx';
-import { PlanetScanFields, PlanetScanPills, planetScanLine } from './PlanetScan.tsx';
-import type { PlanetFacts } from '@atlas/core/planets';
+import { DangerPills, nothingLogged, planetScanLine } from './PlanetScan.tsx';
+import { openPlanetSheet, planetHref, usePlanetSheet } from './planet-sheet-store.ts';
+import type { FactsFile } from '@atlas/core/facts';
 
 const HERO_BUTTON =
   'w-10 h-10 rounded-control bg-[rgba(5,8,17,0.7)] border border-hairline grid place-items-center text-ink hover:border-control-edge transition-colors duration-[var(--duration-micro)]';
@@ -35,14 +36,10 @@ export function SystemDetails() {
   const now = useNow();
   const id = useSectionParam();
   const facts = useFacts();
-  // The planet stays set while the sheet slides closed, so its title doesn't flip mid-animation.
-  const [planetSheet, setPlanetSheet] = useState({ open: false, planetId: null as string | null, session: 0 });
+  const planetSheet = usePlanetSheet();
   const [sharing, setSharing] = useState(false);
   const closeShare = useCallback(() => {
     setSharing(false);
-  }, []);
-  const closePlanet = useCallback(() => {
-    setPlanetSheet(sheet => ({ ...sheet, open: false }));
   }, []);
   useEffect(() => {
     void loadFacts(); // biome families, for the planets' colours
@@ -65,12 +62,9 @@ export function SystemDetails() {
   }
   const current = homeSummary(state, now).current;
   const here = current?.id === system.id && lastVisit(system) !== undefined;
-  const orbit = systemOrbit(system, biome => biomeFamily(facts, biome));
+  const orbit = systemOrbit(system, planet => planetFamily(facts, planet).family);
   const place = [system.region, system.galaxy].filter(Boolean).join(' · ');
   const linked = notesForSystem(state.notes, system.id);
-  const openPlanet = (planetId: string | null) => {
-    setPlanetSheet(sheet => ({ open: true, planetId, session: sheet.session + 1 }));
-  };
 
   return (
     <div className="flex flex-col gap-section max-w-2xl">
@@ -146,7 +140,7 @@ export function SystemDetails() {
         {place && <p className="text-sub text-ink-muted">{place}</p>}
       </header>
 
-      <Facts system={system} />
+      <Facts system={system} facts={facts} />
       <PortalAddress system={system} />
 
       <section aria-labelledby="planetsTitle" className="flex flex-col gap-2">
@@ -158,11 +152,9 @@ export function SystemDetails() {
             <li key={planet.id}>
               <PlanetRow
                 planet={planet}
-                family={biomeFamily(facts, planet.biome)}
-                planetFacts={facts?.planets ?? null}
-                onOpen={() => {
-                  openPlanet(planet.id);
-                }}
+                href={planetHref(system.id, planet.id)}
+                facts={facts}
+                editing={planetSheet.open && planetSheet.systemId === system.id && planetSheet.planetId === planet.id}
               />
             </li>
           ))}
@@ -170,7 +162,7 @@ export function SystemDetails() {
             <button
               type="button"
               onClick={() => {
-                openPlanet(null);
+                openPlanetSheet(system.id, null);
               }}
               className="w-full min-h-14 px-3.5 flex items-center gap-3 text-left text-sub text-ink-muted hover:text-ink hover:bg-slate-ground transition-colors duration-[var(--duration-micro)]"
             >
@@ -221,14 +213,6 @@ export function SystemDetails() {
       </section>
 
       <ShareSystemSheet system={system} open={sharing} onClose={closeShare} />
-      <PlanetSheet
-        system={system}
-        open={planetSheet.open}
-        planet={system.planets.find(planet => planet.id === planetSheet.planetId)}
-        session={planetSheet.session}
-        planetFacts={facts?.planets ?? null}
-        onClose={closePlanet}
-      />
     </div>
   );
 }
@@ -246,41 +230,114 @@ const stars = (n: number, of: number) => (
   </>
 );
 
-// What the game shows, two to a row; anything not logged says so instead of being left out.
-function Facts({ system }: { system: System }) {
-  const cells: [string, ReactNode, string?][] = [
+// What the game shows, two to a row; anything not logged says so instead of being left out (03b). The galaxy map's
+// pairs read as it shows them: "Yellow F4", "Prospecting // Opulent" with the economy's type and stars beneath.
+function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
+  const map = facts?.galaxyMap ?? null;
+  const type = economyType(map, system.economy);
+  const strength = strengthStars(map, system.economyStrength) ?? (system.wealth || null);
+  const economy = system.economy || system.economyStrength;
+  const cells: [string, ReactNode, { wide?: boolean; tone?: string }?][] = [
     [
       'Star',
-      system.star ? (
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            className="w-2 h-2 rounded-full"
-            style={{ background: `var(--color-star-${system.star})` }}
-            aria-hidden="true"
-          />
-          {STAR_CLASSES[system.star].label}
+      system.star || system.spectralClass ? (
+        <span className="inline-flex items-center gap-2">
+          {system.star && (
+            <>
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: `var(--color-star-${system.star})` }}
+                aria-hidden="true"
+              />
+              {STAR_CLASSES[system.star].label}
+            </>
+          )}
           {system.spectralClass && <span className="font-mono text-ink-soft">{system.spectralClass}</span>}
         </span>
       ) : (
-        system.spectralClass || missing
+        missing
       )
     ],
+    [
+      'Economy',
+      economy || strength ? (
+        <span className="flex flex-col gap-1">
+          {economy && (
+            <span>
+              {system.economy}
+              {system.economy && system.economyStrength && <span className="text-ink-muted"> // </span>}
+              {system.economyStrength}
+            </span>
+          )}
+          {(type || strength) && (
+            <span className={`text-sub text-ink-muted ${economy ? '' : 'text-row'}`}>
+              {type && `${type} economy`}
+              {type && strength ? ' · ' : ''}
+              {strength && (
+                <>
+                  <span className="text-units-amber-text">{stars(strength, 3)}</span> strength
+                </>
+              )}
+            </span>
+          )}
+        </span>
+      ) : (
+        missing
+      ),
+      { wide: true }
+    ],
     ['Race', system.race ? RACES[system.race] : missing],
-    // As the galaxy map pairs them: "Prospecting // Opulent".
-    ['Economy', [system.economy, system.economyStrength].filter(Boolean).join(' // ') || missing],
-    ['Wealth', system.wealth ? stars(system.wealth, 3) : missing, system.wealth ? 'text-units-amber-text' : ''],
-    ['Conflict', system.conflict ? CONFLICT_LEVELS[system.conflict] : missing],
-    ['Your rating', system.rating ? stars(system.rating, 5) : missing, system.rating ? 'text-units-amber-text' : '']
+    [
+      'Conflict',
+      system.conflict === 'pirate' ? (
+        <SeverityPill danger size="M">
+          Pirate (outlaw)
+        </SeverityPill>
+      ) : system.conflict ? (
+        CONFLICT_LEVELS[system.conflict]
+      ) : (
+        missing
+      )
+    ],
+    [
+      'Your rating',
+      system.rating ? stars(system.rating, 5) : missing,
+      { tone: system.rating ? 'text-units-amber-text' : '' }
+    ]
   ];
   // "Water" and "Dissonant" show only when the map says so: their absence isn't something the player logged.
-  const flags = [system.water && 'Water', system.dissonant && 'Dissonant'].filter(Boolean).join(' · ');
-  if (flags) cells.splice(1, 0, ['On the map', flags]);
+  if (system.water || system.dissonant) {
+    cells.splice(1, 0, [
+      'On the map',
+      <span className="flex flex-col gap-0.5">
+        {system.water && (
+          <span className="inline-flex items-center gap-1.5">
+            <i className="ph-fill ph-drop text-[#60a5fa]" aria-hidden="true" />
+            Water
+          </span>
+        )}
+        {system.dissonant && (
+          <span className="inline-flex items-center gap-1.5">
+            <i className="ph-bold ph-wave-sine text-ink-soft" aria-hidden="true" />
+            Dissonant
+          </span>
+        )}
+      </span>
+    ]);
+  }
+  // A cell left alone on its row (after Economy's full row, say) takes the whole row rather than leave a gap.
+  let used = 0;
+  const laid = cells.map(([label, value, opts], i) => {
+    const wide = Boolean(opts?.wide) || (i === cells.length - 1 && used % 2 === 0);
+    used += opts?.wide ? 2 : 1;
+    return { label, value, tone: opts?.tone, wide };
+  });
   return (
     <dl className="grid grid-cols-2 gap-px rounded-card overflow-hidden bg-hairline border border-hairline">
-      {cells.map(([label, value, tone]) => (
-        <div key={label} className="bg-panel px-3 py-2.5 min-w-0">
+      {laid.map(({ label, value, tone, wide }) => (
+        <div key={label} className={`bg-panel px-4 py-3 min-w-0 ${wide ? 'col-span-2' : ''}`}>
           <dt className={LABEL}>{label}</dt>
-          <dd className={`mt-[3px] text-row break-words ${tone || 'text-ink-bright'}`}>{value}</dd>
+          <dd className={`mt-1 text-row break-words ${tone || 'text-ink-bright'}`}>{value}</dd>
         </div>
       ))}
     </dl>
@@ -339,40 +396,63 @@ function PortalAddress({ system }: { system: System }) {
   );
 }
 
+// A planet's row (03b): its marker, name, one scan line and, for the game's danger only, a crimson pill naming what
+// it's about. It opens the planet's own view (36).
 function PlanetRow({
   planet,
-  family,
-  planetFacts,
-  onOpen
+  href,
+  facts,
+  editing
 }: {
   planet: Planet;
-  family: string | null;
-  planetFacts: PlanetFacts | null;
-  onOpen: () => void;
+  href: string;
+  facts: FactsFile | null;
+  editing: boolean;
 }) {
   const base = planet.tags.includes('base');
-  const note = planet.notes.split('\n').find(line => line.trim());
-  const sub = [planetScanLine(planet), note ? `“${note.trim()}”` : ''].filter(Boolean).join(' · ');
+  const { family, relic } = planetFamily(facts, planet);
+  const line = planetScanLine(planet);
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="w-full px-3.5 py-3 flex items-center gap-3 text-left hover:bg-slate-ground transition-colors duration-[var(--duration-micro)]"
+    <a
+      href={href}
+      className="w-full px-4 py-3.5 flex items-center gap-3.5 text-left hover:bg-slate-ground transition-colors duration-[var(--duration-micro)]"
     >
-      <span className="w-10 h-10 grid place-items-center shrink-0">
-        <PlanetMarker family={family} size={base ? 26 : 20} base={base} />
+      <span className="w-12 h-12 grid place-items-center shrink-0">
+        <PlanetMarker
+          family={family}
+          relic={relic}
+          size={base ? 28 : 26}
+          base={base}
+          unlogged={nothingLogged(planet)}
+        />
       </span>
       <span className="flex-1 min-w-0">
-        <span className="block text-row font-semibold text-ink-bright break-words">{planet.name}</span>
-        {sub && <span className="block text-caption text-ink-muted line-clamp-2">{sub}</span>}
-        <PlanetScanPills planet={planet} facts={planetFacts} />
-      </span>
-      {base && (
-        <span className="h-[22px] px-2 rounded-full bg-scanner-cyan-tint text-quantity-cyan text-pill uppercase inline-flex items-center shrink-0">
-          Base
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-row font-semibold text-ink-bright break-words">{planet.name}</span>
+          {base && (
+            <span className="h-[22px] px-2 rounded-full bg-scanner-cyan-tint border border-scanner-cyan-edge text-quantity-cyan text-pill uppercase inline-flex items-center">
+              Base
+            </span>
+          )}
+          {editing && (
+            <span className="h-[22px] px-2 rounded-full bg-scanner-cyan-tint border border-scanner-cyan-edge text-quantity-cyan text-[11px] font-semibold inline-flex items-center">
+              Editing
+            </span>
+          )}
         </span>
-      )}
-    </button>
+        <span className="block text-caption text-ink-muted">
+          {line.text}
+          {line.temperature && (
+            <>
+              {line.text && ' · '}
+              <span className="font-mono">{line.temperature}</span>
+            </>
+          )}
+        </span>
+        <DangerPills planet={planet} facts={facts?.planets ?? null} />
+      </span>
+      <i className="ph ph-caret-right text-ink-muted shrink-0" aria-hidden="true" />
+    </a>
   );
 }
 
@@ -419,148 +499,5 @@ function Journal({ system }: { system: System }) {
         </ol>
       </div>
     </section>
-  );
-}
-
-const SHEET_LAYOUT = '(min-width: 0px)';
-const FIELD =
-  'w-full h-12 rounded-control border border-control-edge bg-slate-ground px-3.5 text-base md:text-sm text-ink-bright placeholder:text-ink-disabled focus:border-scanner-cyan-edge-strong focus:outline-hidden';
-
-// Adds or edits one planet: a bottom sheet below lg, a side panel from lg up, like the editor.
-function PlanetSheet({
-  system,
-  planet,
-  open,
-  session,
-  planetFacts,
-  onClose
-}: {
-  system: System;
-  planet: Planet | undefined;
-  open: boolean;
-  session: number;
-  planetFacts: PlanetFacts | null;
-  /** Stable (useCallback): the sheet's open effect depends on it. */
-  onClose: () => void;
-}) {
-  const sheet = useRef<HTMLDivElement>(null);
-  const title = useRef<HTMLHeadingElement>(null);
-  useSheetDrag(sheet, onClose);
-  useSheetOpen(open, onClose, { layout: SHEET_LAYOUT, focus: title });
-
-  const submit = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const field = (name: string) => {
-      const value = data.get(name);
-      return typeof value === 'string' ? value : '';
-    };
-    if (!field('name').trim()) return;
-    savePlanet(system.id, planet?.id ?? null, {
-      name: field('name'),
-      biome: field('biome'),
-      tags: field('tags'),
-      notes: field('notes'),
-      scan: Object.fromEntries(
-        (
-          [
-            'descriptor',
-            'body',
-            'weather',
-            'sentinels',
-            'flora',
-            'fauna',
-            'abundance',
-            'resources',
-            'temperature',
-            'discoveredBy',
-            'discoveredOn'
-          ] as const
-        ).map(name => [name, field(name)])
-      )
-    });
-    onClose();
-  };
-
-  return (
-    <>
-      <div
-        onClick={onClose}
-        className={`fixed inset-0 z-[55] bg-scrim backdrop-blur-[2px] transition-opacity duration-200 ${open ? '' : 'opacity-0 pointer-events-none'}`}
-      />
-      <div
-        ref={sheet}
-        id="planetSheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="planetSheetTitle"
-        aria-hidden={!open}
-        inert={!open}
-        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${open ? '' : 'lg:translate-x-full'}`}
-      >
-        <PanelGrab onClose={onClose} label="Close planet" />
-        <form
-          key={session}
-          onSubmit={submit}
-          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] lg:pb-6 flex flex-col gap-4"
-        >
-          <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 lg:pt-5 pb-1 bg-slate-deep">
-            <SheetGrab onClose={onClose} label="Close planet" />
-            <h2
-              ref={title}
-              id="planetSheetTitle"
-              tabIndex={-1}
-              className="font-display text-lg font-bold text-ink-bright focus:outline-hidden"
-            >
-              {planet ? 'Edit planet' : 'Add planet'}
-            </h2>
-            <p className="text-sub text-ink-muted mt-1">{system.name}</p>
-          </div>
-          <label className="flex flex-col gap-1.5 text-caption text-ink-muted">
-            Name
-            <input name="name" required maxLength={80} defaultValue={planet?.name ?? ''} className={FIELD} />
-          </label>
-          <label className="flex flex-col gap-1.5 text-caption text-ink-muted">
-            Tags
-            <input
-              name="tags"
-              maxLength={200}
-              defaultValue={planet?.tags.join(', ') ?? ''}
-              placeholder="base, oxygen-hotspot"
-              className={FIELD}
-            />
-          </label>
-          <PlanetScanFields planet={planet} facts={planetFacts} />
-          <label className="flex flex-col gap-1.5 text-caption text-ink-muted">
-            Notes
-            <textarea
-              name="notes"
-              rows={3}
-              maxLength={1000}
-              defaultValue={planet?.notes ?? ''}
-              className={`${FIELD} h-auto py-3 leading-relaxed resize-y`}
-            />
-          </label>
-          <div className="grid grid-cols-[1fr_2fr] gap-2 mt-1">
-            <Button size="L" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit">
-              {planet ? 'Save planet' : 'Add planet'}
-            </Button>
-          </div>
-          {planet && (
-            <ArmButton
-              label="Delete planet"
-              armedLabel="Tap again to delete"
-              onConfirm={() => {
-                deletePlanet(system.id, planet.id);
-                onClose();
-              }}
-            />
-          )}
-        </form>
-      </div>
-    </>
   );
 }

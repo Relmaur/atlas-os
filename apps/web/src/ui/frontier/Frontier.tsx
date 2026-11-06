@@ -1,6 +1,6 @@
 // Frontier (#frontier; design 26): what's still out there, from the log alone. Every first goes on the Traveller Card.
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { biomeFamily } from '@atlas/core/facts';
+import { planetFamily } from '@atlas/core/facts';
 import { frontier, FAMILY_LABEL } from '@atlas/core/frontier';
 import { RACES, STAR_CLASSES, type StarClass } from '@atlas/core/systems-model';
 import { useAppState } from '../useAppState.ts';
@@ -52,7 +52,7 @@ export function Frontier() {
     if (shown) void loadFacts();
   }, [shown]);
   const view = useMemo(
-    () => frontier({ systems: state.systems, gear: state.gear }, biome => biomeFamily(facts, biome)),
+    () => frontier({ systems: state.systems, gear: state.gear }, planet => planetFamily(facts, planet).family),
     [state, facts]
   );
   const [sharing, setSharing] = useState(false);

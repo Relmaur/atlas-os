@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
 import { DEFAULT_FILTER } from '@atlas/core/systems-list';
@@ -258,17 +258,24 @@ const GALAXY_MAP = {
   }
 };
 
-test('editor: the galaxy map’s pairs, "F4 // Water" and "Prospecting // Opulent", fill the colour and stars they mean', async () => {
+test('06b: the star and economy pairs; the class sets the colour, the strength sets the stars', async () => {
   setFactsForTests({ schema: 1, facts: {}, galaxyMap: GALAXY_MAP });
   edit('sys-a');
-  await userEvent.type(screen.getByRole('textbox', { name: 'Spectral class' }), 'F4');
-  expect(screen.getByRole('radio', { name: 'Yellow' }).getAttribute('aria-checked')).toBe('true');
-  expect(screen.getByText('Class F: a yellow star, by the wiki’s table.')).toBeTruthy();
-  await userEvent.click(screen.getByRole('button', { name: 'Water' }));
-  await userEvent.type(screen.getByRole('combobox', { name: 'Economy' }), 'Prospecting');
-  await userEvent.type(screen.getByRole('combobox', { name: 'Economy strength' }), 'Opulent');
-  expect(screen.getByText('A Mining economy, ★★★ strength.')).toBeTruthy();
-  expect(screen.getByRole('radio', { name: '3 of 3' }).getAttribute('aria-checked')).toBe('true');
+  const star = within(screen.getByRole('group', { name: 'Star' }));
+  await userEvent.type(star.getByRole('combobox', { name: 'Class' }), 'F4');
+  expect(star.getByRole('radio', { name: 'Yellow' }).getAttribute('aria-checked')).toBe('true');
+  expect(
+    star.getByText(
+      'F is a yellow class on the wiki’s Spectral class page, so the colour follows. Pick another to override.'
+    )
+  ).toBeTruthy();
+  await userEvent.click(star.getByRole('button', { name: 'Water' }));
+  const economy = within(screen.getByRole('group', { name: 'Economy' }));
+  await userEvent.type(economy.getByRole('combobox', { name: 'Name' }), 'Prospecting');
+  await userEvent.type(economy.getByRole('combobox', { name: 'Strength' }), 'Opulent');
+  expect(economy.getByText('A Mining economy, ★★★ strength.')).toBeTruthy();
+  expect(economy.getByRole('radio', { name: '3 of 3' }).getAttribute('aria-checked')).toBe('true');
+  expect(economy.getByText('Set by “Opulent”. Change it if the game disagrees.')).toBeTruthy();
   await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
   expect(system('sys-a')).toMatchObject({
     spectralClass: 'F4',
@@ -281,12 +288,32 @@ test('editor: the galaxy map’s pairs, "F4 // Water" and "Prospecting // Opulen
   });
 });
 
-test('editor: a colour or stars already logged are never changed for you', async () => {
+test('06c: your colour and stars are kept; the wiki’s reading is offered, and an unknown name stays as typed', async () => {
   setFactsForTests({ schema: 1, facts: {}, galaxyMap: GALAXY_MAP });
-  appState.systems[0] = { ...appState.systems[0]!, star: 'red', wealth: 1 };
+  appState.systems[0] = { ...appState.systems[0]!, star: 'blue', wealth: 1 };
   edit('sys-a');
-  await userEvent.type(screen.getByRole('textbox', { name: 'Spectral class' }), 'E1');
-  await userEvent.type(screen.getByRole('combobox', { name: 'Economy strength' }), 'Opulent');
+  const star = within(screen.getByRole('group', { name: 'Star' }));
+  await userEvent.type(star.getByRole('combobox', { name: 'Class' }), 'F4');
+  expect(star.getByText('You chose Blue. F4 reads yellow on the wiki; your choice stays.')).toBeTruthy();
+  expect(star.getByRole('radio', { name: 'Blue' }).getAttribute('aria-checked')).toBe('true');
+  const economy = within(screen.getByRole('group', { name: 'Economy' }));
+  await userEvent.type(economy.getByRole('combobox', { name: 'Name' }), 'Ore Mines');
+  await userEvent.type(economy.getByRole('combobox', { name: 'Strength' }), 'Opulent');
+  expect(
+    economy.getByText(
+      '“Ore Mines” isn’t one of the wiki’s economy names; it’s kept as typed. Strength still sets the stars.'
+    )
+  ).toBeTruthy();
   await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
-  expect(system('sys-a')).toMatchObject({ spectralClass: 'E1', star: 'red', wealth: 1, economyStrength: 'Opulent' });
+  expect(system('sys-a')).toMatchObject({ spectralClass: 'F4', star: 'blue', wealth: 1, economy: 'Ore Mines' });
+
+  // "Use yellow" takes the wiki's reading.
+  act(() => {
+    openSystemEditor('sys-a');
+  });
+  await userEvent.click(
+    within(screen.getByRole('group', { name: 'Star' })).getByRole('button', { name: 'Use yellow' })
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+  expect(system('sys-a')?.star).toBe('yellow');
 });

@@ -4,7 +4,7 @@
 // file, so nothing here ever applies a rule the mirror can no longer show.
 import { z } from 'zod';
 import { GlyphTableSchema } from './glyphs.ts';
-import { PlanetFactsSchema, biomeFor } from './planets.ts';
+import { PlanetFactsSchema, biomeFor, isReliquary, reliquaryMainBiome } from './planets.ts';
 import { GalaxyMapFactsSchema } from './galaxy-map.ts';
 
 export const ClassCountsSchema = z.object({ C: z.int(), B: z.int(), A: z.int(), S: z.int() });
@@ -16,7 +16,18 @@ export const TechMaxSchema = z.object({
 const SlotListSchema = z.array(z.string().regex(/^R\d{1,2}C\d{1,2}$/));
 // The planet marker's colour families. A biome joins one only where the wiki says what it's like (its hazard, or
 // that it's Earth-like or exotic); every other biome draws slate.
-export const BIOME_FAMILIES = ['toxic', 'hot', 'radioactive', 'frozen', 'exotic', 'lush'] as const;
+export const BIOME_FAMILIES = [
+  'toxic',
+  'hot',
+  'radioactive',
+  'frozen',
+  'exotic',
+  'lush',
+  'barren',
+  'dead',
+  'marsh',
+  'ocean'
+] as const;
 export type BiomeFamily = (typeof BIOME_FAMILIES)[number];
 const BiomeFamilySchema = z.object({ biome: z.string(), family: z.enum(BIOME_FAMILIES) });
 
@@ -37,6 +48,11 @@ export const FACT_VALUES = {
   'biome-exotic': BiomeFamilySchema,
   'biome-mega-exotic': BiomeFamilySchema,
   'biome-gas-giant': BiomeFamilySchema,
+  'biome-barren': BiomeFamilySchema,
+  'biome-dead': BiomeFamilySchema,
+  'biome-marsh': BiomeFamilySchema,
+  'biome-waterworld': BiomeFamilySchema,
+  'reliquary-main-biome': z.literal(true),
   // Light years per region (one step of a portal address's X, Y or Z): distances from a galaxy's centre.
   'region-light-years': z.int().positive()
 } as const;
@@ -95,7 +111,11 @@ const BIOME_FACTS = [
   'biome-irradiated',
   'biome-exotic',
   'biome-mega-exotic',
-  'biome-gas-giant'
+  'biome-gas-giant',
+  'biome-barren',
+  'biome-dead',
+  'biome-marsh',
+  'biome-waterworld'
 ] as const;
 
 /** A biome's colour family ("Scorched" → "hot"), from the cited facts; null when the wiki gives it none. */
@@ -108,4 +128,22 @@ export function biomeFamily(file: FactsFile | null, biome: string): BiomeFamily 
     if (value?.biome.toLowerCase() === wanted) return value.family;
   }
   return null;
+}
+
+/**
+ * A planet's marker: its biome family, and a relic ring for a Reliquary world. A Reliquary world takes its main
+ * biome's family (the wiki: its surface "depends on the main biome"), from the biome the player picked or else from
+ * the set its name belongs to; a name several sets share ("Abandoned") leaves it slate until the player picks.
+ */
+export function planetFamily(
+  file: FactsFile | null,
+  planet: { biome: string; descriptor?: string }
+): { family: BiomeFamily | null; relic: boolean } {
+  const planets = file?.planets ?? null;
+  const relic = isReliquary(planets, planet);
+  if (!relic) return { family: biomeFamily(file, planet.biome || planet.descriptor || ''), relic: false };
+  if (!getFact(file, 'reliquary-main-biome')) return { family: null, relic };
+  const picked = biomeFamily(file, planet.biome);
+  const main = reliquaryMainBiome(planets, planet.descriptor ?? '');
+  return { family: picked ?? (main ? biomeFamily(file, main.name) : null), relic };
 }

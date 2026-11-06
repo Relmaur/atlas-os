@@ -4,6 +4,7 @@
 //   star colour → palette · race → rosette geometry · Manufacturing → a hex lattice · economy → layers
 //   conflict → amplitude · wealth → line weight · planets → orbits and the biome ring · a first → where the worlds start
 // The MVP awards Logged, Addressed, First and Fleet. Witnessed and Verified need the future Community Atlas.
+import type { PlanetLike } from './systems-model.ts';
 import { firsts as logFirsts, loggedAt, type First } from './frontier.ts';
 import type { BiomeFamily } from './facts.ts';
 import { classLetter, type GearItem } from './gear.ts';
@@ -120,7 +121,11 @@ const FAMILY_RING: Record<string, string> = {
   radioactive: '#a3e635',
   frozen: '#7dd3fc',
   exotic: '#e879f9',
-  lush: '#4ade80'
+  lush: '#4ade80',
+  barren: '#d4b483',
+  dead: '#a8a29e',
+  marsh: '#5fb7a0',
+  ocean: '#3b82f6'
 };
 
 export function systemArt(input: SystemArtInput, W = 300, H = 420): CardArt {
@@ -456,7 +461,7 @@ const worlds = (system: System) => {
 /** The art's inputs from a logged system. A system with no address keys on its id, until an address settles it. */
 export function systemArtInput(
   system: System,
-  family: (biome: string) => BiomeFamily | null,
+  family: (planet: PlanetLike) => BiomeFamily | null,
   edition?: number
 ): SystemArtInput {
   return {
@@ -468,7 +473,7 @@ export function systemArtInput(
     conflict: LEVEL[system.conflict] ?? 1,
     wealth: system.wealth || 1,
     manufacturing: system.economy === 'Manufacturing',
-    planets: system.planets.map(planet => ({ family: family(planet.biome), base: planet.tags.includes('base') })),
+    planets: system.planets.map(planet => ({ family: family(planet), base: planet.tags.includes('base') })),
     ...(edition === undefined ? {} : { edition })
   };
 }
@@ -479,7 +484,7 @@ const facts = (system: System) =>
   );
 const placeOf = (system: System) => [system.region, system.galaxy].filter(Boolean).join(' · ');
 
-function systemCard(system: System, family: (biome: string) => BiomeFamily | null): CollectionCard {
+function systemCard(system: System, family: (planet: PlanetLike) => BiomeFamily | null): CollectionCard {
   const addressed = Boolean(system.glyphs);
   return {
     id: `system:${system.id}`,
@@ -532,7 +537,7 @@ function fleetCard(item: GearItem): CollectionCard {
 function firstCard(
   first: First,
   log: { systems: System[]; gear: GearItem[] },
-  family: (biome: string) => BiomeFamily | null
+  family: (planet: PlanetLike) => BiomeFamily | null
 ): CollectionCard | null {
   const [group = '', value = ''] = first.key.split(':');
   const earliest = [...log.systems]
@@ -545,7 +550,7 @@ function firstCard(
           : group === 'galaxy'
             ? system.galaxy.trim().toLowerCase() === value
             : group === 'biome'
-              ? system.planets.some(planet => family(planet.biome) === value)
+              ? system.planets.some(planet => family(planet) === value)
               : false
     );
   const base = {
@@ -592,7 +597,7 @@ function firstCard(
 /** Every card the log has earned, newest first. */
 export function collection(
   log: { systems: System[]; gear: GearItem[] },
-  family: (biome: string) => BiomeFamily | null
+  family: (planet: PlanetLike) => BiomeFamily | null
 ): CollectionCard[] {
   const firstCards = logFirsts(log, family).flatMap(first => firstCard(first, log, family) ?? []);
   return [...log.systems.map(system => systemCard(system, family)), ...log.gear.map(fleetCard), ...firstCards].sort(

@@ -92,6 +92,32 @@ export const FACTS = {
     quote: 'the temperature is always similar to the non-storm temperature on an extreme scorched or volcanic world',
     value: { biome: 'Gas Giant', family: 'hot' }
   },
+  'biome-barren': {
+    page: 'Biome - Barren',
+    quote: 'have a surface that is rocky and sometimes sandy',
+    value: { biome: 'Barren', family: 'barren' }
+  },
+  'biome-dead': {
+    page: 'Biome - Dead',
+    quote: 'When viewed from space, their surfaces are brown, with cracks',
+    value: { biome: 'Dead', family: 'dead' }
+  },
+  'biome-marsh': {
+    page: 'Biome - Marsh',
+    quote: 'characterized by stump-like, mangrove-inspired non-scannable trees and toxic-like fungi',
+    value: { biome: 'Marsh', family: 'marsh' }
+  },
+  'biome-waterworld': {
+    page: 'Biome - Waterworld',
+    quote: 'the planet is covered entirely by a vast ocean',
+    value: { biome: 'Waterworld', family: 'ocean' }
+  },
+  // A Reliquary world looks like its main biome: its marker takes that family, with a relic ring.
+  'reliquary-main-biome': {
+    page: 'Biome - The Reliquary',
+    quote: 'however they depends on the main biome of the planet',
+    value: true
+  },
   'region-light-years': {
     page: 'Portal address',
     quote: 'the proportions of each region are roughly 400ly x 400 ly x 400 ly',

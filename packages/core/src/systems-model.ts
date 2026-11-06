@@ -32,7 +32,11 @@ export interface Planet {
   discoveredBy: string;
   /** The day the game says it was discovered (YYYY-MM-DD), or ''. */
   discoveredOn: string;
+  /** The time beside that day (HH:MM, as the game shows it), or ''. Added in 3.27. */
+  discoveredTime: string;
 }
+/** What a planet's colour is read from: its biome, and its description for a Reliquary world or an unset biome. */
+export type PlanetLike = Pick<Planet, 'biome' | 'descriptor'>;
 export const PLANET_BODIES = { planet: 'Planet', moon: 'Moon' };
 export type PlanetBody = keyof typeof PLANET_BODIES;
 // A system as normalizeSystem() stores it: every field present, with a known type.
@@ -185,6 +189,7 @@ const tagList = (value: unknown): string[] => [
 const isDate = (value: unknown): value is string => typeof value === 'string' && !Number.isNaN(Date.parse(value));
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 // The scan fields: each missing or damaged one reads as empty, never as a guess.
 export function normalizePlanetScan(
   planet: Record<string, unknown>
@@ -207,7 +212,9 @@ export function normalizePlanetScan(
     temperature:
       Number.isFinite(temperature) && Math.abs(temperature) < 1000 ? Math.round(temperature * 10) / 10 : null,
     discoveredBy: word(planet.discoveredBy),
-    discoveredOn: typeof planet.discoveredOn === 'string' && DAY.test(planet.discoveredOn) ? planet.discoveredOn : ''
+    discoveredOn: typeof planet.discoveredOn === 'string' && DAY.test(planet.discoveredOn) ? planet.discoveredOn : '',
+    discoveredTime:
+      typeof planet.discoveredTime === 'string' && TIME.test(planet.discoveredTime) ? planet.discoveredTime : ''
   };
 }
 

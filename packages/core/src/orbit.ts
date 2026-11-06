@@ -6,6 +6,7 @@
 // centred on it, and each planet sits on its arc at an angle seeded from the system's galaxy and portal address, so
 // the same system draws the same picture on every device. Order is the planet's position in the system, never
 // sorted. Logged, not imagined: planets the game counts but the player hasn't logged are dashed rings.
+import type { PlanetLike } from './systems-model.ts';
 import { Rng, seedOf } from './seed.ts';
 import type { System } from './systems-model.ts';
 
@@ -158,13 +159,13 @@ export function orbitSentence(system: string, starColour: string, planets: Orbit
  */
 export function systemOrbit(
   system: Pick<System, 'id' | 'galaxy' | 'glyphs' | 'planets'>,
-  familyOf: (biome: string) => string | null
+  familyOf: (planet: PlanetLike) => string | null
 ): { seed: [string, string]; planets: OrbitPlanet[] } {
   return {
     seed: [system.galaxy, system.glyphs || system.id],
     planets: system.planets.map(planet => ({
       name: planet.name,
-      family: familyOf(planet.biome),
+      family: familyOf(planet),
       size: 1, // the log doesn't hold planet sizes
       base: planet.tags.includes('base')
     }))

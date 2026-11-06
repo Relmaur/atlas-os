@@ -79,13 +79,18 @@ test('the system leads with its orbit, where you are, its place and what the gam
   expect(facts).toMatchObject({
     Star: 'Yellow',
     Race: 'Korvax',
-    Economy: 'High Tech',
-    Wealth: '★★★2 of 3',
+    // Wealth is folded into Economy (03b): the stars read as its strength.
+    Economy: 'High Tech★★★2 of 3 strength',
     Conflict: 'Medium',
     'Your rating': '★★★★★5 of 5'
   });
+  expect(facts).not.toHaveProperty('Wealth');
+  expect(facts).not.toHaveProperty('On the map'); // shown only when the map says Water or Dissonant
   expect(screen.getByRole('heading', { name: 'Planets · 2' })).toBeTruthy();
-  expect(screen.getByRole('button', { name: /Buya 90\/K4 Frozen · “Main save first appearance!” Base/ })).toBeTruthy();
+  // A row opens the planet's own view (36).
+  const buya = screen.getByRole('link', { name: /^Buya 90\/K4/ });
+  expect(buya.textContent).toContain('Frozen · not scanned yet');
+  expect(buya.getAttribute('href')).toBe('#planet/sys-a/pl-1');
   const journal = screen.getByRole('region', { name: 'Journal' });
   expect(journal.textContent).toContain('Main save planet spawn!');
   expect(journal.textContent).toContain('Visited');
@@ -114,150 +119,6 @@ test('back, favourite, edit and Log a visit', async () => {
   expect(system('sys-a')?.visits).toHaveLength(2);
   await userEvent.click(screen.getByRole('button', { name: 'Edit system' }));
   expect(getPanel()).toMatchObject({ open: true, mode: 'edit', systemId: 'sys-a' });
-});
-
-test('planets: add one, edit it, and delete it with a second tap', async () => {
-  render(<SystemDetails />);
-  const sheet = document.getElementById('planetSheet')!;
-  expect(sheet.getAttribute('aria-hidden')).toBe('true');
-  await userEvent.click(screen.getByRole('button', { name: 'Add planet' }));
-  expect(sheet.getAttribute('aria-hidden')).toBe('false');
-  await userEvent.type(within(sheet).getByRole('textbox', { name: 'Name' }), 'Hogaw 24/K5');
-  await userEvent.type(within(sheet).getByRole('combobox', { name: 'Biome' }), 'Frozen');
-  await userEvent.click(within(sheet).getByRole('button', { name: 'Add planet' }));
-  expect(system('sys-a')?.planets.map(planet => planet.name)).toEqual(['Buya 90/K4', 'Leforntow', 'Hogaw 24/K5']);
-  expect(sheet.getAttribute('aria-hidden')).toBe('true');
-
-  await userEvent.click(screen.getByRole('button', { name: /^Hogaw 24\/K5/ }));
-  expect(within(sheet).getByRole('heading', { name: 'Edit planet' })).toBeTruthy();
-  const name = within(sheet).getByRole('textbox', { name: 'Name' });
-  await userEvent.clear(name);
-  await userEvent.type(name, 'Hogaw Prime');
-  await userEvent.click(within(sheet).getByRole('button', { name: 'Save planet' }));
-  expect(system('sys-a')?.planets[2]?.name).toBe('Hogaw Prime');
-
-  await userEvent.click(screen.getByRole('button', { name: /^Hogaw Prime/ }));
-  await userEvent.click(within(sheet).getByRole('button', { name: 'Delete planet' }));
-  expect(system('sys-a')?.planets).toHaveLength(3); // armed, not yet deleted
-  await userEvent.click(within(sheet).getByRole('button', { name: 'Tap again to delete' }));
-  expect(system('sys-a')?.planets).toHaveLength(2);
-});
-
-const weather = (clear: string[], normal: string[], extreme: string[]) => ({ clear, normal, extreme, other: [] });
-const PLANETS = {
-  biomes: [
-    {
-      page: 'Biome - Barren',
-      path: 'b',
-      revId: 1,
-      name: 'Barren',
-      descriptors: ['Abandoned'],
-      weather: weather([], [], [])
-    },
-    {
-      page: 'Biome - Dead',
-      path: 'd',
-      revId: 1,
-      name: 'Dead',
-      descriptors: ['Abandoned'],
-      weather: weather([], [], [])
-    },
-    {
-      page: 'Biome - Frozen',
-      path: 'f',
-      revId: 1,
-      name: 'Frozen',
-      descriptors: ['Frostbound'],
-      weather: weather(['Icy'], ['Icy Blasts'], ['Deep Freeze']),
-      resources: ['Dioxite', 'Frost Crystal', 'Radon']
-    }
-  ],
-  sentinels: {
-    page: 'Sentinel',
-    path: 's',
-    revId: 1,
-    low: ['Few'],
-    high: ['Attentive'],
-    aggressive: ['Frenzied'],
-    corrupted: []
-  },
-  life: { page: 'Planet - Discovery Menu', path: 'p', revId: 1, flora: ['Uncommon'], fauna: ['Abundant'] }
-};
-
-test('planets: the scan, copied from the game, with the wiki’s words to say what they mean', async () => {
-  setFactsForTests({ schema: 1, facts: {}, planets: PLANETS });
-  render(<SystemDetails />);
-  const sheet = document.getElementById('planetSheet')!;
-  await userEvent.click(screen.getByRole('button', { name: 'Add planet' }));
-  const box = (name: string) => within(sheet).getByRole('combobox', { name });
-  await userEvent.type(within(sheet).getByRole('textbox', { name: 'Name' }), 'Hogaw 24/K5');
-  // "Frostbound" is a Frozen prefix: the biome follows it.
-  await userEvent.type(box('Description'), 'Frostbound');
-  expect((box('Biome') as HTMLInputElement).value).toBe('Frozen');
-  expect(within(sheet).getByText('A Frozen world, by the wiki’s list.')).toBeTruthy();
-  await userEvent.click(within(sheet).getByRole('radio', { name: 'Planet' }));
-  await userEvent.type(box('Weather'), 'Icy Blasts');
-  expect(within(sheet).getByText('Normal weather')).toBeTruthy();
-  await userEvent.type(box('Sentinels'), 'Few');
-  expect(within(sheet).getByText('Low activity')).toBeTruthy();
-  await userEvent.type(within(sheet).getByRole('textbox', { name: 'Resources' }), 'Uncommon');
-  await userEvent.type(box('Fauna'), 'Abundant');
-  await userEvent.type(box('Flora'), 'Uncommon');
-  // The Frozen page's resources are a tap away; the rest are typed.
-  expect(within(sheet).getByText('Frozen worlds have:')).toBeTruthy();
-  await userEvent.click(within(sheet).getByRole('button', { name: 'Add Frost Crystal' }));
-  expect(within(sheet).queryByRole('button', { name: 'Add Frost Crystal' })).toBeNull();
-  await userEvent.type(box('Resources the scan lists'), 'Copper,');
-  await userEvent.click(within(sheet).getByRole('button', { name: 'Add Dioxite' }));
-  await userEvent.type(within(sheet).getByRole('textbox', { name: 'Temperature, °C' }), '-60,8');
-  await userEvent.type(within(sheet).getByRole('textbox', { name: 'Discovered by' }), 'marck94zac1');
-  await userEvent.click(within(sheet).getByRole('button', { name: 'Add planet' }));
-  expect(system('sys-a')?.planets[2]).toMatchObject({
-    name: 'Hogaw 24/K5',
-    biome: 'Frozen',
-    descriptor: 'Frostbound',
-    body: 'planet',
-    weather: 'Icy Blasts',
-    sentinels: 'Few',
-    abundance: 'Uncommon',
-    fauna: 'Abundant',
-    flora: 'Uncommon',
-    resources: ['Frost Crystal', 'Copper', 'Dioxite'],
-    temperature: -60.8,
-    discoveredBy: 'marck94zac1'
-  });
-  expect(screen.getByRole('button', { name: /^Hogaw 24\/K5/ }).textContent).toContain(
-    'Frostbound Planet · Icy Blasts · −60.8 °C'
-  );
-});
-
-test('planets: a prefix several biomes use leaves the biome to the player, and a chosen biome stays', async () => {
-  setFactsForTests({ schema: 1, facts: {}, planets: PLANETS });
-  render(<SystemDetails />);
-  const sheet = document.getElementById('planetSheet')!;
-  await userEvent.click(screen.getByRole('button', { name: /^Leforntow/ }));
-  const box = (name: string) => within(sheet).getByRole<HTMLInputElement>('combobox', { name });
-  expect(box('Biome').value).toBe('Hot Moon'); // the player's own words, as typed
-  await userEvent.type(box('Description'), 'Frostbound');
-  expect(box('Biome').value).toBe('Hot Moon');
-  await userEvent.clear(box('Biome'));
-  await userEvent.clear(box('Description'));
-  await userEvent.type(box('Description'), 'Abandoned');
-  expect(within(sheet).getByText('Used by Barren, Dead: pick the biome below.')).toBeTruthy();
-});
-
-test('planets: extreme weather and aggressive sentinels show on the planet’s row', () => {
-  setFactsForTests({ schema: 1, facts: {}, planets: PLANETS });
-  appState.systems[0]!.planets[1] = {
-    ...appState.systems[0]!.planets[1]!,
-    biome: 'Frozen',
-    weather: 'Deep Freeze',
-    sentinels: 'Frenzied'
-  };
-  render(<SystemDetails />);
-  const row = screen.getByRole('button', { name: /^Leforntow/ });
-  expect(row.textContent).toContain('Extreme weather');
-  expect(row.textContent).toContain('Aggressive sentinels');
 });
 
 test('a system that isn’t in the log says so', () => {
