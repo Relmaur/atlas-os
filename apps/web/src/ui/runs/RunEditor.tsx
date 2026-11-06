@@ -160,7 +160,7 @@ export function RunEditor({ existing, catalog }: { existing: PlayerRun | undefin
         role="dialog"
         aria-modal="true"
         aria-labelledby="runEditorTitle"
-        className="kb-sheet fixed z-[61] flex flex-col bg-slate-deep border-control-edge inset-x-0 bottom-0 h-[92dvh] rounded-t-sheet border-t lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:h-full lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l"
+        className="kb-sheet fixed z-[61] flex flex-col bg-slate-deep border-control-edge inset-x-0 bottom-0 h-[92dvh] rounded-t-sheet border-t lg:inset-x-auto lg:right-5 lg:top-5 lg:bottom-5 lg:h-auto lg:w-[620px] lg:rounded-panel lg:overflow-hidden lg:border"
       >
         <PanelGrab onClose={dismiss} label="Close run editor" />
         <form id="runEditor" onSubmit={submit} className="flex flex-col flex-1 min-h-0">

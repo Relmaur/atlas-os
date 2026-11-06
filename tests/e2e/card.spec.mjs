@@ -3,7 +3,10 @@ import { test, expect } from './fixtures.mjs';
 
 test('the Traveller Card from Settings: the front, then its back, both accessible', async ({ page }, testInfo) => {
   await page.goto('./#more');
-  await page.getByRole('link', { name: /Traveller Card/ }).click();
+  await page
+    .locator('main')
+    .getByRole('link', { name: /Traveller Card/ })
+    .click();
   await expect(page).toHaveURL(/#card$/);
   const front = page.getByRole('region', { name: 'Traveller Card, front' });
   await expect(front.getByRole('img', { name: /Class [CBAS]/ })).toBeVisible();

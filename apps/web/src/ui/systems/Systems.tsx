@@ -1,6 +1,7 @@
 // The Systems log (design 02): every system warped to, searchable and filterable the way the in-game Discoveries
 // page isn't. A system with its star or planets logged draws its orbit strip; one without stays a compact card.
-import { useEffect } from 'react';
+// From lg it's the Workbench's list pane (round 6, d01): one dense row per system beside the open one.
+import { useEffect, useState } from 'react';
 import { planetFamily } from '@atlas/core/facts';
 import { formatAgo } from '@atlas/core/format';
 import { homeSummary } from '@atlas/core/home';
@@ -22,10 +23,21 @@ import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { Button } from '../parts/Button.tsx';
 import { LogSegment } from '../parts/LogSegment.tsx';
 import { OrbitDiagram } from '../parts/StarChart.tsx';
-import { MetaLine, OutlawPill } from '../parts/SystemBits.tsx';
+import { MetaLine, OutlawPill, StarDot } from '../parts/SystemBits.tsx';
+import { useMedia } from '../parts/useMedia.ts';
+import { useNavOpen } from '../shell/nav-store.ts';
 import { useSectionParam } from '../shell/section-store.ts';
 import { openSystem, openSystemEditor, setSystemFilter, useSystemFilter } from './panel-store.ts';
 
+const WIDE = '(min-width: 1024px)';
+// The list pane's sort says it in a word (d01: "Recent"), so the filter field keeps its room.
+const SHORT_SORTS: Record<keyof typeof SORTS, string> = {
+  recent: 'Recent',
+  discovered: 'Newest',
+  name: 'Name',
+  rating: 'Rating',
+  region: 'Region'
+};
 const plural = (n: number, word: string) => `${String(n)} ${word}${n === 1 ? '' : 's'}`;
 const TAG_LIMIT = 6;
 
@@ -34,6 +46,7 @@ export function Systems() {
   const now = useNow();
   const filter = useSystemFilter();
   const facts = useFacts();
+  const wide = useMedia(WIDE);
   useEffect(() => {
     void loadFacts(); // biome families, for the planets' colours
   }, []);
@@ -46,6 +59,9 @@ export function Systems() {
   const logNew = () => {
     openSystemEditor();
   };
+
+  if (wide)
+    return <SystemRows systems={systems} visible={visible} filter={filter} hereId={hereId} now={now} onLog={logNew} />;
 
   return (
     <div className="flex flex-col gap-section">
@@ -129,7 +145,7 @@ export function Systems() {
 // A deliberate rail on phones (it scrolls sideways inside itself, never the page); from lg the chips wrap. Each chip
 // is 32px tall with a 40px hit area. Sort sits at the end: the design has no place for it, and it's a feature people
 // use.
-function ChipRail({ chips, sort }: { chips: FilterChip[]; sort: SystemFilter['sort'] }) {
+function ChipRail({ chips, sort }: { chips: FilterChip[]; sort: SystemFilter['sort'] | null }) {
   const chip =
     "relative flex-none h-8 px-3 rounded-full border text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors duration-[var(--duration-micro)] after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']";
   const off = 'border-control-edge bg-slate-ground text-ink-soft hover:border-control-edge-hover';
@@ -163,27 +179,29 @@ function ChipRail({ chips, sort }: { chips: FilterChip[]; sort: SystemFilter['so
           {item.count !== null && <span className="font-mono">{item.count}</span>}
         </button>
       ))}
-      <span className="relative flex-none">
-        <select
-          id="systemSort"
-          value={sort}
-          onChange={event => {
-            setSystemFilter({ sort: event.target.value as SystemFilter['sort'] });
-          }}
-          aria-label="Sort"
-          className={`${chip} ${off} appearance-none pr-7`}
-        >
-          {Object.entries(SORTS).map(([key, label]) => (
-            <option key={key} value={key}>
-              {label}
-            </option>
-          ))}
-        </select>
-        <i
-          className="ph-bold ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-ink-muted pointer-events-none"
-          aria-hidden="true"
-        />
-      </span>
+      {sort !== null && (
+        <span className="relative flex-none">
+          <select
+            id="systemSort"
+            value={sort}
+            onChange={event => {
+              setSystemFilter({ sort: event.target.value as SystemFilter['sort'] });
+            }}
+            aria-label="Sort"
+            className={`${chip} ${off} appearance-none pr-7`}
+          >
+            {Object.entries(SORTS).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <i
+            className="ph-bold ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-ink-muted pointer-events-none"
+            aria-hidden="true"
+          />
+        </span>
+      )}
     </div>
   );
 }
@@ -320,5 +338,187 @@ function SystemCard({
         <span className={`ml-auto ${here ? hereText : footerText}`}>{here ? 'You are here' : visited}</span>
       </div>
     </article>
+  );
+}
+
+// The list pane (d01): the title with Log system (N), a filter field, the filter chips behind a toggle, the sort, and a
+// row per system: its star, its name (★ if a favourite) over where it is, and "Here" or when you were last there.
+// Names and places that don't fit end in an ellipsis, with the whole text as a tooltip.
+function SystemRows({
+  systems,
+  visible,
+  filter,
+  hereId,
+  now,
+  onLog
+}: {
+  systems: System[];
+  visible: System[];
+  filter: SystemFilter;
+  hereId: string | null;
+  now: number;
+  onLog: () => void;
+}) {
+  const navOpen = useNavOpen();
+  const at = useSectionParam();
+  const chips = filterChips(systems, filter);
+  const filtering = chips.some(chip => chip.on && chip.id !== 'all');
+  const [showFilters, setShowFilters] = useState(filtering);
+  const control =
+    'h-[38px] rounded-control border border-control-edge bg-slate-ground text-ink inline-flex items-center gap-1.5 px-3 text-[13px] font-semibold hover:border-control-edge-hover';
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      <header className="flex items-center justify-between gap-2.5 px-[18px] pt-4 pb-3">
+        <h1 className="font-display font-extrabold text-[22px] leading-none text-ink-bright">Systems</h1>
+        <button
+          type="button"
+          onClick={onLog}
+          aria-keyshortcuts="n"
+          className="h-10 shrink-0 rounded-control border border-scanner-cyan-edge bg-scanner-cyan-tint text-scanner-cyan-text inline-flex items-center gap-1.5 px-3.5 text-[13px] font-semibold whitespace-nowrap hover:border-scanner-cyan-edge-strong"
+        >
+          <i className="ph-bold ph-plus" aria-hidden="true" />
+          {navOpen ? 'Log' : 'Log system'}
+          <kbd className="nav-kbd ml-1">N</kbd>
+        </button>
+      </header>
+      <p id="systemsSummary" className="sr-only">
+        {systemsLine(systems)}
+      </p>
+      <div className="px-[18px] pb-3 flex flex-col gap-2.5">
+        <div className="flex gap-2">
+          <label className="relative flex-1 min-w-0">
+            <i
+              className="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              id="systemSearch"
+              autoComplete="off"
+              value={filter.q}
+              onChange={event => {
+                setSystemFilter({ q: event.target.value });
+              }}
+              placeholder={`Filter ${plural(systems.length, 'system')}`}
+              aria-label="Search systems"
+              className="w-full h-[38px] rounded-control border border-control-edge focus:border-scanner-cyan-edge-strong bg-slate-ground pl-9 pr-3 text-[13px] text-ink-bright placeholder:text-ink-disabled focus:outline-hidden"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => {
+              setShowFilters(!showFilters);
+            }}
+            aria-expanded={showFilters}
+            aria-controls="systemTagFilters"
+            aria-label={filtering ? 'Filters (some on)' : 'Filters'}
+            className={`${control} relative w-[38px] justify-center px-0`}
+          >
+            <i className="ph-bold ph-funnel" aria-hidden="true" />
+            {filtering && (
+              <span
+                className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-scanner-cyan-glow"
+                aria-hidden="true"
+              />
+            )}
+          </button>
+          <span className="relative shrink-0">
+            <i
+              className="ph-bold ph-sort-descending absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
+              aria-hidden="true"
+            />
+            <select
+              id="systemSort"
+              value={filter.sort}
+              onChange={event => {
+                setSystemFilter({ sort: event.target.value as SystemFilter['sort'] });
+              }}
+              aria-label="Sort"
+              className={`${control} appearance-none pl-8 pr-3`}
+            >
+              {Object.entries(SHORT_SORTS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </span>
+        </div>
+        {showFilters && <ChipRail chips={chips} sort={null} />}
+      </div>
+      <p id="systemResultCount" role="status" className="sr-only">
+        {filterActive(filter) ? `${String(visible.length)} of ${plural(systems.length, 'system')}` : ''}
+      </p>
+      <ul id="systemList" className="flex-1 min-h-0 overflow-y-auto">
+        {visible.map(system => {
+          const last = lastVisit(system);
+          const place = systemMeta(system)
+            .map(part => part.text)
+            .filter(Boolean)
+            .join(' · ');
+          const open = at === system.id;
+          const here = system.id === hereId;
+          return (
+            <li key={system.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  openSystem(system.id);
+                }}
+                aria-current={open ? 'true' : undefined}
+                className={`system-row w-full grid grid-cols-[10px_minmax(0,1fr)_auto] items-center gap-3 px-[18px] h-[58px] border-t border-hairline text-left ${
+                  open
+                    ? 'bg-scanner-cyan-tint shadow-[inset_3px_0_0_var(--color-scanner-cyan-glow)]'
+                    : 'hover:bg-[rgba(148,163,184,0.06)]'
+                }`}
+              >
+                <StarDot system={system} size="w-2.5 h-2.5" />
+                <span className="min-w-0 flex flex-col gap-0.5">
+                  <span title={system.name} className="truncate text-sm font-semibold text-ink-bright">
+                    {system.name}
+                    {system.favorite && (
+                      <>
+                        <span className="text-units-amber-text" aria-hidden="true">
+                          {' ★'}
+                        </span>
+                        <span className="sr-only">, a favourite</span>
+                      </>
+                    )}
+                  </span>
+                  {place && (
+                    <span title={place} className="truncate text-xs text-ink-muted">
+                      {place}
+                    </span>
+                  )}
+                </span>
+                <span
+                  className={`text-xs text-right whitespace-nowrap ${here ? 'text-units-amber-text' : 'text-ink-muted'}`}
+                >
+                  {here ? 'Here' : last ? formatAgo(last.at, now) : 'Never visited'}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+        {systems.length > 0 && visible.length === 0 && (
+          <li className="px-[18px] py-6 flex flex-col items-center gap-2 text-center text-sub text-ink-muted border-t border-hairline">
+            No systems match these filters.
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSystemFilter({ ...DEFAULT_FILTER, sort: filter.sort });
+              }}
+            >
+              Clear filters
+            </Button>
+          </li>
+        )}
+        {systems.length === 0 && (
+          <li className="px-[18px] py-6 text-sub text-ink-muted border-t border-hairline">
+            Your log is empty. Log a system after your next warp; only its name is needed.
+          </li>
+        )}
+      </ul>
+    </div>
   );
 }

@@ -178,6 +178,17 @@
   --radius-card: 18px; /* cards and grouped lists */
   --radius-hero: 22px; /* Home's current-system card */
   --radius-sheet: 24px; /* a sheet's top corners */
+  --radius-panel: 12px; /* desktop: a floating panel (nav, command bar, panes, side panels, dialogs) */
+  --radius-tag: 4px; /* desktop: chips, pills, tags and keys */
+
+  /* The desktop Workbench (round 6, from 1024): everything floats this far from the window's edges, panes this far
+     apart, and the nav and command bar hold their items this far in (inner corner = outer − padding). */
+  --spacing-float: 20px;
+  --spacing-pane-gap: 16px;
+  --spacing-panel-pad: 6px;
+  --spacing-rail: 56px;
+  --spacing-sidebar: 252px;
+  --spacing-command: 56px;
 
   /* Rhythm (brief, 2026-10-28): every screen uses these steps */
   --spacing-gutter: 16px; /* page sides; the tab bar's side inset */
@@ -203,6 +214,21 @@
   /* Motion: 120–200ms for micro-interactions, 250–350ms for sheets; exits are faster than entrances. Under
      reduced motion every animation settles at its end state (theme.css). */
   --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* From 1024 the scale is lower ("a serious log tool"): panels 12, controls and cards 8, slots 6, chips and tags 4.
+   Phones keep the rounder scale above. Data marks (planets, stars, dots) stay round everywhere. */
+@media (min-width: 1024px) {
+  :root {
+    --radius-chip: 4px;
+    --radius-slot: 6px;
+    --radius-segment: 5px; /* inside an 8px track with 3px padding */
+    --radius-control: 8px;
+    --radius-button: 8px;
+    --radius-card: 8px;
+    --radius-hero: 12px;
+    --radius-sheet: 12px;
+  }
 }
 
 :root {

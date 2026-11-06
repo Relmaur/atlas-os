@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { buildState } from '@atlas/core/state';
@@ -8,11 +8,17 @@ import { setAppState } from '../../app/store.ts';
 import { setFactsForTests } from '../gear/facts-store.ts';
 import { Systems } from './Systems.tsx';
 import { getPanel, setSystemFilter } from './panel-store.ts';
+import { setWide } from '../test-media.ts';
 
 const ago = (hours: number) => new Date(Date.now() - hours * HOUR_MS).toISOString();
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 beforeEach(() => {
   localStorage.clear();
+  setWide(false); // the phone's list; the Workbench's rows are tested at the end
   setFactsForTests({ schema: 1, facts: {} });
   act(() => {
     setSystemFilter(DEFAULT_FILTER);
@@ -73,7 +79,8 @@ test('a system with a star or planets draws its orbit and says where you are; on
 
 test('search and chips narrow the list; All clears the chips; Clear filters clears everything', async () => {
   render(<Systems />);
-  const chip = (name: RegExp | string) => within(screen.getByRole('group', { name: 'Filters' })).getByRole('button', { name });
+  const chip = (name: RegExp | string) =>
+    within(screen.getByRole('group', { name: 'Filters' })).getByRole('button', { name });
   expect(chip('All 3').getAttribute('aria-pressed')).toBe('true');
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search systems' }), 'hauler');
   expect(names()).toEqual(['Hesper Drift']);
@@ -121,6 +128,27 @@ test('a card opens the system; Log system and the dashed button open the editor'
 test('an empty log explains what to do', () => {
   setAppState(buildState({ systems: [] }));
   render(<Systems />);
-  expect(screen.getByText('Your log is empty. Log a system after your next warp; only its name is needed.')).toBeTruthy();
+  expect(
+    screen.getByText('Your log is empty. Log a system after your next warp; only its name is needed.')
+  ).toBeTruthy();
   expect(document.getElementById('systemsSummary')?.textContent).toBe('0 systems · 0 planets · 0 visits');
+});
+
+test('d01: on the Workbench each system is one row: star, name (★ for a favourite) over where it is, and Here or when', async () => {
+  setWide(true);
+  render(<Systems />);
+  const rows = within(document.getElementById('systemList')!).getAllByRole('button');
+  expect(rows.map(row => row.textContent)).toEqual([
+    expect.stringMatching(/^Hesper Drift ★, a favouriteEuclid · Korvax/),
+    expect.stringMatching(/^Ekwa NexusOdyalutai.*Here$/),
+    expect.stringMatching(/^Outlaw Den.*Never visited$/)
+  ]);
+  // The filter chips wait behind their toggle; the sort says it in a word.
+  expect(document.getElementById('systemTagFilters')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
+  expect(document.getElementById('systemTagFilters')).not.toBeNull();
+  expect(screen.getByRole('combobox', { name: 'Sort' }).textContent).toContain('Recent');
+  expect(screen.getByPlaceholderText('Filter 3 systems')).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: /^Log system/ }));
+  expect(getPanel()).toMatchObject({ open: true, mode: 'edit', systemId: null });
 });

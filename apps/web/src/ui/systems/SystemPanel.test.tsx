@@ -8,6 +8,7 @@ import { setFactsForTests } from '../gear/facts-store.ts';
 import { SystemPanel } from './SystemPanel.tsx';
 import { setGalaxiesForTests } from './galaxies-store.ts';
 import { closeSystemPanel, getPanel, openSystemEditor, setSystemFilter } from './panel-store.ts';
+import { setWide } from '../test-media.ts';
 
 vi.mock('../shell/section-store.ts', () => ({ showSection: vi.fn(), goBack: vi.fn() }));
 
@@ -345,4 +346,27 @@ test('a system’s discovery: Me fills in your game account, with the day and ti
     notes: 'Old notes' // the rest as it was
   });
   appState.accounts = [];
+});
+
+test('d14: from lg a click outside closes only when nothing is unsaved, and Ctrl+Enter saves', async () => {
+  setWide(true);
+  render(<SystemPanel />);
+  act(() => {
+    openSystemEditor('sys-a');
+  });
+  expect(screen.getByText('Ekwa Nexus · Esc or the grab bar closes')).toBeTruthy();
+  const backdrop = document.getElementById('systemBackdrop')!;
+  const name = screen.getByRole('textbox', { name: 'Name' });
+  await userEvent.clear(name);
+  await userEvent.type(name, 'Ekwa Prime');
+  await userEvent.click(backdrop);
+  expect(getPanel().open).toBe(true); // unsaved: it stays
+  await userEvent.keyboard('{Control>}{Enter}{/Control}');
+  expect(getPanel().open).toBe(false);
+  expect(system('sys-a')?.name).toBe('Ekwa Prime');
+  act(() => {
+    openSystemEditor('sys-a');
+  });
+  await userEvent.click(backdrop);
+  expect(getPanel().open).toBe(false); // nothing changed: it closes
 });

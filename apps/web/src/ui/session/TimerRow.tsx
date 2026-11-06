@@ -11,6 +11,8 @@ const KIND: Record<TimerKind, { label: string; tone: RingTone; text: string }> =
   crop: { label: 'Crops', tone: 'amber', text: 'text-units-amber-text' },
   custom: { label: 'Custom', tone: 'cyan', text: 'text-ink-label' }
 };
+/** "Refiner", "Crops": a timer's kind before its label in the command bar; a custom timer has only its label. */
+export const timerKindName = (kind: TimerKind): string => (kind === 'custom' ? '' : KIND[kind].label);
 const HOUR = 3_600_000;
 
 const minutes = (ms: number) => Math.round(ms / 60_000);

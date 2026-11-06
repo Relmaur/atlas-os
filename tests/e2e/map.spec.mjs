@@ -1,8 +1,8 @@
-import { test, expect } from './fixtures.mjs';
+import { test, expect, logLink } from './fixtures.mjs';
 
 test('the Map: the galaxy chain, then one galaxy with a system at its true place', async ({ page }) => {
   await page.goto('./#systems');
-  await page.getByRole('navigation', { name: 'Log sections' }).getByRole('link', { name: 'Map' }).click();
+  await logLink(page, 'Map').click();
   await expect(page).toHaveURL(/#map$/);
   await expect(page.locator('#mapSummary')).toContainText('1 system · 1 galaxy · 2 more without an address');
   await expect(

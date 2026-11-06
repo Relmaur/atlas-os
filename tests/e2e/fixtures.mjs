@@ -147,9 +147,22 @@ export async function holdToStartSession(page, { fakeClock = false } = {}) {
   await page.locator('#startSession').hover();
   await page.mouse.down();
   if (fakeClock) await page.clock.runFor(700);
-  await expect(page.locator('#sessionBar')).toBeVisible();
+  await expect(liveSession(page)).toBeVisible();
   await page.mouse.up();
 }
 
+// What's live, wherever it shows: the session strip below lg, the command bar from lg (round 6).
+export const liveBar = page => page.locator('#sessionBar:visible, #commandBar:visible');
+export const liveSession = page => page.locator('#sessionBar:visible, #commandBar [data-live="session"]:visible');
+// Opens the Session screen from the strip, or from the command bar's session or timer.
+export const openLiveBar = page => page.locator('#sessionBar:visible, #commandBar [data-live]:visible').first().click();
+
 // The Session and timers button that's on screen: the app header's, or Home's own on a phone.
 export const sessionButton = page => page.locator('#sessionButton:visible, #homeSessionButton:visible');
+
+// A Log screen's link: in Log's segmented control below lg, in the nav from lg (round 6 drops the segment there).
+export const logLink = (page, name) =>
+  page
+    .locator('nav[aria-label="Log sections"]:visible, nav[aria-label="Primary"]:visible')
+    .getByRole('link', { name: new RegExp(`^${name}\\b`) })
+    .first();

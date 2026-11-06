@@ -1,7 +1,7 @@
 // Accessibility (axe) on every screen and the page frame: any violation in the gated region fails. An entry without a
 // region reports only (violations attached and summarised as an annotation); none is left.
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, holdToStartSession } from './fixtures.mjs';
+import { test, expect, holdToStartSession, openLiveBar } from './fixtures.mjs';
 
 const openEditor = async page => {
   await page.locator('#systemList').getByText('Ekwa Nexus').click();
@@ -43,7 +43,7 @@ const writeNote = async page => {
 const openCamp = page => page.getByRole('tab', { name: 'Registers' }).click();
 const liveSession = async page => {
   await holdToStartSession(page);
-  await page.locator('#sessionBar').click();
+  await openLiveBar(page);
   await page.locator('#sessionClock').waitFor();
 };
 const openTimerSheet = async page => {

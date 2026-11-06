@@ -33,13 +33,13 @@
     </div>
 
     <!-- Top header: logo, search, Export/Import (React: src/ui/shell/Header.tsx) -->
-    <header id="headerRoot" class="app-header sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800"></header>
+    <header id="headerRoot" class="app-header sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 lg:border-b-0"></header>
 
     <!-- Main Workspace Container -->
     <div class="flex-1 w-full flex relative">
 
-        <!-- The rail from lg; the bottom tab bar replaces it below (React: src/ui/shell/Sidebar.tsx) -->
-        <aside id="sidebarNav" class="hidden lg:flex lg:sticky lg:top-0 lg:h-dvh lg:w-[88px] lg:shrink-0 flex-col"></aside>
+        <!-- The floating nav from lg (round 6); the bottom tab bar replaces it below (React: src/ui/shell/Sidebar.tsx) -->
+        <aside id="sidebarNav" class="hidden lg:block"></aside>
 
         <!-- Main Content Area -->
         <main class="app-main flex-1 min-w-0 px-4 py-5 sm:p-6 lg:p-8">

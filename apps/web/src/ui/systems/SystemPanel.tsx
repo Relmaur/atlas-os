@@ -30,11 +30,16 @@ export function SystemPanel() {
     };
   }, [panel.open]);
 
-  // Esc closes the editor (Cancel's shortcut: it doesn't ask).
+  // Esc closes the editor (Cancel's shortcut: it doesn't ask); Ctrl+Enter (⌘↵) saves it (d14).
   useEffect(() => {
     if (!panel.open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') closeSystemPanel();
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        const form = document.getElementById('systemEditor');
+        if (form instanceof HTMLFormElement) form.requestSubmit();
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => {
@@ -48,7 +53,11 @@ export function SystemPanel() {
     <>
       <div
         id="systemBackdrop"
-        onClick={closeSystemPanel}
+        onClick={() => {
+          // From lg a click outside closes it only when nothing is unsaved (d14); a phone's tap outside still closes.
+          if (matchMedia('(min-width: 1024px)').matches) dismissSystemPanel();
+          else closeSystemPanel();
+        }}
         className={`fixed inset-0 z-[55] bg-slate-950/60 backdrop-blur-[2px] transition-opacity duration-200 ${panel.open ? '' : 'opacity-0 pointer-events-none'}`}
       />
       <div
@@ -59,7 +68,7 @@ export function SystemPanel() {
         aria-labelledby="systemPanelTitle"
         aria-hidden={!panel.open}
         inert={!panel.open}
-        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-950 border-slate-700 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.85)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 h-[92dvh] rounded-t-3xl border-t ${panel.open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:h-full lg:w-[440px] xl:w-[620px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${panel.open ? '' : 'lg:translate-x-full'}`}
+        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-950 border-slate-700 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.85)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 h-[92dvh] rounded-t-3xl border-t ${panel.open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-5 lg:top-5 lg:h-auto lg:bottom-5 lg:w-[540px] lg:rounded-panel lg:overflow-hidden lg:border lg:translate-y-0 ${panel.open ? '' : 'lg:translate-x-[calc(100%+20px)]'}`}
       >
         <PanelGrab onClose={dismissSystemPanel} label="Close" />
         <div

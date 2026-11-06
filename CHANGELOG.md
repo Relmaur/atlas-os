@@ -6,6 +6,23 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.31.0] - 2026-11-06
+Design round 6, "Workbench" (desktop), part 1: the shell and Systems.
+
+### Changed
+- On a computer (1024px and wider), the app is a Workbench (in progress; the screens follow). Everything floats 20px from the window's edges: a nav rail on the left, a command bar along the top, and the content below it.
+  - The nav lists every place in groups (Now, Log, Runs & tools, Knowledge, You), with each one's name and count on hover. Ctrl+\ (⌘\ on a Mac) opens it as a sidebar that pushes the content aside, with your latest systems under Systems; this device remembers which you prefer.
+  - The command bar holds the search (Ctrl K) and what's live: the session, your next timers counting down with their rings, and sync. Under 1280px the timers drop their names.
+  - A list and its detail sit in two panes, each with its own scroll. Editors open as panels floating at the right.
+  - Ctrl K opens search as a palette in the middle of the screen, with the key hints at its foot.
+  - Systems, Map, Fleet and Notes are in the nav, so the Log tabs above them are gone on a computer. Phones and tablets are unchanged.
+  - Corners are tighter on a computer: 12px for panels, 8 for controls and cards, 6 for slots and 4 for tags.
+- Systems on a computer:
+  - The list is one compact row per system: its star, its name (★ for a favourite) over where it is, and "Here" or when you were last there. Long names and places end in "…", with the full text on hover. Filter chips sit behind a Filters button, the sort says it in a word, and N logs a system.
+  - A system fills the detail pane. A wide orbit band leads, with Favourite and Edit (E). Then come the name with Log a visit and Share, six facts in a grid, and the planets and moons as cards (a moon says which planet it orbits). Beside them sits the portal address with Hex, Names and Dial, and the journal. When the pane is narrower than about 900px, the address and journal move under the rest. At 1920px the facts make one row and the planets three columns.
+  - A planet fills the pane too. It opens with a breadcrumb back to its system, the bodies before and after it, and Edit (E). Under that are three columns: the scan; resources and notes; then discovery and the planet's portal glyph.
+  - The system editor is a 540px panel. It says how to leave it (Esc or the grab bar), Ctrl+Enter saves, and a click outside closes it only when nothing is unsaved. On a phone a tap outside still closes the sheet.
+
 ## [3.30.1] - 2026-11-06
 ### Fixed
 - On a computer, the card collection runs across the whole screen, and every card on screen draws its picture, not just the one in view and its neighbours. Dragging with the mouse moves to the next card, as a swipe does on a phone; a drag never flips the card it ends on. The hint under the cards says "drag or use ← →" where there's a mouse.

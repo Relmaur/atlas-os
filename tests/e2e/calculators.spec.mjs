@@ -75,7 +75,10 @@ test('base value and extractor yield use wiki values', async ({ page }) => {
 
 test('Best crafts ranks the real mirror and opens a pick in the planner', async ({ page }) => {
   await page.goto('./#calculators');
-  await page.getByRole('link', { name: /Best crafts/ }).click();
+  await page
+    .locator('main')
+    .getByRole('link', { name: /Best crafts/ })
+    .click();
   await expect(page).toHaveURL(/#crafts$/);
   const rows = page.locator('#craftList [data-craft]');
   await expect(rows.first()).toHaveAttribute('data-craft', /^(Stasis Device|Fusion Ignitor)$/);

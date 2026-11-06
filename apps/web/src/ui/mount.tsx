@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { Home } from './home/Home.tsx';
 import { Systems } from './systems/Systems.tsx';
 import { SystemPanel } from './systems/SystemPanel.tsx';
-import { SystemDetails } from './systems/SystemDetails.tsx';
+import { SystemScreen } from './systems/SystemDesk.tsx';
 import { PlanetDetails } from './systems/PlanetDetails.tsx';
 import { MyGlyphs } from './portal/MyGlyphs.tsx';
 import { Dialling } from './portal/Dialling.tsx';
@@ -58,7 +58,7 @@ const FRAME: [string, ReactNode][] = [
 const SCREENS: [string, ReactNode][] = [
   ['homeRoot', <Home />],
   ['systemsRoot', <Systems />],
-  ['systemDetailRoot', <SystemDetails />],
+  ['systemDetailRoot', <SystemScreen />],
   ['planetDetailRoot', <PlanetDetails />],
   ['myGlyphsRoot', <MyGlyphs />],
   ['diallingRoot', <Dialling />],

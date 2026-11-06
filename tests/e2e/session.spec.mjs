@@ -1,10 +1,10 @@
-import { test, expect, storedState, holdToStartSession } from './fixtures.mjs';
+import { test, expect, storedState, holdToStartSession, liveBar, openLiveBar } from './fixtures.mjs';
 
 test('a session with a one-minute timer: the bar counts down, then announces it once', async ({ page }) => {
   await page.clock.install();
   await page.goto('./');
   await holdToStartSession(page, { fakeClock: true });
-  await page.locator('#sessionBar').click(); // starting shows the bar; the bar opens the Session screen
+  await openLiveBar(page); // starting shows the bar; the bar opens the Session screen
   await expect(page.locator('#sessionClock')).toBeVisible();
   await page.getByRole('button', { name: 'Custom timer' }).click();
   const sheet = page.locator('#timerSheet');
@@ -17,10 +17,10 @@ test('a session with a one-minute timer: the bar counts down, then announces it 
   await page.evaluate(() => {
     location.hash = '#home';
   });
-  await expect(page.locator('#sessionBar')).toContainText('Storm passes');
+  await expect(liveBar(page)).toContainText('Storm passes');
   await page.clock.fastForward('01:05');
   await expect(page.locator('#toastMessage')).toHaveText('Timer done: Storm passes.');
-  await expect(page.locator('#sessionBar')).toContainText('Storm passes done');
+  await expect(liveBar(page)).toContainText(/Storm passes\s*done/);
   const state = await storedState(page);
   expect(state.timers[0]).toMatchObject({ label: 'Storm passes', alerted: true });
   expect(state.session.timersDone).toBe(1);
@@ -29,7 +29,7 @@ test('a session with a one-minute timer: the bar counts down, then announces it 
 test('timers and the session survive a reload and end in a recap', async ({ page }) => {
   await page.goto('./');
   await holdToStartSession(page);
-  await page.locator('#sessionBar').click();
+  await openLiveBar(page);
   await page.getByRole('button', { name: 'Crop timer' }).click();
   const sheet = page.locator('#timerSheet');
   await sheet.getByLabel('Crop').fill('Frostwort');

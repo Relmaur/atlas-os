@@ -198,7 +198,11 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
               {isNew ? 'Add system' : 'Edit system'}
             </h2>
             <p id={subtitleId} className="text-sub text-ink-muted">
-              What the game shows, plus your own tags and notes.
+              <span className="lg:hidden">What the game shows, plus your own tags and notes.</span>
+              {/* From lg (d14): which system, and how to leave. */}
+              <span className="hidden lg:inline">
+                {`${existing?.name ?? 'A new system'} · Esc or the grab bar closes`}
+              </span>
             </p>
           </div>
         </div>
@@ -451,12 +455,15 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
             {error}
           </p>
         )}
-        <div className="grid grid-cols-[1fr_2fr] gap-2.5">
+        <div className="grid grid-cols-[1fr_2fr] gap-2.5 lg:flex lg:justify-end">
           <Button size="L" onClick={cancel}>
             Cancel
           </Button>
           <Button variant="primary" type="submit">
             {isNew ? 'Add system' : 'Save changes'}
+            <kbd aria-hidden="true" className="hidden lg:inline nav-kbd ml-1.5">
+              Ctrl ↵
+            </kbd>
           </Button>
         </div>
       </div>

@@ -44,7 +44,7 @@ export function PlanetSheet() {
         aria-labelledby="planetSheetTitle"
         aria-hidden={!sheet.open}
         inert={!sheet.open}
-        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${sheet.open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:max-h-none lg:w-[460px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${sheet.open ? '' : 'lg:translate-x-full'}`}
+        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${sheet.open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-5 lg:top-5 lg:bottom-5 lg:max-h-none lg:w-[540px] lg:rounded-panel lg:overflow-hidden lg:border lg:translate-y-0 ${sheet.open ? '' : 'lg:translate-x-[calc(100%+20px)]'}`}
       >
         <PanelGrab onClose={close} label="Close body" />
         <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">

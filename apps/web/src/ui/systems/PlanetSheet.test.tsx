@@ -9,6 +9,7 @@ import { SystemDetails } from './SystemDetails.tsx';
 import { PlanetDetails } from './PlanetDetails.tsx';
 import { PlanetSheet } from './PlanetSheet.tsx';
 import { closePlanetSheet, getPlanetSheet, openPlanetSheet } from './planet-sheet-store.ts';
+import { setWide } from '../test-media.ts';
 
 let param = 'sys-a';
 let section = 'system';
@@ -130,6 +131,7 @@ const HOGAW = {
 
 beforeEach(() => {
   localStorage.clear();
+  setWide(false); // the phone's screens; the Workbench's planet (d16) is tested on its own
   param = 'sys-a';
   section = 'system';
   setFactsForTests(FACTS);
@@ -167,6 +169,7 @@ beforeEach(() => {
 
 afterEach(() => {
   act(closePlanetSheet);
+  vi.restoreAllMocks();
 });
 
 const planet = (id: string) => appState.systems[0]?.planets.find(item => item.id === id);
@@ -471,4 +474,20 @@ test('the hazard reading: Temperature, Radiation or Toxicity from the wiki, each
   render(<PlanetDetails />);
   const scan = screen.getByRole('region', { name: 'The scan' });
   expect(scan.textContent).toContain('Radiation4.2 Rad');
+});
+
+test('d16: on the Workbench a planet has a breadcrumb, the bodies either side, Edit, and three columns', async () => {
+  setWide(true);
+  section = 'planet';
+  param = 'sys-a/pl-l';
+  render(<PlanetDetails />);
+  const nav = screen.getByRole('navigation', { name: 'Planet' });
+  expect(within(nav).getByRole('link', { name: 'Masdalri Junction' }).getAttribute('href')).toMatch(/^#system\//);
+  const prev = within(nav).queryByRole('link', { name: /^Previous body/ });
+  const next = within(nav).queryByRole('link', { name: /^Next body/ });
+  expect(prev?.getAttribute('href')).toBe('#planet/sys-a/pl-h');
+  expect(next?.getAttribute('href')).toBe('#planet/sys-a/pl-g');
+  expect(screen.getByRole('region', { name: 'The scan' })).toBeTruthy();
+  await userEvent.click(within(nav).getByRole('button', { name: 'Edit body' }));
+  expect(getPlanetSheet()).toMatchObject({ open: true, systemId: 'sys-a', planetId: 'pl-l' });
 });

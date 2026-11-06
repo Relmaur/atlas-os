@@ -42,7 +42,7 @@ export function SessionSheet() {
         aria-labelledby="timerSheetTitle"
         aria-hidden={!open}
         inert={!open}
-        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-0 lg:top-0 lg:bottom-0 lg:max-h-none lg:w-[440px] lg:rounded-none lg:border-t-0 lg:border-l lg:translate-y-0 ${open ? '' : 'lg:translate-x-full'}`}
+        className={`kb-sheet fixed z-[56] flex flex-col bg-slate-deep border-control-edge transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] inset-x-0 bottom-0 max-h-[92dvh] rounded-t-sheet border-t ${open ? '' : 'translate-y-full'} lg:inset-x-auto lg:right-5 lg:top-5 lg:bottom-5 lg:max-h-none lg:w-[440px] lg:rounded-panel lg:overflow-hidden lg:border lg:translate-y-0 ${open ? '' : 'lg:translate-x-[calc(100%+20px)]'}`}
       >
         <PanelGrab onClose={closeAddTimer} label="Close timer" />
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] lg:pb-6 flex flex-col gap-4">

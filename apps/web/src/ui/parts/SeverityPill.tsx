@@ -13,7 +13,7 @@ export function SeverityPill({
   const height = size === 'M' ? 'h-[26px] px-2.5 text-[13px]' : 'h-[22px] px-2 text-[11px]';
   return (
     <span
-      className={`inline-flex items-center gap-1 shrink-0 rounded-full border font-semibold whitespace-nowrap ${height} ${
+      className={`inline-flex items-center gap-1 shrink-0 rounded-full lg:rounded-tag border font-semibold whitespace-nowrap ${height} ${
         danger
           ? 'bg-danger-crimson-tint border-danger-crimson-edge text-danger-crimson-text'
           : 'bg-transparent border-control-edge text-ink-soft'

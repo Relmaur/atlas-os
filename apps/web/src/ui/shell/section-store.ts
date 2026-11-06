@@ -91,6 +91,12 @@ export function showSection(key: string): Promise<void> {
       element.classList.toggle('hidden', element.id !== `sec-${section}`);
     });
     window.scrollTo({ top: 0 });
+    // From lg the content scrolls in its own pane (round 6), and the newly shown screen starts at its top; a list
+    // beside it keeps its place.
+    const main = document.querySelector('main');
+    const shown = document.getElementById(`sec-${section}`);
+    if (main) main.scrollTop = 0;
+    if (shown) shown.scrollTop = 0;
   };
   const animate =
     current !== '' &&

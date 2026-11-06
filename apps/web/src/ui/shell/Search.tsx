@@ -466,8 +466,8 @@ export function Search() {
             onKeyDown={onKeyDown}
             className="w-full h-11 bg-slate-ground border border-control-edge hover:border-control-edge-hover focus:border-scanner-cyan-edge-strong focus:shadow-[0_0_0_3px_rgba(34,211,238,0.12)] rounded-control pl-10 pr-10 text-base md:text-sm text-ink-bright placeholder:text-ink-disabled focus:outline-hidden transition"
           />
-          <kbd className="hidden lg:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-ink-muted border border-control-edge rounded px-1.5 py-0.5 pointer-events-none">
-            /
+          <kbd className="hidden lg:block absolute right-4 top-1/2 -translate-y-1/2 nav-kbd pointer-events-none">
+            Esc
           </kbd>
         </div>
         <button type="button" onClick={close} className="lg:hidden h-11 px-1 text-[15px] font-medium text-ink-soft">
@@ -581,6 +581,19 @@ export function Search() {
           </div>
         )}
       </div>
+      {/* The palette's key hints, from lg (d15). */}
+      <p className="search-foot" aria-hidden="true">
+        <span className="flex items-center gap-1.5">
+          <kbd className="nav-kbd">↑</kbd>
+          <kbd className="nav-kbd">↓</kbd>
+          move
+          <kbd className="nav-kbd ml-3">↵</kbd>
+          open
+          <kbd className="nav-kbd ml-3">Esc</kbd>
+          close
+        </span>
+        <span>Searches your log and the Codex, offline</span>
+      </p>
     </div>
   );
 }

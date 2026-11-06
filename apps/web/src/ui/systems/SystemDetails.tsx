@@ -400,7 +400,7 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
 // The portal address (03c), as 12 named slots: planet · star system · region (the wiki's Portal address page). Glyph 1
 // names the planet it takes you to when a planet's own portal glyph matches (35c); My glyphs says what's still to find
 // (never blocking anything). Without an address (03d), the three ways to read one, Photo Mode first.
-function PortalAddress({ system }: { system: System }) {
+export function PortalAddress({ system, desk = false }: { system: System; desk?: boolean }) {
   const table = useGlyphTable();
   const { myGlyphs } = useAppState();
   const glyphs = system.glyphs;
@@ -479,7 +479,12 @@ function PortalAddress({ system }: { system: System }) {
           {groupGlyphs(shown)}
         </span>
       </div>
-      <div className="rounded-card bg-panel border border-hairline p-3.5 flex flex-col gap-3.5">
+      {/* On the Workbench (d01) it sits in the inspector, which is already a box: no box of its own. */}
+      <div
+        className={
+          desk ? 'flex flex-col gap-3.5' : 'rounded-card bg-panel border border-hairline p-3.5 flex flex-col gap-3.5'
+        }
+      >
         <GlyphSlots slots={slotsOf(glyphs, unknown)} table={table} planetUnknown label="Portal address" />
         {unknown ? (
           <div className="flex gap-2.5 items-start p-3 rounded-xl border border-hairline bg-slate-ground text-[12.5px] leading-normal text-ink-soft">
@@ -534,16 +539,18 @@ function PortalAddress({ system }: { system: System }) {
               <span>You have every glyph this needs.</span>
             </p>
           ))}
-        <div className="grid grid-cols-2 gap-2">
+        {/* The Workbench's inspector has one row of three (d01): Hex, Names, Dial. */}
+        <div className={desk ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-2 gap-2'}>
           <button
             type="button"
             onClick={() => {
               copyText(shown, `Copied the portal address ${groupGlyphs(shown)}.`);
             }}
+            aria-label={desk ? 'Copy as hex' : undefined}
             className={TOOL}
           >
             <i className="ph-bold ph-copy" aria-hidden="true" />
-            Copy as hex
+            {desk ? 'Hex' : 'Copy as hex'}
           </button>
           <button
             type="button"
@@ -551,19 +558,28 @@ function PortalAddress({ system }: { system: System }) {
               const text = `${unknown ? '? ' : ''}${addressAsNames(table, unknown ? glyphs.slice(1) : glyphs)}`;
               copyText(text, 'Copied the address as glyph names.');
             }}
+            aria-label={desk ? 'Copy as names' : undefined}
             className={TOOL}
           >
             <i className="ph-bold ph-text-aa" aria-hidden="true" />
-            Copy as names
+            {desk ? 'Names' : 'Copy as names'}
           </button>
+          {desk && (
+            <a href={`#dial/${encodeURIComponent(system.id)}`} aria-label="Dial at a portal" className={TOOL}>
+              <i className="ph-bold ph-play" aria-hidden="true" />
+              Dial
+            </a>
+          )}
         </div>
-        <a
-          href={`#dial/${encodeURIComponent(system.id)}`}
-          className="h-12 rounded-[14px] border border-ready-emerald-edge bg-ready-emerald-tint text-ready-emerald-text text-[15px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-ready-emerald-tint-hover"
-        >
-          <i className="ph-bold ph-circles-three-plus" aria-hidden="true" />
-          Dial at a portal
-        </a>
+        {!desk && (
+          <a
+            href={`#dial/${encodeURIComponent(system.id)}`}
+            className="h-12 rounded-[14px] border border-ready-emerald-edge bg-ready-emerald-tint text-ready-emerald-text text-[15px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-ready-emerald-tint-hover"
+          >
+            <i className="ph-bold ph-circles-three-plus" aria-hidden="true" />
+            Dial at a portal
+          </a>
+        )}
       </div>
       <p className="m-0 text-[11px] leading-normal text-ink-muted">
         Names, and planet · star system · region, from the No Man’s Sky wiki (the Glyph pages and Portal address).

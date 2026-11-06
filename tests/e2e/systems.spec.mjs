@@ -1,4 +1,11 @@
-import { test, expect, storedState } from './fixtures.mjs';
+import AxeBuilder from '@axe-core/playwright';
+import { test, expect, storedState, logLink } from './fixtures.mjs';
+
+// From lg the Systems list keeps its filter chips behind a Filters button (d01); below lg they're always there.
+const openFilters = async page => {
+  const toggle = page.locator('#sec-systems').getByRole('button', { name: /^Filters/ });
+  if (await toggle.isVisible()) await toggle.click();
+};
 
 test('adds a system with glyphs and a tag, logging the arrival', async ({ page }) => {
   await page.goto('./#systems');
@@ -42,13 +49,17 @@ test('a system opens on its own screen; planets added there persist across a rel
   await expect(page).toHaveURL(/#planet\/sys-ekwa\/pl-/);
   await expect(page.locator('#planetTitle')).toHaveText('Verdant IV');
   await expect(page.locator('#sec-planet')).toContainText('Nothing scanned yet');
-  await page.locator('#sec-planet').getByRole('button', { name: 'Back to Ekwa Nexus' }).click();
+  // Back to the system: the Back button below lg, the breadcrumb from lg (d16).
+  if ((page.viewportSize()?.width ?? 0) >= 1024)
+    await page.getByRole('navigation', { name: 'Planet' }).getByRole('link', { name: 'Ekwa Nexus' }).click();
+  else await page.locator('#sec-planet').getByRole('button', { name: 'Back to Ekwa Nexus' }).click();
   await expect(page).toHaveURL(/#system\/sys-ekwa$/);
 
   await page.reload(); // the address opens the same system
   await expect(page.locator('#systemTitle')).toHaveText('Ekwa Nexus');
   const system = (await storedState(page)).systems.find(item => item.id === 'sys-ekwa');
   expect(system.planets.map(planet => planet.name)).toEqual(['Verdant IV']);
+  if ((page.viewportSize()?.width ?? 0) >= 1024) return; // from lg the list is beside it: no Back (d01)
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page).toHaveURL(/#systems$/);
 });
@@ -59,7 +70,10 @@ test('the Favourites filter shows only favourite systems', async ({ page }) => {
   const details = page.locator('#sec-system');
   await details.getByRole('button', { name: 'Favourite' }).click();
   await expect(details.getByRole('button', { name: 'Favourite' })).toHaveAttribute('aria-pressed', 'true');
-  await details.getByRole('button', { name: 'Back' }).click();
+  // Below lg the detail is its own screen; from lg the list is beside it, its chips behind Filters (d01).
+  if (await details.getByRole('button', { name: 'Back' }).isVisible())
+    await details.getByRole('button', { name: 'Back' }).click();
+  await openFilters(page);
   await page.locator('#systemFavFilter').click();
   await expect(page.locator('#systemFavFilter')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#systemList')).toContainText('Hesper Drift');
@@ -68,6 +82,7 @@ test('the Favourites filter shows only favourite systems', async ({ page }) => {
 
 test('filters by tag', async ({ page }) => {
   await page.goto('./#systems');
+  await openFilters(page);
   await page
     .locator('#systemTagFilters')
     .getByRole('button', { name: /trade-hub/ })
@@ -111,9 +126,10 @@ test('from lg a system opens beside its list, marked there; a phone keeps one sc
     return;
   }
   await expect(list).toBeVisible();
-  expect((await list.boundingBox()).x + 380).toBeLessThanOrEqual((await details.boundingBox()).x);
-  await expect(list.locator('[aria-current="true"]')).toHaveText('Hesper Drift');
-  await expect(list.getByRole('link', { name: 'Systems' })).toHaveAttribute('aria-current', 'page');
+  const listBox = await list.boundingBox();
+  expect(listBox.x + listBox.width + 16).toBeLessThanOrEqual((await details.boundingBox()).x);
+  await expect(list.locator('[aria-current="true"]')).toContainText('Hesper Drift');
+  await expect(logLink(page, 'Systems')).toHaveAttribute('aria-current', 'page');
   await list.locator('#systemList').getByText('Ekwa Nexus').click();
   await expect(details).toContainText('Ekwa Nexus');
   await page.goto('./#systems');
@@ -167,4 +183,37 @@ test('a portal address from Photo Mode, by name: tapped in, read on System detai
   await page.locator('#sec-dial').getByRole('button', { name: 'Next: Bird' }).click();
   await expect(page.locator('#sec-dial').getByRole('img', { name: 'Glyph 2 of 12' })).toBeVisible();
   await expect(page.locator('#tabBarRoot')).toBeHidden();
+});
+
+test('d01, d19, d20: the Systems workbench at 1024, 1440 and 1920 has no text out of its box and passes axe', async ({
+  page
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
+  test.setTimeout(90_000);
+  for (const [width, height] of [
+    [1024, 768],
+    [1440, 900],
+    [1920, 1080]
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('./#system/sys-hesper');
+    const side = page.getByRole('complementary', { name: 'Address and journal' });
+    await expect(side).toBeVisible();
+    // The inspector sits beside the main column when the pane is wide enough (~900px), under it otherwise.
+    const main = await page.locator('#sec-system h1').boundingBox();
+    const aside = await side.boundingBox();
+    if (width === 1024) expect(aside.y).toBeGreaterThan(main.y);
+    else expect(aside.x).toBeGreaterThan(main.x + main.width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    // Nothing spills out of its box sideways in either pane.
+    const spills = await page.evaluate(() =>
+      [...document.querySelectorAll('#sec-systems *, #sec-system *')]
+        .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)
+        .filter(el => !['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(el).overflowX))
+        .map(el => el.outerHTML.slice(0, 120))
+    );
+    expect(spills).toEqual([]);
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+  }
 });

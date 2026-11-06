@@ -1,4 +1,5 @@
-// The Log tab's segmented control, at the top of Systems, Map, Fleet and Notes. It's navigation, not a setting, so the
+// The Log tab's segmented control, at the top of Systems, Map, Fleet and Notes, below lg only: from lg the nav lists
+// them (round 6). It's navigation, not a setting, so the
 // open segment takes the scanner cyan of the active tab (with aria-current), not the emerald of a selected segment.
 import { useSection } from '../shell/section-store.ts';
 
@@ -17,7 +18,7 @@ export function LogSegment() {
   return (
     <nav
       aria-label="Log sections"
-      className="flex gap-1 p-1 rounded-control bg-slate-ground border border-hairline max-w-xl"
+      className="lg:hidden flex gap-1 p-1 rounded-control bg-slate-ground border border-hairline max-w-xl"
     >
       {SEGMENTS.map(({ section: segment, label }) => (
         <a

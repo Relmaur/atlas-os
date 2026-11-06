@@ -1,8 +1,9 @@
 // The main page's header below lg, on the screens that don't draw their own: the logo (back to Home), Settings, the
-// session, and Export and Import (click, or drop a file). From lg the rail takes over and only the search stays mounted
-// here, shown as a floating panel when the rail's key opens it.
+// session, and Export and Import (click, or drop a file). From lg the command bar (round 6) floats along the top
+// instead, and the search mounted here opens as the Ctrl K palette.
 import { useState } from 'react';
 import { exportState, importState } from '../../app/backup.ts';
+import { CommandBar } from './CommandBar.tsx';
 import { Search } from './Search.tsx';
 import { showSection } from './section-store.ts';
 import { openSession } from '../session/sheet-store.ts';
@@ -27,6 +28,7 @@ export function Header() {
       </a>
 
       <Search />
+      <CommandBar />
 
       <div className="lg:hidden ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Settings (More) has no tab: below lg it sits behind this gear. Search is on the tab bar's key. */}

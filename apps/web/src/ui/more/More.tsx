@@ -22,12 +22,13 @@ const TOP_BUTTON =
   'w-11 h-11 rounded-control bg-slate-ground border border-control-edge grid place-items-center text-ink hover:border-control-edge-hover';
 // Handled in shell/Sidebar.tsx and shell/Search.tsx. Shown from lg, where there's usually a keyboard.
 const SHORTCUTS: [keys: string, what: string][] = [
-  ['/ or ⌘K', 'Search'],
+  ['/ or Ctrl K', 'Search'],
+  ['Ctrl \\', 'Open or close the sidebar'],
   ['g then h', 'Go to Home'],
   ['g then l', 'Go to Log'],
   ['g then r', 'Go to Runs'],
   ['g then c', 'Go to the Codex'],
-  ['n', 'New note, while in Log'],
+  ['n', 'Log a system, in Systems; a new note elsewhere in Log'],
   ['Esc', 'Close the top panel']
 ];
 const ROW = 'w-full flex items-center gap-3 min-h-[60px] px-4 py-3 text-left';

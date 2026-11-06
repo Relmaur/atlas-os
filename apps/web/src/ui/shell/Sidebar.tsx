@@ -1,16 +1,20 @@
-// The left rail from lg (design/desktop-direction): the search key, the same four tabs as the phone's pill, and
-// Settings at the foot. Below lg the floating tab bar takes over. It also holds the keyboard shortcuts.
+// The desktop nav from lg (round 6: WorkbenchNav), and the keyboard shortcuts. Below lg the floating tab bar takes
+// over.
 import { useEffect } from 'react';
 import { newNote } from '../notes/note-nav.ts';
-import { toggleSearch, useSearchOpen } from './Search.tsx';
-import { showSection, useSection } from './section-store.ts';
-import { PrimaryTabs, tabOf } from './TabBar.tsx';
+import { openSystemEditor } from '../systems/panel-store.ts';
+import { openPlanetSheet } from '../systems/planet-sheet-store.ts';
+import { startNav } from './nav-store.ts';
+import { showSection, useSection, useSectionParam } from './section-store.ts';
+import { tabOf } from './TabBar.tsx';
+import { WorkbenchNav } from './WorkbenchNav.tsx';
 
 const CHORD_MS = 1000;
+const SYSTEMS = new Set(['systems', 'system', 'planet']);
 
-// g then a letter jumps to a tab; n starts a note in Log. Never while typing or with a modifier held, so the browser's
+// g then a letter jumps to a tab; n logs a system in Systems and starts a note elsewhere in Log. Never while typing or with a modifier held, so the browser's
 // own shortcuts and every text field keep working.
-function useShortcuts(section: string) {
+function useShortcuts(section: string, param: string) {
   useEffect(() => {
     let chordAt = 0;
     const onKey = (event: KeyboardEvent) => {
@@ -27,6 +31,13 @@ function useShortcuts(section: string) {
         else if (key === 'c') location.assign('wiki/');
       } else if (key === 'g') {
         chordAt = performance.now();
+      } else if (key === 'e' && section === 'system' && param) {
+        openSystemEditor(param); // "Edit (E)" on System detail (d01)
+      } else if (key === 'e' && section === 'planet' && param.includes('/')) {
+        const [systemId = '', planetId = ''] = param.split('/');
+        openPlanetSheet(systemId, planetId); // "Edit  E" on a planet (d16)
+      } else if (key === 'n' && SYSTEMS.has(section)) {
+        openSystemEditor(); // "Log system  N" on the Systems pane (round 6, d01)
       } else if (key === 'n' && tabOf(section) === 'log') {
         newNote();
       }
@@ -35,37 +46,12 @@ function useShortcuts(section: string) {
     return () => {
       document.removeEventListener('keydown', onKey);
     };
-  }, [section]);
+  }, [section, param]);
 }
 
 export function Sidebar() {
   const section = useSection();
-  const searching = useSearchOpen();
-  useShortcuts(section);
-  return (
-    <nav aria-label="Primary" className="rail">
-      <button
-        type="button"
-        onClick={toggleSearch}
-        aria-label="Search and quick actions"
-        title="Search (/ or ⌘K)"
-        aria-expanded={searching}
-        className="search-key"
-      >
-        <i className="ph-bold ph-magnifying-glass" aria-hidden="true" />
-      </button>
-      <PrimaryTabs settingsApart />
-      <a
-        href="#more"
-        aria-current={section === 'more' ? 'page' : undefined}
-        title="Settings"
-        className="tab-item rail-settings"
-      >
-        <span className="tab-icon">
-          <i className="ph-bold ph-gear-six" aria-hidden="true" />
-        </span>
-        <span>Settings</span>
-      </a>
-    </nav>
-  );
+  useShortcuts(section, useSectionParam());
+  useEffect(startNav, []);
+  return <WorkbenchNav />;
 }

@@ -157,6 +157,18 @@ input[type='search']::-webkit-search-cancel-button {
 
 /* Shell: navigation */
 
+.search-foot {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 16px;
+  border-top: 1px solid var(--color-hairline);
+  font-size: 12px;
+  color: var(--color-ink-muted);
+}
+
 /* Shell: search (design 19). From md the panel drops down under the header's field; on a phone it fills the screen. */
 .search-panel {
   position: absolute;
@@ -1334,27 +1346,9 @@ label.list-row:active {
     right: calc(50vw - 320px);
   }
 }
-/* From 1024: the left rail. The header collapses, and only the search it holds shows, floating beside the rail. */
+/* The Codex page's rail, from 1024 (wiki/index.html keeps a static copy of the old rail until its own round-6 board,
+   d08; the main page uses WorkbenchNav). */
 @media (min-width: 1024px) {
-  .app-header {
-    position: static;
-    border: 0;
-    background: none;
-    backdrop-filter: none; /* the build adds the -webkit- twin; it would trap the fixed panel inside the header */
-  }
-  body.search-open #globalSearch {
-    display: block;
-    position: fixed;
-    z-index: 50;
-    top: 1rem;
-    left: calc(88px + 2rem);
-    width: min(640px, calc(100vw - 88px - 4rem));
-    max-width: none;
-    margin: 0;
-  }
-  body.search-open .app-main {
-    opacity: 0.35;
-  }
   .rail {
     flex: 1;
     display: flex;
@@ -1382,24 +1376,385 @@ label.list-row:active {
   }
 }
 
-/* From 1024: a detail screen beside its list (section-store.ts sets data-pane). The list keeps its own scroll, so it
-   stays where it was while details change. */
+/* The Workbench (round 6), from 1024. Everything floats 20px (--spacing-float) from the window's edges: the nav on the
+   left, the command bar on top, and below it the panes, 16px apart. Floating panels are glass with one 1px edge, 12px
+   corners and 6px padding, so what sits inside them has 6px corners (inner = outer − padding) and no border of its
+   own. Phones and tablets keep their layout: nothing here applies below 1024. */
+.command-bar {
+  display: none;
+}
 @media (min-width: 1024px) {
-  body:is([data-pane='systems'], [data-pane='gear'], [data-pane='notes'], [data-pane='runs'], [data-pane='guides'])
-    .app-main {
+  body {
+    --workbench-left: calc(var(--spacing-float) + var(--spacing-rail) + var(--spacing-pane-gap));
+    --workbench-top: calc(var(--spacing-float) + var(--spacing-command) + var(--spacing-pane-gap));
+  }
+  body[data-nav='open'] {
+    --workbench-left: calc(var(--spacing-float) + var(--spacing-sidebar) + var(--spacing-pane-gap));
+  }
+  .workbench-nav,
+  .command-bar {
+    background: rgba(11, 19, 37, 0.82);
+    backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--color-nav-edge);
+    border-radius: var(--radius-panel);
+  }
+  .app-header {
+    position: static;
+    border: 0;
+    background: none;
+    backdrop-filter: none; /* the build adds the -webkit- twin; it would trap the fixed bar inside the header */
+  }
+  /* The command bar says what's live, so the session strip above the content goes. */
+  #sessionBarRoot {
+    display: none;
+  }
+
+  /* The nav: a 56px rail, or a 252px sidebar that pushes the panes. */
+  .workbench-nav {
+    position: fixed;
+    z-index: 45;
+    left: var(--spacing-float);
+    top: var(--spacing-float);
+    bottom: var(--spacing-float);
+    width: var(--spacing-rail);
+    padding: var(--spacing-panel-pad);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .workbench-nav.is-open {
+    width: var(--spacing-sidebar);
+  }
+  .nav-groups {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .is-open .nav-groups {
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .workbench-nav:not(.is-open) .nav-group::before {
+    content: '';
+    height: 1px;
+    margin: 6px;
+    background: rgba(148, 163, 184, 0.14);
+  }
+  .nav-link {
+    position: relative;
     display: grid;
-    grid-template-columns: 380px minmax(0, 1fr);
-    column-gap: 32px;
-    align-items: start;
+    place-items: center;
+    height: 40px;
+    flex: none;
+    border: 0;
+    border-radius: calc(var(--radius-panel) - var(--spacing-panel-pad));
+    background: transparent;
+    color: var(--color-ink-label);
+    font: 500 13px/1 var(--font-sans);
+    text-decoration: none;
+    cursor: pointer;
   }
-  body[data-pane] #storageBannerRoot,
-  body[data-pane] #sessionBarRoot {
-    grid-column: 1 / -1;
+  .nav-link:hover {
+    color: var(--color-ink);
+    background: rgba(148, 163, 184, 0.07);
+  }
+  .nav-link[aria-current='page'] {
+    color: var(--color-quantity-cyan);
+    background: var(--color-scanner-cyan-tint);
+    box-shadow: inset 0 0 0 1px var(--color-scanner-cyan-edge);
+  }
+  .nav-link[aria-current='page'] .nav-icon {
+    color: var(--color-scanner-cyan-glow);
+  }
+  .nav-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    line-height: 0;
+  }
+  .nav-dot,
+  .nav-dot-inline {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-scanner-cyan-glow);
+  }
+  .nav-dot {
+    position: absolute;
+    top: -3px;
+    right: -5px;
+    box-shadow: 0 0 0 2px var(--color-panel);
+  }
+  .nav-dot-inline {
+    flex: none;
+    margin-left: auto;
+  }
+  .nav-search {
+    height: 48px;
+    margin-bottom: 8px;
+    background: rgba(148, 163, 184, 0.07);
+  }
+  .nav-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  /* The rail's names: a tip beside the icon on hover and keyboard focus. Screen readers have the link's own name. */
+  .nav-tip {
+    position: absolute;
+    left: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 60;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: var(--radius-tag);
+    background: var(--color-slate-ground);
+    border: 1px solid var(--color-control-edge);
+    color: var(--color-ink);
+    font: 12px/1 var(--font-sans);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .nav-link:hover .nav-tip,
+  .nav-link:focus-visible .nav-tip {
+    display: flex;
+  }
+  .nav-tip .nav-count {
+    margin: 0;
+  }
+  .nav-count {
+    margin-left: auto;
+    font: 500 11px/1 var(--font-mono);
+    color: var(--color-ink-label);
+  }
+  .nav-dot-inline + .nav-count,
+  .nav-dot-inline + .sr-only + .nav-count {
+    margin-left: 6px;
+  }
+  .nav-kbd {
+    flex: none;
+    padding: 3px 6px;
+    border-radius: var(--radius-tag);
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--color-ink-muted);
+    font: 500 11px/1 var(--font-mono);
+  }
+  /* Open: a row per link, with names, counts and section labels. */
+  .is-open .nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    height: 32px;
+    padding: 0 10px;
+    color: var(--color-ink-soft);
+    text-align: left;
+  }
+  .is-open .nav-link[aria-current='page'] {
+    color: var(--color-scanner-cyan-text);
+  }
+  .is-open .nav-search {
+    height: 36px;
+    margin: 0 0 4px;
+    color: var(--color-ink-muted);
+  }
+  .is-open .nav-search .nav-kbd {
+    margin-left: auto;
+  }
+  .nav-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .is-open .nav-sub {
+    height: 28px;
+    padding-left: 36px;
+    font-size: 12.5px;
+    color: var(--color-ink-muted);
+  }
+  .nav-sub > i {
+    font-size: 13px;
+  }
+  .nav-section {
+    padding: 12px 10px 4px;
+    font: 600 10px/1 var(--font-sans);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-label);
+  }
+  .nav-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 44px;
+    padding-left: 10px;
+  }
+  .is-open .nav-head .nav-toggle {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+  }
+  .is-open .nav-foot {
+    padding-top: 4px;
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+  }
+  /* A short window: the rail's links tighten so every one still fits without a scrollbar (which would clip the tips). */
+  @media (max-height: 880px) {
+    .workbench-nav:not(.is-open) .nav-link {
+      height: 34px;
+    }
+    .workbench-nav:not(.is-open) .nav-search {
+      height: 40px;
+      margin-bottom: 4px;
+    }
+    .workbench-nav:not(.is-open) .nav-group::before {
+      margin: 4px 6px;
+    }
+  }
+
+  /* The command bar: search on the left, what's live on the right. */
+  .command-bar {
+    position: fixed;
+    z-index: 44;
+    top: var(--spacing-float);
+    right: var(--spacing-float);
+    left: calc(var(--workbench-left) - 0px);
+    height: var(--spacing-command);
+    padding: var(--spacing-panel-pad);
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  .command-search {
+    flex: 0 1 420px;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: calc(var(--radius-panel) - var(--spacing-panel-pad));
+    background: rgba(148, 163, 184, 0.07);
+    color: var(--color-ink-muted);
+    font: 14px/1 var(--font-sans);
+    cursor: text;
+  }
+  .command-search:hover {
+    background: rgba(148, 163, 184, 0.1);
+  }
+  .command-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 100%;
+    padding: 0 12px;
+    border: 0;
+    border-radius: calc(var(--radius-panel) - var(--spacing-panel-pad));
+    background: transparent;
+    color: var(--color-ink-soft);
+    font: 12.5px/1 var(--font-sans);
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .command-item:hover {
+    background: rgba(148, 163, 184, 0.07);
+  }
+  .command-item .truncate {
+    max-width: 240px;
+  }
+  .command-divider {
+    flex: none;
+    width: 1px;
+    height: 24px;
+    background: rgba(148, 163, 184, 0.16);
+  }
+  .command-short {
+    display: none;
+  }
+  @media (max-width: 1279.98px) {
+    .command-bar .command-name {
+      display: none;
+    }
+    .command-short {
+      display: inline;
+    }
+  }
+
+  /* The content: below the command bar and beside the nav. A screen of its own scrolls in one pane; a list with its
+     detail (body[data-pane], section-store.ts) gets two, each with its own scroll. The panes are plain scrolling
+     boxes, never fixed, transformed or blurred: dialogs and sheets mounted inside them are position: fixed and must
+     stay relative to the window and above the nav. */
+  main.app-main {
+    flex: 1;
+    min-width: 0;
+    height: calc(100dvh - var(--workbench-top) - var(--spacing-float));
+    margin: var(--workbench-top) var(--spacing-float) var(--spacing-float) var(--workbench-left);
+    padding: 24px;
+    overflow-y: auto;
+    background: rgba(11, 19, 37, 0.86);
+    border: 1px solid var(--color-nav-edge);
+    border-radius: var(--radius-panel);
+  }
+  /* Single-column screens sit in the middle of the pane. */
+  :is(#sessionRoot, #planRoot, #craftsRoot, #frontierRoot, #cardsRoot) > * {
+    margin-inline: auto;
+  }
+
+  /* List · detail: the list is 340px (300 with the sidebar open, 380 from 1600), the detail takes the rest. */
+  body:is([data-pane='systems'], [data-pane='gear'], [data-pane='notes'], [data-pane='runs'], [data-pane='guides'])
+    main.app-main {
+    --list-width: 340px;
+    display: grid;
+    grid-template-columns: var(--list-width) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    column-gap: var(--spacing-pane-gap);
+    padding: 0;
+    overflow: hidden;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  body[data-nav='open'] main.app-main {
+    --list-width: 300px;
+  }
+  @media (min-width: 1600px) {
+    body:is([data-pane='systems'], [data-pane='gear'], [data-pane='notes'], [data-pane='runs'], [data-pane='guides'])
+      main.app-main {
+      --list-width: 380px;
+    }
+  }
+  body[data-pane] #storageBannerRoot:empty {
+    display: none;
   }
   body:is([data-pane='systems'], [data-pane='gear'], [data-pane='notes'], [data-pane='runs'], [data-pane='guides'])
-    .book-section {
+    :is(.book-section:not(.hidden), #panePlaceholder) {
     grid-column: 2;
-    grid-row: 3;
+    grid-row: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px;
+    background: rgba(11, 19, 37, 0.86);
+    border: 1px solid var(--color-nav-edge);
+    border-radius: var(--radius-panel);
   }
   body[data-pane='systems'] #sec-systems,
   body[data-pane='gear'] #sec-gear,
@@ -1408,11 +1763,13 @@ label.list-row:active {
   body[data-pane='guides'] #sec-guides {
     display: block;
     grid-column: 1;
-    position: sticky;
-    top: 2rem;
-    max-height: calc(100dvh - 4rem);
+    grid-row: 1;
+    min-height: 0;
     overflow-y: auto;
-    padding: 2px; /* room for the cards' focus rings, which the scroll box would clip */
+    padding: 18px;
+    background: rgba(11, 19, 37, 0.86);
+    border: 1px solid var(--color-nav-edge);
+    border-radius: var(--radius-panel);
   }
   body:is(
       [data-section='systems'],
@@ -1422,24 +1779,115 @@ label.list-row:active {
       [data-section='guides']
     )
     #panePlaceholder {
-    display: block;
-    grid-column: 2;
-    grid-row: 3;
-    padding-top: 6rem;
+    display: grid;
+    place-items: center;
     text-align: center;
     color: var(--color-ink-muted);
     font-size: var(--text-sub);
   }
-  /* What's open in the list. */
-  :is(#sec-systems, #sec-gear) li:has([aria-current='true']) > * {
+  /* What's open in the list. Systems marks its own rows (d01). */
+  #sec-gear li:has([aria-current='true']) > * {
     border-color: var(--color-scanner-cyan-edge);
+  }
+  /* The Systems list (d01): rows run edge to edge, the header stays and the rows scroll. */
+  body[data-pane='systems'] #sec-systems {
+    padding: 0;
+    overflow: hidden;
+  }
+  #sec-systems > #systemsRoot {
+    height: 100%;
+  }
+  /* System detail (d01): the orbit band runs edge to edge, so the pane has no padding of its own. */
+  body[data-pane='systems'] :is(#sec-system, #sec-planet):not(.hidden) {
+    padding: 0;
   }
   #sec-notes li a[aria-current='true'] {
     background: var(--color-scanner-cyan-tint);
   }
-  /* Single-column screens sit in the middle of the space, not against the rail. */
-  :is(#sessionRoot, #planRoot, #craftsRoot, #frontierRoot, #cardsRoot) > * {
+
+  /* The detail pane's own primitive: main · inspector side by side, folding the inspector under the main column when
+     the pane is narrower than ~900px (d01, d02, d19). */
+  .detail-pane {
+    container-type: inline-size;
+  }
+  .detail-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+  .detail-side {
+    border-top: 1px solid var(--color-hairline);
+  }
+  @container (min-width: 900px) {
+    .detail-split {
+      grid-template-columns: minmax(0, 1fr) clamp(320px, 30%, 420px);
+      align-content: stretch;
+    }
+    .detail-side {
+      border-top: 0;
+      border-left: 1px solid var(--color-hairline);
+    }
+  }
+  /* Reading text never runs wider than 720px. */
+  .reading {
+    max-width: 720px;
+  }
+
+  /* Ctrl K: the search as a 720px palette over the dimmed workbench (d15). */
+  /* The header holds the search, so it rises over the nav and panes while the palette is open; the scrim is a
+     spread shadow around the palette, which a click goes straight through (a click outside closes it). */
+  body.search-open .app-header {
+    z-index: 70;
+  }
+  body.search-open #globalSearch {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    z-index: 65;
+    top: 12vh;
+    left: 0;
+    right: 0;
     margin-inline: auto;
+    width: min(720px, calc(100vw - 2 * var(--spacing-float)));
+    max-width: none;
+    max-height: calc(88vh - 40px);
+    overflow: hidden;
+    background: rgba(11, 19, 37, 0.97);
+    border: 1px solid var(--color-nav-edge);
+    border-radius: var(--radius-panel);
+    box-shadow:
+      0 0 0 100vmax var(--color-scrim),
+      0 24px 64px -12px rgba(0, 0, 0, 0.85);
+  }
+  body.search-open #globalSearchInput {
+    height: 60px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 17px;
+    padding-left: 52px;
+  }
+  body.search-open #globalSearch > div:first-child i {
+    left: 20px;
+    font-size: 20px;
+  }
+  body.search-open #globalSearchPanel {
+    position: static;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    margin: 0;
+    padding: 12px 16px 16px;
+    border: 0;
+    border-top: 1px solid var(--color-hairline);
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+  body.search-open .search-foot {
+    display: flex;
   }
 }
 
