@@ -6,6 +6,11 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.26.1] - 2026-11-05
+### Fixed
+- The planet sheet no longer scrolls sideways on iPhone: the "Discovered on" date field fits its column.
+- A biome written as the game shows it, "Frostbound Planet" or "Icy Moon", reads as its biome: its colour, weather suggestions and resource chips. The text stays as typed.
+
 ## [3.26.0] - 2026-11-05
 ### Added
 - Planets hold what a scan shows: the description ("Frostbound"), planet or moon, biome, weather, sentinels, flora, fauna, the resources level, the resources it lists, temperature, and who discovered it and when. Every field takes the words the game shows.

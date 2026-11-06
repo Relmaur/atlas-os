@@ -502,7 +502,7 @@ function PlanetSheet({
         <form
           key={session}
           onSubmit={submit}
-          className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] lg:pb-6 flex flex-col gap-4"
+          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] lg:pb-6 flex flex-col gap-4"
         >
           <div data-sheet-grab className="sticky top-0 z-10 -mx-5 px-5 pt-3 lg:pt-5 pb-1 bg-slate-deep">
             <SheetGrab onClose={onClose} label="Close planet" />

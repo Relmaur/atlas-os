@@ -291,7 +291,7 @@ export function PlanetScanFields({ planet, facts }: { planet: Planet | undefined
           cls && cls !== 'other' ? <Pill tone={weatherTone(cls)}>{`${WEATHER_LABELS[cls]} weather`}</Pill> : undefined
         }
       />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
         <WordField
           label="Resources"
           name="abundance"
@@ -327,11 +327,11 @@ export function PlanetScanFields({ planet, facts }: { planet: Planet | undefined
         items={resources}
         onItems={setResources}
         biome={(() => {
-          const entry = facts?.biomes.find(item => item.name.toLowerCase() === biome.trim().toLowerCase());
+          const entry = biomeFor(facts, biome);
           return entry ? { name: entry.name, resources: entry.resources ?? [] } : null;
         })()}
       />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
         <label className={LABEL_FIELD}>
           Temperature, °C
           <input
@@ -346,7 +346,13 @@ export function PlanetScanFields({ planet, facts }: { planet: Planet | undefined
         </label>
         <label className={LABEL_FIELD}>
           Discovered on
-          <input name="discoveredOn" type="date" defaultValue={planet?.discoveredOn ?? ''} className={FIELD} />
+          {/* iOS draws a date field at its own minimum width and centred: without appearance it fits its column. */}
+          <input
+            name="discoveredOn"
+            type="date"
+            defaultValue={planet?.discoveredOn ?? ''}
+            className={`${FIELD} min-w-0 block appearance-none text-left`}
+          />
         </label>
       </div>
       <label className={LABEL_FIELD}>

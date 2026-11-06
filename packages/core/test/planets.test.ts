@@ -106,6 +106,8 @@ const FACTS: PlanetFacts = {
 test('a prefix names its biome only when one biome uses it; the player picks otherwise', () => {
   expect(biomeFor(FACTS, ' frostbound ')?.name).toBe('Frozen');
   expect(biomeFor(FACTS, 'Frozen')?.name).toBe('Frozen');
+  expect(biomeFor(FACTS, 'Frostbound Planet')?.name).toBe('Frozen'); // as the game shows it
+  expect(biomeFor(FACTS, 'frozen moon')?.name).toBe('Frozen');
   expect(biomeFor(FACTS, 'Abandoned')).toBeNull();
   expect(biomeFor(FACTS, 'Frosty')).toBeNull();
   expect(biomeFor(null, 'Frostbound')).toBeNull();
@@ -118,6 +120,7 @@ test('weather severity comes from the biome’s own table, then any biome’s; s
   expect(weatherClass(FACTS, 'Frozen', 'Made-up Drizzle')).toBeNull();
   expect(weatherWords(FACTS, 'Frozen')).toEqual(['Icy', 'Icy Blasts', 'Deep Freeze']);
   expect(weatherWords(FACTS, 'My own words')).toEqual([]);
+  expect(weatherClass(FACTS, 'Frostbound Planet', 'Icy Blasts')).toBe('normal'); // an older log's biome text
   expect(sentinelLevel(FACTS, 'few')).toBe('low');
   expect(sentinelLevel(FACTS, 'Frenzied')).toBe('aggressive');
   expect(sentinelLevel(FACTS, '')).toBeNull();

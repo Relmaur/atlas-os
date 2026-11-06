@@ -221,8 +221,10 @@ export function parseLifeWords(body: string): { flora: string[]; fauna: string[]
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /** The biome a name stands for: its own name ("Frozen") or a prefix only one biome uses ("Frostbound"). */
-export function biomeFor(facts: PlanetFacts | null, word: string): Biome | null {
-  if (!facts || !word.trim()) return null;
+export function biomeFor(facts: PlanetFacts | null, typed: string): Biome | null {
+  // The game shows "Frostbound Planet" or "Icy Moon": the body's word isn't part of the prefix.
+  const word = typed.trim().replace(/\s+(?:planet|moon)$/i, '');
+  if (!facts || !word) return null;
   const byName = facts.biomes.find(biome => same(biome.name, word));
   if (byName) return byName;
   const matches = facts.biomes.filter(biome => biome.descriptors.some(name => same(name, word)));
@@ -235,7 +237,7 @@ export function weatherClass(facts: PlanetFacts | null, biome: string, weather: 
   if (!facts || !weather.trim()) return null;
   const find = (entry: Biome) =>
     (['clear', 'normal', 'extreme'] as const).find(cls => entry.weather[cls].some(word => same(word, weather)));
-  const own = facts.biomes.find(entry => same(entry.name, biome));
+  const own = biomeFor(facts, biome);
   const fromOwn = own && find(own);
   if (fromOwn) return fromOwn;
   for (const entry of facts.biomes) {
@@ -247,7 +249,7 @@ export function weatherClass(facts: PlanetFacts | null, biome: string, weather: 
 
 /** The weather words to offer for a biome: its own first, by severity. */
 export function weatherWords(facts: PlanetFacts | null, biome: string): string[] {
-  const own = facts?.biomes.find(entry => same(entry.name, biome));
+  const own = biomeFor(facts, biome);
   if (!own) return [];
   return unique([...own.weather.clear, ...own.weather.normal, ...own.weather.extreme, ...own.weather.other]);
 }
