@@ -9,6 +9,7 @@ import { setFactsForTests } from '../gear/facts-store.ts';
 import { Systems } from './Systems.tsx';
 import { getPanel, setSystemFilter } from './panel-store.ts';
 import { setWide } from '../test-media.ts';
+import { setNavOpen } from '../shell/nav-store.ts';
 
 const ago = (hours: number) => new Date(Date.now() - hours * HOUR_MS).toISOString();
 
@@ -149,6 +150,22 @@ test('d01: on the Workbench each system is one row: star, name (★ for a favour
   expect(document.getElementById('systemTagFilters')).not.toBeNull();
   expect(screen.getByRole('combobox', { name: 'Sort' }).textContent).toContain('Recent');
   expect(screen.getByPlaceholderText('Filter 3 systems')).toBeTruthy();
+  // With the sidebar open the column is tighter: the field and the button say it in a word.
+  act(() => {
+    setNavOpen(true);
+  });
+  expect(screen.getByPlaceholderText('Filter')).toBeTruthy();
+  expect(screen.getByRole('button', { name: /^Log N$/ })).toBeTruthy();
+  act(() => {
+    setNavOpen(false);
+  });
   await userEvent.click(screen.getByRole('button', { name: /^Log system/ }));
   expect(getPanel()).toMatchObject({ open: true, mode: 'edit', systemId: null });
+});
+
+test('d01: from ten systems the filter field drops the word, so its placeholder is never cut off', () => {
+  setWide(true);
+  setAppState(buildState({ systems: Array.from({ length: 12 }, (_, i) => ({ id: `s${String(i)}`, name: `S${String(i)}` })) }));
+  render(<Systems />);
+  expect(screen.getByPlaceholderText('Filter 12')).toBeTruthy();
 });

@@ -264,3 +264,12 @@ test('d14: the system editor panel at 1024, 1440 and 1920 pairs its fields, keep
     expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
   }
 });
+
+test('d19: the orbit band draws when a system opens after coming from another screen', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'the band is the Workbench’s');
+  await page.goto('./#home');
+  await page.getByRole('link', { name: /^Systems/ }).first().click();
+  await page.locator('#systemList').getByRole('button', { name: /Hesper Drift/ }).click();
+  const band = page.getByRole('region', { name: 'Orbit diagram' });
+  await expect(band.locator('svg').first()).toBeVisible();
+});

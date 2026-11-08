@@ -6,6 +6,11 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.36.1] - 2026-11-07
+### Fixed
+- On a computer, a system's orbit diagram draws when you open it after coming from another screen; before, the band stayed empty until a reload.
+- On a computer, the Systems filter field no longer cuts off its placeholder: it reads "Filter" with the sidebar open, and "Filter 12" rather than "Filter 12 systems" from ten systems.
+
 ## [3.36.0] - 2026-11-06
 ### Added
 - The sidebar on a computer counts the systems on your Map, the Codex's articles and the six guides, and Favourites under Systems opens the list with only your favourites.

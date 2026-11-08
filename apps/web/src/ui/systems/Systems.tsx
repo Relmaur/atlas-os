@@ -39,6 +39,15 @@ const SHORT_SORTS: Record<keyof typeof SORTS, string> = {
   region: 'Region'
 };
 const plural = (n: number, word: string) => `${String(n)} ${word}${n === 1 ? '' : 's'}`;
+
+// The list column is 300px at every width, so the field's room is fixed: ~104px of text with the rail, ~64px with
+// the sidebar open. "Filter 3 systems" fits the first, "Filter 12 systems" no longer does, and with the sidebar open
+// the count is already on its Systems badge. Measured at 13px; a placeholder must never be cut off.
+function filterPlaceholder(count: number, navOpen: boolean): string {
+  if (navOpen) return 'Filter';
+  return count < 10 ? `Filter ${plural(count, 'system')}` : `Filter ${count.toLocaleString()}`;
+}
+
 const TAG_LIMIT = 6;
 
 export function Systems() {
@@ -399,7 +408,7 @@ function SystemRows({
               onChange={event => {
                 setSystemFilter({ q: event.target.value });
               }}
-              placeholder={`Filter ${plural(systems.length, 'system')}`}
+              placeholder={filterPlaceholder(systems.length, navOpen)}
               aria-label="Search systems"
               className="w-full h-[38px] rounded-control border border-control-edge focus:border-scanner-cyan-edge-strong bg-slate-ground pl-9 pr-3 text-[13px] text-ink-bright placeholder:text-ink-disabled focus:outline-hidden"
             />

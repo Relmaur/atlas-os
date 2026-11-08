@@ -1,12 +1,13 @@
 // An element's width as it changes, for things drawn for the room they have (System detail's band, a note's
 // Markdown beside its preview) rather than stretched.
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useState, type RefCallback } from 'react';
 
-export function useWidth<T extends HTMLElement>(): [RefObject<T | null>, number] {
-  const ref = useRef<T>(null);
+// A callback ref, not a mount-time effect: the element can arrive after the component mounts (System detail is
+// mounted before any system is open, so its band only appears when one opens), and a one-shot effect would never
+// measure it, leaving the width at 0 and the diagram undrawn until a reload.
+export function useWidth<T extends HTMLElement>(): [RefCallback<T>, number] {
   const [width, setWidth] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
+  const ref = useCallback((el: T | null) => {
     if (!el) return;
     const measure = () => {
       setWidth(Math.round(el.clientWidth));
