@@ -48,7 +48,7 @@ test('d04: on the Workbench the chain has its own pane, the galaxies in the orde
   expect(screen.queryByRole('navigation', { name: 'Log sections' })).toBeNull();
 });
 
-test('d05: one galaxy has the map, its tools at the top, and the selected system with the galaxy’s list beside it', async () => {
+test('d05: one galaxy has the map and its tools, and the selected system with the galaxy’s list beside it', async () => {
   setWide(true);
   param = 'Euclid';
   render(<MapScreen />);
@@ -56,9 +56,13 @@ test('d05: one galaxy has the map, its tools at the top, and the selected system
   const side = screen.getByRole('complementary', { name: /^Euclid: the selected system/ });
   expect(within(side).getByText('Selected')).toBeTruthy();
   expect(within(side).getByRole('heading', { name: 'Ekwa Nexus' })).toBeTruthy(); // a base is picked first
-  await userEvent.click(within(side).getByRole('button', { name: 'Hesper Drift' }));
+  await userEvent.click(within(side).getByRole('button', { name: /Hesper Drift/ }));
   expect(within(side).getByRole('heading', { name: 'Hesper Drift' })).toBeTruthy();
-  expect(within(side).getByRole('button', { name: 'Hesper Drift' }).getAttribute('aria-pressed')).toBe('true');
+  expect(
+    within(side)
+      .getByRole('button', { name: /Hesper Drift/ })
+      .getAttribute('aria-pressed')
+  ).toBe('true');
 });
 
 test('below lg the Map is one column, with Log’s segment (designs 30 and 31)', () => {

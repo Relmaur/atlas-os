@@ -3,7 +3,8 @@
 // a turning ring marks where they are, and the next galaxies wait as dashed outlines. The centre counts how far into
 // the 256 they are. Motion stops for reduced motion (theme.css, .chain-pulse and .chain-here).
 import type { Galaxy } from '@atlas/core/location';
-import { spiralDots, tide, type Journey } from '@atlas/core/map';
+import { tide, type Journey } from '@atlas/core/map';
+import { GalaxySpiral } from './GalaxySpiral.tsx';
 import { STAR_CLASSES } from '@atlas/core/systems-model';
 
 const S = 358;
@@ -78,16 +79,7 @@ export function ChainChart({ trip, next, bare = false }: { trip: Journey; next: 
           return (
             <a key={galaxy.name} href={`#map/${encodeURIComponent(galaxy.name)}`} aria-label={`Open ${galaxy.name}`}>
               <circle cx={x} cy={y} r={r + 3} fill="#070c18" stroke={colour} strokeOpacity={0.55} />
-              {spiralDots(galaxy.name, galaxy.type, Math.round(80 + (90 * r) / 30)).map((dot, k) => (
-                <circle
-                  key={k}
-                  cx={x + dot.x * r}
-                  cy={y + dot.y * r}
-                  r={dot.r}
-                  fill={colour}
-                  fillOpacity={0.55 * dot.o}
-                />
-              ))}
+              <GalaxySpiral name={galaxy.name} type={galaxy.type} cx={x} cy={y} r={r} colour={colour} />
               <circle cx={x} cy={y} r={r * 0.06 + 0.5} fill="#fff7d6" fillOpacity={0.8} />
               {galaxy.placed.map(p => (
                 <circle

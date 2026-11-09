@@ -1048,6 +1048,22 @@ label.list-row:active {
   }
 }
 
+/* One galaxy (round 7, c17): with reduced motion a zoom is a 120 ms fade instead of a camera move. The global rule
+   above zeroes every animation, so this one states its own duration. */
+.map-fade {
+  animation: map-fade 120ms ease-out;
+}
+@keyframes map-fade {
+  from {
+    opacity: 0.15;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-fade {
+    animation-duration: 120ms !important;
+  }
+}
+
 /* The Traveller Card (05, 29). The flip turns the card in 3D; tilt turns the whole card (owner, 2026-10-31), with the
    art and the class badge floating above it and a light sweeping across, from --tilt-x and --tilt-y (each ±0.5) set by
    the screen. The art's pulses run along each line (.cf); the faint base is .cb. The

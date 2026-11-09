@@ -1,5 +1,5 @@
 // Map (designs 30 and 31): `#map` is the galaxy chain, every galaxy the player has reached in the order they reached
-// it, with the next ones waiting; `#map/<galaxy>` is one galaxy, the player's systems magnified at their true places.
+// it, with the next ones waiting; `#map/<galaxy>` is one galaxy, the player's systems at true scale (round 7, c17).
 // Distances are light years from the galaxy's centre, by the wiki's region size (a cited fact).
 import { useEffect } from 'react';
 import { getFact } from '@atlas/core/facts';
@@ -38,7 +38,11 @@ export function MapScreen() {
     ? [
         galaxy.name,
         plural(galaxy.placed.length + galaxy.unplaced, 'system'),
-        galaxy.deepest !== null && lyPerRegion ? `deepest ${formatLightYears(galaxy.deepest, lyPerRegion)}` : ''
+        galaxy.deepest !== null && lyPerRegion
+          ? `deepest ${formatLightYears(galaxy.deepest, lyPerRegion)}`
+          : galaxy.placed.length
+            ? ''
+            : 'none placed'
       ]
         .filter(Boolean)
         .join(' · ')

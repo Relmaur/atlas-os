@@ -6,6 +6,18 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.37.0] - 2026-11-08
+### Changed
+- One galaxy's map is drawn at true scale: it opens on the whole galaxy, with its core, its rim and rings in light years, and a pin for each group of your systems (pins that would overlap become one). Zoom to a group and each region is a dot; zoom to a region and the systems logged there fan out round their one point. A breadcrumb shows how far in you are and takes you back up, a small locator shows where you are in the whole galaxy, and when the core is off screen a chip on the edge points to it with its distance. Pinch, drag, the mouse wheel or the + and − buttons zoom; Fit frames all your systems.
+- The galaxy's spiral is drawn as arms rather than dots, so it never looks like real stars; it's the same in the galaxy picker and on the galaxy chain.
+- The list under the map groups your systems by place, with the systems that share a region together. With many systems it has a search, and each group shows a few until you ask for all of them, always including the one selected.
+- On a computer the map and the list beside it share what's selected and what's under the mouse. With the map focused, ← and → go through your systems in the order you logged them, ↑ and ↓ through those in one region, Enter selects, + and − zoom, 0 fits and G shows the whole galaxy.
+- The selected system's card gives its height in the galaxy beside its region, and marks the deepest system in a galaxy.
+
+### Fixed
+- Two systems logged in the same region no longer hide each other on the map. The map shows how many share the place, and the card lets you switch between them, on a phone too, without zooming.
+- The note about systems without a portal address names them and offers to add an address; a galaxy with none placed lists each one.
+
 ## [3.36.1] - 2026-11-07
 ### Fixed
 - On a computer, a system's orbit diagram draws when you open it after coming from another screen; before, the band stayed empty until a reload.
