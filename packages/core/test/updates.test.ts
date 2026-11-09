@@ -21,8 +21,8 @@ test('every update file is valid, and named for its date and slug', () => {
 
 test("updates sort newest first, and the app carries the newest one's first highlight", () => {
   const updates = seeded.map(({ text }) => parseUpdate(text, vars));
-  assert.equal(newestFirst(updates)[0]?.slug, 'survey');
-  assert.deepEqual(latestOf(updates)?.title, 'Every planet, as the scan shows it');
+  assert.equal(newestFirst(updates)[0]?.slug, 'gateway');
+  assert.deepEqual(latestOf(updates)?.title, 'Portal addresses, three ways');
   assert.equal(latestOf([]), null);
 });
 

@@ -1,6 +1,7 @@
 // Makes each update's 1600×800 banner from real app screens with the invented log (apps/site/public/banners), used on the
 // page and as its share image. Run by hand when the screens change, then commit them:
-//   pnpm --filter @atlas/web build --mode e2e && node scripts/site-banners.mjs
+//   pnpm --filter @atlas/web build --mode e2e && node scripts/site-banners.mjs [name …]
+// With names, only those banners are made, so a published update's banner stays as it went out.
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { chromium } from '@playwright/test';
@@ -14,6 +15,7 @@ const log = withTravels(160, 10);
 
 // `middle` is shown flat and large; the other two lean in from the sides.
 const BANNERS = {
+  gateway: { left: '#dial/vintam', middle: '#map/Euclid', right: '#system/vintam' },
   survey: { left: '#system/vintam', middle: '#planet/vintam/p4', right: '#planet/vintam/p2' },
   'first-light': { left: '#home', middle: '#card', right: '#map' },
   origins: { left: '#systems', middle: '#system/vintam', right: '#session' }
@@ -57,6 +59,14 @@ try {
     await app.goto(`${BASE}${hash}`);
     await app.waitForLoadState('networkidle');
     await app.waitForTimeout(900);
+    // The Map scrolls its list to the selected system; the banner shows the map above it.
+    if (hash.startsWith('#map/')) {
+      await app.evaluate(() => {
+        scrollTo(0, 0);
+        for (const el of document.querySelectorAll('*')) if (el.scrollTop) el.scrollTop = 0;
+      });
+      await app.waitForTimeout(300);
+    }
     // The card alone, as it's held: not the screen around it, and with the address it prints for a real player.
     if (hash === '#card')
       await app.evaluate(() => {
@@ -76,7 +86,9 @@ try {
   };
   const card = await browser.newContext({ viewport: { width: 1600, height: 800 }, deviceScaleFactor: 1 });
   const canvas = await card.newPage();
+  const only = process.argv.slice(2);
   for (const [name, { left, middle, right }] of Object.entries(BANNERS)) {
+    if (only.length && !only.includes(name)) continue;
     const [l, m, r] = [await shot(left), await shot(middle), await shot(right)];
     await canvas.setContent(`<!doctype html><style>
       html,body{margin:0;width:1600px;height:800px;overflow:hidden;background:radial-gradient(circle at 50% 45%,#0b1a2e,#04070f 70%)}

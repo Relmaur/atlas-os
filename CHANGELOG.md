@@ -6,6 +6,10 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.38.2] - 2026-11-09
+### Added
+- Gateway, a new named update on the Updates page (atlas-os.cloud/updates/) covering 3.28 to 3.38: portal addresses three ways, dialling at a portal, the galaxy map at true scale and the Workbench on a computer. Home's What's new card shows it once.
+
 ## [3.38.1] - 2026-11-08
 ### Fixed
 - The galaxy map no longer slows to a crawl on a phone once you zoom into a group or a region of systems. Zoomed in, the galaxy's rim and rings were still drawn whole, hundreds of thousands of pixels round; now only the part on screen is drawn.

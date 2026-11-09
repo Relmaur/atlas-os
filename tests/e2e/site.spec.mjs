@@ -195,13 +195,13 @@ test('the Updates list: every update, newest first, gold on the latest, and a li
   await expect(page.locator('footer').getByRole('link', { name: 'Updates' })).toHaveAttribute('href', '/updates/');
   await page.goto('./updates/');
   await expect(page).toHaveTitle(/What's new in ATLAS:OS/);
-  await expect(page.locator('.update-name')).toHaveText(['Survey', 'First Light', 'Where it started']);
+  await expect(page.locator('.update-name')).toHaveText(['Gateway', 'Survey', 'First Light', 'Where it started']);
   await expect(page.locator('.rel').first().locator('.latest')).toHaveText('Latest');
   await expect(page.locator('.rel').nth(1).locator('.latest')).toHaveCount(0);
-  await expect(page.locator('.rel').first().locator('.ver')).toHaveText('3.27');
+  await expect(page.locator('.rel').first().locator('.ver')).toHaveText('3.38');
   await expect(page.locator('.rel').first().locator('.h')).toHaveCount(4);
   // First Light's lede carries the page count, filled in at build time.
-  await expect(page.locator('.rel').nth(1).locator('.lede')).toContainText(/\d,\d{3} pages/);
+  await expect(page.locator('.rel').nth(2).locator('.lede')).toContainText(/\d,\d{3} pages/);
   expect(await page.locator('body').innerText()).not.toContain('{{');
   await expect(page.locator('.rel').first().locator('details')).toHaveCount(2);
   const { violations } = await new AxeBuilder({ page }).analyze();
@@ -249,7 +249,7 @@ test('Copy link gives the update its own address, or shows it if the clipboard r
   const button = page.locator('.rel').first().locator('[data-copy]'); // its name changes when clicked
   await button.click();
   await expect(button).toHaveText('Link copied');
-  expect(await page.evaluate(() => window.copied)).toBe('https://atlas-os.cloud/updates/survey/');
+  expect(await page.evaluate(() => window.copied)).toBe('https://atlas-os.cloud/updates/gateway/');
 
   await page.evaluate(() => {
     navigator.clipboard.writeText = () => Promise.reject(new Error('refused'));
@@ -262,9 +262,11 @@ test('Copy link gives the update its own address, or shows it if the clipboard r
 test('the feed lists every update, and later updates rise in on scroll', async ({ page, request }) => {
   const feed = await (await request.get('./updates.xml')).text();
   expect(feed).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
+  expect(feed).toContain('<id>https://atlas-os.cloud/updates/gateway/</id>');
   expect(feed).toContain('<id>https://atlas-os.cloud/updates/survey/</id>');
   expect(feed).toContain('<id>https://atlas-os.cloud/updates/first-light/</id>');
   expect(feed).toContain('<id>https://atlas-os.cloud/updates/origins/</id>');
+  expect(feed.indexOf('/gateway/')).toBeLessThan(feed.indexOf('/survey/'));
   expect(feed.indexOf('survey')).toBeLessThan(feed.indexOf('first-light'));
   expect(feed.indexOf('first-light')).toBeLessThan(feed.indexOf('origins'));
   expect(feed).not.toContain('{{');

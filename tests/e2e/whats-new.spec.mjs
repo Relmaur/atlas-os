@@ -8,10 +8,10 @@ test("after an update: one card on Home, with the newest update's name, until it
   await page.goto('./#home');
   await page.reload();
   const card = page.locator('#whatsNew');
-  await expect(card.getByRole('heading', { name: 'Updated to Survey' })).toBeVisible();
+  await expect(card.getByRole('heading', { name: 'Updated to Gateway' })).toBeVisible();
   await expect(card.getByRole('link', { name: "See what's new" })).toHaveAttribute(
     'href',
-    'https://atlas-os.cloud/updates/survey/'
+    'https://atlas-os.cloud/updates/gateway/'
   );
   await expect(page.locator('#homeNow')).toBeVisible(); // it never covers Home
   await card.getByRole('button', { name: /^Dismiss/ }).click();
@@ -19,7 +19,7 @@ test("after an update: one card on Home, with the newest update's name, until it
   await page.reload();
   await expect(page.locator('#homeNow')).toBeVisible();
   await expect(card).toBeHidden();
-  expect(await page.evaluate(() => localStorage.getItem('atlas_update_seen'))).toBe('survey');
+  expect(await page.evaluate(() => localStorage.getItem('atlas_update_seen'))).toBe('gateway');
 });
 
 test('Settings links to the updates', async ({ page }) => {
