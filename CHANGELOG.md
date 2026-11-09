@@ -6,6 +6,24 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.39.0] - 2026-11-09
+### Added
+- **Infested worlds.** Their names come from the wiki's Infested page ("Icy Abhorrence", "Frozen Hell", "Infested Paradise"…), and each sets the biome it overlays (Icy Abhorrence is a Frozen world) with that biome's colour, weather and resources. Everywhere a planet is drawn (rows, the orbit diagram, the planet's own page, cards and saved pictures), an Infested world wears a ring of small spores in its biome's colour. Rows add a quiet INFESTED tag, and the planet's page reads "Infested · Frozen biome". The names the wiki marks as standing alone show without "Planet" or "Moon", as the game does, and never pick Planet or Moon for you. Flora offers the six Infested words first.
+- **Which world?** A name the wiki uses for several worlds asks right under Description: "Infested" (five biomes) and "Corrupted" (Infested Scorched, or an Exotic Glitch world). The biome you've already set is picked for you when it fits.
+- **"Vile Brood Detected"** is a switch in the planet sheet, after the temperature, and its own line at the end of The scan, worded as the game shows it, with what it means and links to Juicy Grubs and the Brood Mother in the Codex. It's no longer offered as a resource.
+- **The galaxy map's conflict word**, as a pair like the economy's: "Rowdy // Medium", from the wiki's Conflict Level page. A word sets the level only when none is chosen; if your level disagrees, it's kept, with a button to use the wiki's. An outlaw system shows one crimson "Pirate Controlled" pill.
+- **Not mapped yet.** A system with no portal address says "No address" above its name in Systems, on the Workbench, in Search and in Ctrl K, and a "Not mapped" filter lists them. Once a system has its address, each planet without its own glyph says "No glyph", and the planets heading counts them ("2 not mapped").
+
+### Changed
+- An Exotic or Dead world's weather ("Obsidian Heat", "Winds of Glass", "Anomalous") reads **No storms**, as the wiki's Weather page says those worlds always lack storms. Mega Exotic, Gas Giant and Waterworld weather names don't say whether it storms, so they show no severity at all.
+- An economy logged in one field as the map shows it ("High Tech // Balanced") is read as its type and strength (a Technology economy, ★★). Nothing you typed is rewritten.
+
+### Fixed
+- On a computer, the open sidebar no longer clips the keyboard focus ring at its edges.
+
+### Notes
+- Additive: a system gains `conflictWord` and a planet gains `detected` ('' and [] in an older log). No planet or system you've logged changes. A "Vile Brood Detected" typed among a planet's resources stays there as typed; it now reads as the planet's own line, and switching it off removes it.
+
 ## [3.38.2] - 2026-11-09
 ### Added
 - Gateway, a new named update on the Updates page (atlas-os.cloud/updates/) covering 3.28 to 3.38: portal addresses three ways, dialling at a portal, the galaxy map at true scale and the Workbench on a computer. Home's What's new card shows it once.

@@ -106,8 +106,21 @@ test('the Systems line names one galaxy and counts several', () => {
 
 test('chips: only what the log has, counts on stars and favourites, one star at a time, tags combine', () => {
   const log = [
-    normalizeSystem({ name: 'A', star: 'yellow', favorite: true, race: 'korvax', tags: ['base'] }),
-    normalizeSystem({ name: 'B', star: 'yellow', conflict: 'pirate', tags: ['outlaw', 'base'] }),
+    normalizeSystem({
+      name: 'A',
+      star: 'yellow',
+      favorite: true,
+      race: 'korvax',
+      tags: ['base'],
+      glyphs: '10010C4BAB22'
+    }),
+    normalizeSystem({
+      name: 'B',
+      star: 'yellow',
+      conflict: 'pirate',
+      tags: ['outlaw', 'base'],
+      glyphs: '20020C4BAB22'
+    }),
     normalizeSystem({ name: 'C', star: 'red' })
   ];
   const chips = filterChips(log, DEFAULT_FILTER);
@@ -115,6 +128,7 @@ test('chips: only what the log has, counts on stars and favourites, one star at 
     chips.map(chip => [chip.label, chip.count, chip.on]),
     [
       ['All', 3, true],
+      ['Not mapped', 1, false],
       ['Yellow', 2, false],
       ['Red', 1, false],
       ['Favourites', 1, false],
@@ -132,7 +146,38 @@ test('chips: only what the log has, counts on stars and favourites, one star at 
   assert.equal(all.on, false);
   assert.deepEqual(on.find(chip => chip.id === 'star-yellow')?.next, { star: '' }); // tapping it again clears it
   assert.deepEqual(on.find(chip => chip.id === 'tag-outlaw')?.next, { tags: ['base', 'outlaw'] });
-  assert.deepEqual(all.next, { tags: [], star: '', race: '', conflict: '', favorites: false }); // keeps q and sort
+  assert.deepEqual(all.next, { tags: [], star: '', race: '', conflict: '', favorites: false, unmapped: false }); // keeps q and sort
+});
+
+test('7c: Not mapped lists the systems with no address; mapped planets are only asked once their system is', async () => {
+  const { planetMapped, systemMapped, unmappedPlanets } = await import('../src/systems-model.ts');
+  const placed = normalizeSystem({
+    name: 'Placed',
+    glyphs: '10010C4BAB22',
+    planets: [
+      { id: 'pl-a', name: 'Has glyph', portalGlyph: '1' },
+      { id: 'pl-b', name: 'No glyph' }
+    ]
+  });
+  const loose = normalizeSystem({ name: 'Loose', planets: [{ id: 'pl-c', name: 'Waits' }] });
+  assert.equal(systemMapped(placed), true);
+  assert.equal(systemMapped(loose), false);
+  assert.deepEqual(
+    placed.planets.map(planet => planetMapped(placed, planet)),
+    [true, false]
+  );
+  assert.equal(planetMapped(loose, loose.planets[0] ?? { portalGlyph: '' }), null); // its system asks first
+  assert.equal(unmappedPlanets(placed), 1);
+  assert.equal(unmappedPlanets(loose), 0);
+  const filter: SystemFilter = { ...DEFAULT_FILTER, unmapped: true };
+  assert.deepEqual(
+    filterSystems([placed, loose], filter).map(system => system.name),
+    ['Loose']
+  );
+  assert.equal(
+    filterChips([placed], DEFAULT_FILTER).some(chip => chip.id === 'unmapped'),
+    false
+  ); // only when n > 0
 });
 
 test('meta parts: race and conflict as labels, economy carries its wealth, pirates aren’t "conflict"', () => {

@@ -2,7 +2,7 @@
 // in view moves; the shapes come from the same data the saved picture draws.
 import { useId, type ReactNode } from 'react';
 import type { ArtGroup, ArtShape, CardArt, Paint } from '@atlas/core/collectible';
-import { Grain, PlanetShape, StarShape } from '../parts/StarChart.tsx';
+import { Grain, PlanetShape, SporeRing, StarShape } from '../parts/StarChart.tsx';
 
 const paint = ({ fill, fillOpacity, stroke, strokeOpacity, width, dash }: Paint) => ({
   fill: fill ?? 'none',
@@ -25,6 +25,7 @@ function Shape({ shape, grain }: { shape: ArtShape; grain: string }): ReactNode 
       return (
         <>
           <PlanetShape cx={shape.cx} cy={shape.cy} r={shape.r} family={shape.family} grain={grain} />
+          {shape.infested && <SporeRing cx={shape.cx} cy={shape.cy} r={shape.r} family={shape.family} />}
           {shape.base && (
             <circle cx={shape.cx} cy={shape.cy} r={shape.r + 5} fill="none" stroke="#22d3ee" strokeWidth={1.4} />
           )}

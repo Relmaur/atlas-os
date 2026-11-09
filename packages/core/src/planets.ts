@@ -23,7 +23,9 @@ export const BiomeSchema = SourceSchema.extend({
   // The resource pages the biome's article links to ("Dioxite", "Frost Crystal", "Radon"); an older file has none.
   resources: z.array(z.string()).optional(),
   // The Reliquary only: its names come in sets by the planet's main biome ("Frozen Relic" is a Frozen world's).
-  ruined: z.array(z.object({ biome: z.string(), names: z.array(z.string()) })).optional()
+  ruined: z.array(z.object({ biome: z.string(), names: z.array(z.string()) })).optional(),
+  // Exotic's sub-biomes, each with its names ("Glitch": Corrupted, …), so a choice can say "Exotic (Glitch)".
+  subBiomes: z.array(z.object({ name: z.string(), names: z.array(z.string()) })).optional()
 });
 export type Biome = z.infer<typeof BiomeSchema>;
 
@@ -52,7 +54,18 @@ export const PlanetFactsSchema = z.object({
   // the resources whose page says they're "found in underground planetary deposits" (Silver, Gold, Platinum),
   deposits: z.array(SourceSchema).optional(),
   // and the finds whose page says a planet's information panel shows them after a scan (Ancient Bones).
-  finds: z.array(SourceSchema).optional()
+  finds: z.array(SourceSchema).optional(),
+  // A property of the planet, not a resource: a line its discovery menu displays, as the game words it ("Vile Brood
+  // Detected", from the Vile Brood page).
+  detected: z.array(SourceSchema.extend({ label: z.string() })).optional(),
+  // Infested worlds (the "Biome Subtype - Infested" page): their names by the main biome they overlay ("Icy Abhorrence"
+  // is a Frozen world's; their weather is the main biome's), the names the page marks as taking no "Planet" or "Moon",
+  // and the flora words it lists for them.
+  infested: SourceSchema.extend({
+    sets: z.array(z.object({ biome: z.string(), names: z.array(z.string()) })),
+    alone: z.array(z.string()).optional(),
+    flora: z.array(z.string()).optional()
+  }).optional()
 });
 export type PlanetFacts = z.infer<typeof PlanetFactsSchema>;
 
@@ -238,10 +251,83 @@ export function biomeFor(facts: PlanetFacts | null, typed: string): Biome | null
   if (!facts || !word) return null;
   const byName = facts.biomes.find(biome => same(biome.name, word));
   if (byName) return byName;
-  const matches = facts.biomes.filter(biome => biome.descriptors.some(name => same(name, word)));
+  const matches = biomesNamed(facts, word);
   // "Abandoned" is Barren, Dead and the Reliquary: the player picks, the app doesn't guess.
   return matches.length === 1 ? (matches[0] ?? null) : null;
 }
+
+/**
+ * The biomes that use a name: as one of their own prefixes, or as an Infested world's name over that biome ("Icy
+ * Abhorrence" is Frozen; plain "Infested" is five biomes', so the player picks).
+ */
+export function biomesNamed(facts: PlanetFacts | null, typed: string): Biome[] {
+  const word = typed.trim().replace(/\s+(?:planet|moon)$/i, '');
+  if (!facts || !word) return [];
+  const infested = (facts.infested?.sets ?? [])
+    .filter(set => set.names.some(name => same(name, word)))
+    .map(set => set.biome);
+  return facts.biomes.filter(
+    biome => biome.descriptors.some(name => same(name, word)) || infested.some(name => same(name, biome.name))
+  );
+}
+
+/** Whether a planet's name is one of the Infested page's ("Icy Abhorrence", "Infested"). */
+export function isInfested(facts: PlanetFacts | null, typed: string): boolean {
+  const word = typed.trim().replace(/\s+(?:planet|moon)$/i, '');
+  return Boolean(word) && (facts?.infested?.sets ?? []).some(set => set.names.some(name => same(name, word)));
+}
+
+/** The Infested page's names, for the descriptor list: those over `biome` first when one is given. */
+export function infestedNames(facts: PlanetFacts | null, biome = ''): { own: string[]; other: string[] } {
+  const sets = facts?.infested?.sets ?? [];
+  const own = unique(sets.filter(set => biome && same(set.biome, biome)).flatMap(set => set.names));
+  const other = unique(sets.flatMap(set => set.names)).filter(name => !own.includes(name));
+  return { own, other };
+}
+
+/** Whether the wiki marks an Infested name as standing alone: the game shows no "Planet" or "Moon" after it. */
+export function standsAlone(facts: PlanetFacts | null, typed: string): boolean {
+  const word = typed.trim();
+  return Boolean(word) && (facts?.infested?.alone ?? []).some(name => same(name, word));
+}
+
+/** The Infested page's flora words ("Twisted", "Screaming"…). */
+export const infestedFlora = (facts: PlanetFacts | null): string[] => facts?.infested?.flora ?? [];
+
+/**
+ * The worlds a name can stand for when several do: each biome that uses it, worded as the wiki groups it ("Infested
+ * Scorched" from the Infested page, "Exotic (Glitch)" from Exotic's sub-biome). Empty when it fits one or none, so
+ * only an ambiguous name asks.
+ */
+export function namedWorlds(facts: PlanetFacts | null, typed: string): { biome: string; label: string }[] {
+  const word = typed.trim().replace(/\s+(?:planet|moon)$/i, '');
+  const biomes = biomesNamed(facts, word);
+  if (!facts || biomes.length < 2) return [];
+  const over = new Set(
+    (facts.infested?.sets ?? []).filter(set => set.names.some(name => same(name, word))).map(set => set.biome)
+  );
+  // In the wiki's own order: the Infested table's columns first (Toxic, Scorched, … as the page lists them).
+  const column = (name: string) => {
+    const at = (facts.infested?.sets ?? []).findIndex(set => same(set.biome, name));
+    return at === -1 ? Number.MAX_SAFE_INTEGER : at;
+  };
+  return [...biomes]
+    .sort((a, b) => column(a.name) - column(b.name))
+    .map(biome => {
+      const own = biome.descriptors.some(name => same(name, word));
+      const sub = own ? biome.subBiomes?.find(entry => entry.names.some(name => same(name, word)))?.name : undefined;
+      const label =
+        !own && over.has(biome.name) ? `Infested ${biome.name}` : sub ? `${biome.name} (${sub})` : biome.name;
+      return { biome: biome.name, label };
+    });
+}
+
+/** The lines a planet's discovery menu can display, as the game words them ("Vile Brood Detected"). */
+export const detectedLines = (facts: PlanetFacts | null): NonNullable<PlanetFacts['detected']> => facts?.detected ?? [];
+
+/** The line a word stands for ("Vile Brood Detected", or its page's name), if it is one rather than a resource. */
+export const detectedLine = (facts: PlanetFacts | null, name: string): string | null =>
+  detectedLines(facts).find(line => same(line.label, name) || same(line.page, name))?.label ?? null;
 
 /** How severe a weather word is: from its biome's table first, then from any biome's (Barren borrows Scorched's). */
 export function weatherClass(facts: PlanetFacts | null, biome: string, weather: string): WeatherClass | null {
@@ -309,6 +395,65 @@ export function parseRuinedSets(body: string): { set: string; names: string[] }[
     out.push({ set, names: unique(match[2].split(',').map(clean)) });
   }
   return out;
+}
+
+/**
+ * The Infested page: its "Name generation" table has a column per main biome ("Lush | Toxic | …"), each cell a name;
+ * a name marked "1" is one of the "exceptions … which do not receive additional text indicating the type of the
+ * astronomical body" (no "Planet" or "Moon"). Its flora words are the list under "Floral Abundance Name Generation".
+ */
+export function parseInfested(body: string): {
+  sets: { set: string; names: string[] }[];
+  alone: string[];
+  flora: string[];
+} {
+  const rows = section(body, /^name generation$/i)
+    .filter(line => isTableRow(line) && !isRule(line))
+    .map(cells);
+  const [header, ...rest] = rows;
+  const sets = (header ?? [])
+    .map((set, column) => ({ set, names: unique(rest.map(row => unmark(row[column] ?? ''))) }))
+    .filter(entry => entry.set && entry.names.length);
+  const marked = (cell: string) => cell !== unmark(cell);
+  const alone = unique(rest.flatMap(row => row.filter(marked).map(unmark)));
+  const flora: string[] = [];
+  const lines = section(body, /^flora$/i);
+  const start = lines.findIndex(line => /^#+\s*Floral Abundance Name Generation/i.test(line.trim()));
+  for (const line of start === -1 ? [] : lines.slice(start + 1)) {
+    if (/^#/.test(line.trim())) break;
+    const item = listItem(line);
+    if (item) flora.push(clean(item));
+  }
+  return { sets, alone, flora: unique(flora) };
+}
+
+/** Exotic's sub-biomes: each "### Name" whose text starts with a plain "Name generation" line, and that list. */
+export function parseSubBiomes(body: string): { name: string; names: string[] }[] {
+  const lines = body.split('\n');
+  const out: { name: string; names: string[] }[] = [];
+  let heading = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] ?? '';
+    const title = /^###\s+(.+)$/.exec(line)?.[1];
+    if (title) heading = clean(title);
+    if (/^## /.test(line)) heading = '';
+    if (line.trim() !== 'Name generation' || !heading) continue;
+    const block: string[] = [];
+    for (let j = i + 1; j < lines.length; j++) {
+      const next = lines[j] ?? '';
+      if (!next.trim() && !block.length) continue;
+      if (!listItem(next)) break;
+      block.push(next);
+    }
+    const names = unique(namesFromLines(block));
+    if (names.length) out.push({ name: heading, names });
+  }
+  return out;
+}
+
+/** A page saying planets with it display a line in their discovery menu: `display "Vile Brood Detected" in …`. */
+export function discoveryLine(body: string): string | null {
+  return /display "([^"]+ Detected)" in (?:their|the|its) discovery menu/i.exec(body)?.[1]?.trim() ?? null;
 }
 
 /** The Star system page's metals by star colour: "Yellow star systems … will have [[Copper]] or [[Activated Copper]]". */

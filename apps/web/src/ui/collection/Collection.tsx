@@ -103,9 +103,10 @@ export function Collection() {
   const shown = useSection() === 'cards';
   const param = useSectionParam();
   const family = useCallback((planet: PlanetLike) => planetFamily(facts, planet).family, [facts]);
+  const infestedOf = useCallback((planet: PlanetLike) => planetFamily(facts, planet).infested, [facts]);
   const cards = useMemo(
-    () => (shown ? collection({ systems: state.systems, gear: state.gear }, family) : []),
-    [shown, state, family]
+    () => (shown ? collection({ systems: state.systems, gear: state.gear }, family, infestedOf) : []),
+    [shown, state, family, infestedOf]
   );
   useEffect(() => {
     if (shown) void loadFacts();

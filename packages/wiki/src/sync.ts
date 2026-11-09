@@ -36,8 +36,8 @@ import {
 import { InvalidDump, followRedirect, scanDump } from './dump.ts';
 import { discover, reportMarkdown } from './discover.ts';
 import { GlyphTableSchema, glyphPageDigit, parseGlyphNames, type Glyph, type GlyphTable } from '@atlas/core/glyphs';
-import { GalaxyMapFactsSchema, parseEconomyNames, parseEconomyStrength, parseSpectralClasses, type GalaxyMapFacts } from '@atlas/core/galaxy-map';
-import { PlanetFactsSchema, biomePageName, isDeposit, isScanFind, parseRuinedSets, parseStarMetals, resourceLinks, parseBiomeDescriptors, parseBiomeWeather, parseLifeWords, parseSentinelWords, type PlanetFacts } from '@atlas/core/planets';
+import { GalaxyMapFactsSchema, parseConflictWords, parseEconomyNames, parseEconomyStrength, parseSpectralClasses, type GalaxyMapFacts } from '@atlas/core/galaxy-map';
+import { PlanetFactsSchema, biomePageName, discoveryLine, isDeposit, isScanFind, parseInfested, parseRuinedSets, parseSubBiomes, parseStarMetals, resourceLinks, parseBiomeDescriptors, parseBiomeWeather, parseLifeWords, parseSentinelWords, type PlanetFacts } from '@atlas/core/planets';
 import { FACTS, checkFacts, currentGameVersion, type FactPage, type UpdatePage } from './facts.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -427,13 +427,15 @@ function planetFacts(articles: IndexedArticle[]): PlanetFacts | null {
     const name = biomePageName(article.title);
     if (!name || !live(article)) return [];
     const resources = resourceLinks(article.body).flatMap(title => resourcePages.get(title.toLowerCase()) ?? []);
+    const subBiomes = parseSubBiomes(article.body);
     return [
       {
         ...source(article),
         name,
         descriptors: parseBiomeDescriptors(article.body),
         weather: parseBiomeWeather(article.body),
-        resources: [...new Set(resources)]
+        resources: [...new Set(resources)],
+        ...(subBiomes.length ? { subBiomes } : {})
       }
     ];
   });
@@ -459,6 +461,23 @@ function planetFacts(articles: IndexedArticle[]): PlanetFacts | null {
     .filter(article => live(article) && (article as { category?: unknown }).category === 'resources' && isDeposit(article.body))
     .map(source);
   const finds = articles.filter(article => live(article) && isScanFind(article.body)).map(source);
+  // A planet's discovery-menu lines ("Vile Brood Detected"): properties of the planet, kept as the game words them.
+  const detected = articles.flatMap(article => {
+    const label = live(article) ? discoveryLine(article.body) : null;
+    return label ? [{ ...source(article), label }] : [];
+  });
+  // Infested worlds' names, each column resolved to the biome it overlays, with the stand-alone names and flora words.
+  const infestedPage = articles.find(article => article.title === 'Biome Subtype - Infested' && live(article));
+  const parsed = infestedPage && live(infestedPage) ? parseInfested(infestedPage.body) : null;
+  const infestedSets = (parsed?.sets ?? []).flatMap(set => {
+    const name = setBiome(set.set);
+    return name ? [{ biome: name, names: set.names }] : [];
+  });
+  if (!infestedSets.length) console.warn('⚠️  Planets: the Biome Subtype - Infested page no longer lists its names by biome.');
+  const infested =
+    infestedPage && parsed && infestedSets.length
+      ? { ...source(infestedPage), sets: infestedSets, alone: parsed.alone, flora: parsed.flora }
+      : undefined;
   if (!Object.keys(metals).length) console.warn('⚠️  Planets: the Star system page no longer says which metal each star colour gives.');
   const sentinelPage = articles.find(article => article.title === 'Sentinel' && live(article));
   const lifePage = articles.find(article => article.title === 'Planet - Discovery Menu' && live(article));
@@ -478,7 +497,9 @@ function planetFacts(articles: IndexedArticle[]): PlanetFacts | null {
     life: { ...source(lifePage), ...life },
     ...(starPage && Object.keys(metals).length ? { starMetals: { ...source(starPage), metals } } : {}),
     deposits: deposits.sort((a, b) => a.page.localeCompare(b.page)),
-    finds: finds.sort((a, b) => a.page.localeCompare(b.page))
+    finds: finds.sort((a, b) => a.page.localeCompare(b.page)),
+    ...(detected.length ? { detected: detected.sort((a, b) => a.page.localeCompare(b.page)) } : {}),
+    ...(infested ? { infested } : {})
   });
 }
 
@@ -496,6 +517,8 @@ function galaxyMapFacts(articles: IndexedArticle[]): GalaxyMapFacts | null {
   const economyPage = page('Economy');
   const classes = spectralPage && parseSpectralClasses(spectralPage.body);
   const strength = economyPage && parseEconomyStrength(economyPage.body);
+  const conflictPage = page('Conflict Level');
+  const levels = conflictPage && parseConflictWords(conflictPage.body);
   const types = articles.flatMap(article => {
     const name = /^(.+) Economy$/.exec(article.title)?.[1];
     const found = name ? page(article.title) : undefined;
@@ -505,13 +528,15 @@ function galaxyMapFacts(articles: IndexedArticle[]): GalaxyMapFacts | null {
   const problems = [
     !classes && 'the Spectral class page no longer has its class table',
     !strength && 'the Economy page no longer has its strength words',
+    !levels && 'the Conflict Level page no longer lists its words by level',
     types.length < 7 && `only ${String(types.length)} economy types list their names`
   ].filter(Boolean);
   for (const problem of problems) console.warn(`⚠️  Galaxy map: ${String(problem)}.`);
   if (!spectralPage || !economyPage || !classes || !strength || !types.length) return null;
   return GalaxyMapFactsSchema.parse({
     spectral: { ...source(spectralPage), classes },
-    economy: { ...source(economyPage), strength, types: types.sort((a, b) => a.name.localeCompare(b.name)) }
+    economy: { ...source(economyPage), strength, types: types.sort((a, b) => a.name.localeCompare(b.name)) },
+    ...(conflictPage && levels ? { conflict: { ...source(conflictPage), levels } } : {})
   });
 }
 

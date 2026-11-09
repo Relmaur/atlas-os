@@ -1463,6 +1463,10 @@ label.list-row:active {
     overflow-y: auto;
     scrollbar-width: thin;
   }
+  /* The links fill the scrolling list's width, which clips anything drawn outside them: the ring goes inside. */
+  .is-open .nav-groups :focus-visible {
+    outline-offset: -2px;
+  }
   .nav-group {
     display: flex;
     flex-direction: column;

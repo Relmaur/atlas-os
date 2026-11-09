@@ -341,7 +341,11 @@ export function ShareSystemSheet({ system, open, onClose }: { system: System; op
   };
   const card = useMemo(() => postcard(system, options, game?.version ?? null), [system, options, game]);
   const draw = useMemo(() => {
-    const orbit = systemOrbit(system, planet => planetFamily(facts, planet).family);
+    const orbit = systemOrbit(
+      system,
+      planet => planetFamily(facts, planet).family,
+      planet => planetFamily(facts, planet).infested
+    );
     const scene = {
       card,
       format,

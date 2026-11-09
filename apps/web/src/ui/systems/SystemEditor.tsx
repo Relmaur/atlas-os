@@ -1,7 +1,14 @@
 // Add or edit a system (design 06). The draft lives here until Save; the stored system changes only through
 // saveSystem().
 import { useEffect, useId, useState, type ReactNode, type SubmitEvent } from 'react';
-import { economyType, starFromSpectral, strengthStars } from '@atlas/core/galaxy-map';
+import {
+  conflictLevelOf,
+  conflictWords,
+  economyParts,
+  economyType,
+  starFromSpectral,
+  strengthStars
+} from '@atlas/core/galaxy-map';
 import { WordCombobox, type WordGroup } from '../parts/WordCombobox.tsx';
 import {
   CONFLICT_LEVELS,
@@ -72,6 +79,8 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
   // hasn't set them: a value they chose, or one already logged, is never changed for them.
   const [starFollows, setStarFollows] = useState(!draft.star);
   const [wealthFollows, setWealthFollows] = useState(draft.wealth === '0');
+  // The conflict level follows its word the same way: only while the player hasn't set one.
+  const [conflictFollows, setConflictFollows] = useState(draft.conflict === '');
   const [tags, setTags] = useState(draft.tags);
   const [typed, setTyped] = useState('');
   const [arrived, setArrived] = useState(true);
@@ -172,14 +181,19 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
         options: map.economy.strength[n].map(value => ({ value }))
       }))
     : [];
-  const type = economyType(map, draft.economy);
-  const strength = strengthStars(map, draft.economyStrength);
+  // A log from before the two fields typed both in the first, as the map shows them: read, never rewritten.
+  const parts = economyParts(draft);
+  const pairTyped = parts.name !== draft.economy.trim();
+  const type = economyType(map, parts.name);
+  const strength = strengthStars(map, parts.strength);
   const economyNote =
-    draft.economy.trim() && map && !type
-      ? `“${draft.economy.trim()}” isn’t one of the wiki’s economy names; it’s kept as typed.${strength ? ' Strength still sets the stars.' : ''}`
-      : type || strength
-        ? `${type ? `A ${type} economy` : 'An economy'}${strength ? `, ${'★'.repeat(strength)} strength` : ''}.`
-        : '';
+    pairTyped && (type || strength)
+      ? `Read as ${parts.name} // ${parts.strength}: ${type ? `a ${type} economy` : 'an economy'}${strength ? `, ${'★'.repeat(strength)} strength` : ''}. Kept as typed.`
+      : draft.economy.trim() && map && !type
+        ? `“${draft.economy.trim()}” isn’t one of the wiki’s economy names; it’s kept as typed.${strength ? ' Strength still sets the stars.' : ''}`
+        : type || strength
+          ? `${type ? `A ${type} economy` : 'An economy'}${strength ? `, ${'★'.repeat(strength)} strength` : ''}.`
+          : '';
   const setBy = strength !== null && draft.wealth === String(strength) && wealthFollows;
 
   const text = (field: TextField) => ({
@@ -366,20 +380,97 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
       )}
     </PairCard>
   );
-  const conflictField = (
+  // The Galactic Map's conflict word and its level, a pair like the economy's (round 4b, 06h–06j, d14b). The words come
+  // by level from the wiki's Conflict Level page, the system's own level first; a word sets the level only while the
+  // player hasn't chosen one, and a disagreement keeps theirs with a way to take the wiki's.
+  const levels = conflictWords(map);
+  const levelOrder = (['low', 'medium', 'high', 'pirate'] as const)
+    .slice()
+    .sort((a, b) => Number(b === draft.conflict) - Number(a === draft.conflict));
+  const conflictGroups: WordGroup[] = levels
+    ? levelOrder.map(level => ({
+        label: `${level === 'pirate' ? 'Outlaw' : CONFLICT_LEVELS[level]} · wiki`,
+        options: levels[level].map(value => ({
+          value,
+          extra: (
+            <span className="text-caption text-ink-muted">
+              {level === 'pirate' ? 'Pirate' : CONFLICT_LEVELS[level]}
+            </span>
+          )
+        }))
+      }))
+    : [];
+  const wordLevel = conflictLevelOf(map, draft.conflictWord);
+  const levelName = (level: keyof typeof CONFLICT_LEVELS) => (level === 'pirate' ? 'Pirate' : CONFLICT_LEVELS[level]);
+  const conflictNote =
+    wordLevel && draft.conflict && wordLevel !== draft.conflict ? (
+      <div className="rounded-control border border-[rgba(251,191,36,0.45)] bg-units-amber-tint px-3.5 py-3 flex items-center gap-3">
+        <p className="flex-1 text-sub text-units-amber-text">
+          {`You chose ${levelName(draft.conflict)}. The wiki lists ${draft.conflictWord.trim()} as ${levelName(wordLevel)}; your choice stays.`}
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            set({ conflict: wordLevel });
+          }}
+          className="h-10 px-3.5 rounded-control border border-[rgba(251,191,36,0.55)] text-units-amber-text text-sm font-semibold shrink-0 hover:bg-units-amber-tint"
+        >
+          {`Use ${levelName(wordLevel)}`}
+        </button>
+      </div>
+    ) : wordLevel ? (
+      <p className="text-caption text-ink-soft">
+        {wordLevel === 'pirate'
+          ? `${draft.conflictWord.trim()} is the wiki’s word for an outlaw system${draft.conflict === 'pirate' ? ', so Pirate is set.' : '.'}`
+          : `${draft.conflictWord.trim()} is a ${CONFLICT_LEVELS[wordLevel]} word on the wiki’s Conflict Level page${draft.conflict === wordLevel ? `, so ${CONFLICT_LEVELS[wordLevel]} is set.` : '.'}`}
+      </p>
+    ) : null;
+  const conflictWordField = (
+    <WordCombobox
+      label={wide ? 'Conflict · the map’s word' : 'The map’s word'}
+      name="conflictWord"
+      value={draft.conflictWord}
+      onChange={conflictWord => {
+        const level = conflictLevelOf(map, conflictWord);
+        set({ conflictWord, ...(conflictFollows && level ? { conflict: level } : {}) });
+      }}
+      groups={conflictGroups}
+      placeholder="Rowdy"
+      maxLength={40}
+    />
+  );
+  const conflictLevels = (
     <Segments
-      label="Conflict"
+      label="Conflict level"
+      hideLabel
       dense={wide}
       clearable
       value={draft.conflict}
       onChange={conflict => {
+        setConflictFollows(false);
         set({ conflict: conflict as Draft['conflict'] });
       }}
+      // At 540px four levels share half the panel: "Med." to the eye, "Medium" to a screen reader (d14b).
       options={Object.entries(CONFLICT_LEVELS).map(([key, label]): Option => [
         key,
+        key === 'pirate' ? 'Pirate' : wide && key === 'medium' ? 'Med.' : label,
+        undefined,
         key === 'pirate' ? 'Pirate' : label
       ])}
     />
+  );
+  const conflictField = wide ? (
+    <div className="flex flex-col gap-2 min-w-0">
+      {conflictWordField}
+      {conflictLevels}
+      {conflictNote}
+    </div>
+  ) : (
+    <PairCard title="Conflict" caption="the Galactic Map’s word // its level">
+      {conflictWordField}
+      {conflictLevels}
+      {conflictNote}
+    </PairCard>
   );
   const ratingField = (
     <Rating

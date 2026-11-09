@@ -5,6 +5,7 @@ import { useId } from 'react';
 import { orbitLayout, orbitSentence, type OrbitOptions, type OrbitPlanet } from '@atlas/core/orbit';
 import { STAR_CLASSES, type StarClass } from '@atlas/core/systems-model';
 import { BIOME_FAMILIES, type BiomeFamily } from '@atlas/core/facts';
+import { sporeDots, sporeReach } from './spores.ts';
 
 const isFamily = (family: string | null): family is BiomeFamily =>
   (BIOME_FAMILIES as readonly string[]).includes(family ?? '');
@@ -131,11 +132,24 @@ export function StarMark({ colour, r = 6, label }: { colour: StarClass | ''; r?:
 }
 
 /** The planet marker on its own; `size` is its diameter in px. Optionally ringed as your base. */
+/** The Infested spore ring round a disc, in the biome's own colour (slate when it isn't known). Never a status hue. */
+export function SporeRing({ cx, cy, r, family }: { cx: number; cy: number; r: number; family: string | null }) {
+  const fill = isFamily(family) ? `var(--color-biome-${family})` : 'var(--color-ink-muted)';
+  return (
+    <g fill={fill}>
+      {sporeDots(cx, cy, r).map((dot, k) => (
+        <circle key={k} cx={dot.x} cy={dot.y} r={dot.r} />
+      ))}
+    </g>
+  );
+}
+
 export function PlanetMarker({
   family,
   size = 14,
   base = false,
   relic = false,
+  infested = false,
   unlogged = false
 }: {
   family: string | null;
@@ -143,12 +157,14 @@ export function PlanetMarker({
   base?: boolean;
   /** A Reliquary world: a broken ring around the disc says ruins (c01b). */
   relic?: boolean;
+  /** An Infested world: the spore ring round the disc (round 4b, c20). */
+  infested?: boolean;
   /** Nothing logged about the planet yet: a dashed outline instead of a disc (36c). */
   unlogged?: boolean;
 }) {
   const grain = useSvgId();
   const r = size / 2;
-  const half = base || relic ? r + 6 : r;
+  const half = Math.max(base || relic ? r + 6 : r, infested ? sporeReach(r) : 0);
   if (unlogged && !isFamily(family)) {
     const dash = Math.max(2, r * 0.32);
     return (
@@ -184,6 +200,7 @@ export function PlanetMarker({
         <Grain id={grain} />
       </defs>
       <PlanetShape cx={0} cy={0} r={r} family={family} grain={grain} />
+      {infested && <SporeRing cx={0} cy={0} r={r} family={family} />}
       {base && <circle cx={0} cy={0} r={r + 5} fill="none" stroke="var(--color-scanner-cyan-glow)" strokeWidth={1.5} />}
       {relic && !base && (
         <circle
@@ -281,7 +298,10 @@ export function OrbitDiagram({ name, seed, star, planets, grid = true, ...option
             }
           >
             {planet.logged ? (
-              <PlanetShape cx={planet.x} cy={planet.y} r={planet.r} family={planet.family} grain={`${id}g`} />
+              <>
+                <PlanetShape cx={planet.x} cy={planet.y} r={planet.r} family={planet.family} grain={`${id}g`} />
+                {planet.infested && <SporeRing cx={planet.x} cy={planet.y} r={planet.r} family={planet.family} />}
+              </>
             ) : (
               <circle
                 cx={planet.x}
@@ -322,6 +342,7 @@ export function OrbitDiagram({ name, seed, star, planets, grid = true, ...option
                     }
                   >
                     <PlanetShape cx={moon.x} cy={moon.y} r={moon.r} family={moon.family} grain={`${id}g`} />
+                    {moon.infested && <SporeRing cx={moon.x} cy={moon.y} r={moon.r} family={moon.family} />}
                     {moon.base && (
                       <circle
                         cx={moon.x}

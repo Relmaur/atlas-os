@@ -99,7 +99,8 @@ export interface PlanetFields {
       | 'discoveredTime'
       | 'orbits'
       | 'hazard'
-      | 'portalGlyph',
+      | 'portalGlyph'
+      | 'detected',
       string
     >
   >;
@@ -118,6 +119,8 @@ export function savePlanet(systemId: string, planetId: string | null, fields: Pl
       normalizePlanetScan({
         ...fields.scan,
         resources: (fields.scan.resources ?? '').split(',').map(item => item.trim()),
+        // The discovery menu's lines ("Vile Brood Detected"), comma-joined like the resources.
+        detected: (fields.scan.detected ?? '').split(',').map(item => item.trim()),
         // "-60,8" is how half the world writes -60.8; an empty field is "not logged", never 0.
         temperature: fields.scan.temperature?.trim()
           ? Number(fields.scan.temperature.replace(',', '.').replace('−', '-'))

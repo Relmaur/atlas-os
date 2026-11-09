@@ -10,6 +10,7 @@ import {
   lastVisit,
   normalizeGlyphs,
   systemHaystack,
+  systemMapped,
   systemTags,
   type ConflictLevel,
   type Race,
@@ -25,6 +26,8 @@ export interface SystemFilter {
   race: Race | '';
   conflict: ConflictLevel | '';
   favorites: boolean;
+  /** Only the systems with no portal address yet (round 7c). */
+  unmapped: boolean;
   sort: SystemSort;
 }
 export const DEFAULT_FILTER: SystemFilter = {
@@ -34,6 +37,7 @@ export const DEFAULT_FILTER: SystemFilter = {
   race: '',
   conflict: '',
   favorites: false,
+  unmapped: false,
   sort: 'recent'
 };
 
@@ -55,6 +59,7 @@ export function filterSystems(systems: System[], filter: SystemFilter): System[]
   return systems
     .filter(system => {
       if (filter.favorites && !system.favorite) return false;
+      if (filter.unmapped && systemMapped(system)) return false;
       if (filter.star && system.star !== filter.star) return false;
       if (filter.race && system.race !== filter.race) return false;
       if (filter.conflict && system.conflict !== filter.conflict) return false;
@@ -70,7 +75,15 @@ export function filterSystems(systems: System[], filter: SystemFilter): System[]
 }
 
 export function filterActive(filter: SystemFilter): boolean {
-  return Boolean(filter.q || filter.tags.length || filter.star || filter.race || filter.conflict || filter.favorites);
+  return Boolean(
+    filter.q ||
+    filter.tags.length ||
+    filter.star ||
+    filter.race ||
+    filter.conflict ||
+    filter.favorites ||
+    filter.unmapped
+  );
 }
 
 // Every tag on systems and their planets with how often it's used, most used first.
@@ -125,6 +138,8 @@ export interface FilterChip {
   count: number | null;
   /** Star chips draw the star's colour beside the label. */
   star?: StarClass;
+  /** A Phosphor icon drawn before the label ("map-pin-plus" on Not mapped). */
+  icon?: string;
   on: boolean;
   /** What tapping it sets on the filter. */
   next: Partial<SystemFilter>;
@@ -132,16 +147,29 @@ export interface FilterChip {
 
 export function filterChips(systems: System[], filter: SystemFilter): FilterChip[] {
   const count = (keep: (system: System) => boolean) => systems.filter(keep).length;
-  const chipped = Boolean(filter.tags.length || filter.star || filter.race || filter.conflict || filter.favorites);
+  const chipped = Boolean(
+    filter.tags.length || filter.star || filter.race || filter.conflict || filter.favorites || filter.unmapped
+  );
   const chips: FilterChip[] = [
     {
       id: 'all',
       label: 'All',
       count: systems.length,
       on: !chipped,
-      next: { tags: [], star: '', race: '', conflict: '', favorites: false }
+      next: { tags: [], star: '', race: '', conflict: '', favorites: false, unmapped: false }
     }
   ];
+  // Round 7c: the systems with no address yet, right after All, only while there are some (or it's on).
+  const unmapped = count(system => !systemMapped(system));
+  if (unmapped || filter.unmapped)
+    chips.push({
+      id: 'unmapped',
+      label: 'Not mapped',
+      count: unmapped,
+      icon: 'map-pin-plus',
+      on: filter.unmapped,
+      next: { unmapped: !filter.unmapped }
+    });
   (Object.keys(STAR_CLASSES) as StarClass[]).forEach(star => {
     const n = count(system => system.star === star);
     if (n)

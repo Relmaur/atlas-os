@@ -370,3 +370,61 @@ test('d14: from lg a click outside closes only when nothing is unsaved, and Ctrl
   await userEvent.click(backdrop);
   expect(getPanel().open).toBe(false); // nothing changed: it closes
 });
+
+test('06h–06j: the conflict pair: the map’s word sets the level when none is chosen; yours stays, with Use <level>', async () => {
+  const levels = { low: ['Peaceful'], medium: ['Rowdy'], high: ['Lawless'], pirate: ['Pirate Controlled'] };
+  const conflict = { page: 'Conflict Level', path: 'c', revId: 1, levels };
+  setWide(false); // the phone's group (06h); d14b is the Workbench's
+  setFactsForTests({ schema: 1, facts: {}, galaxyMap: { ...GALAXY_MAP, conflict } });
+  appState.systems[0] = {
+    ...appState.systems[0]!,
+    conflict: '',
+    economy: 'Prospecting // Opulent',
+    economyStrength: ''
+  };
+  edit('sys-a');
+  // A pair typed in one field, as before 3.26: read as the two, kept as typed.
+  expect(
+    screen.getByText('Read as Prospecting // Opulent: a Mining economy, ★★★ strength. Kept as typed.')
+  ).toBeTruthy();
+  const group = within(screen.getByRole('group', { name: 'Conflict' }));
+  await userEvent.type(group.getByRole('combobox', { name: 'The map’s word' }), 'Rowdy');
+  const level = () => within(group.getByRole('radiogroup', { name: 'Conflict level' }));
+  expect(level().getByRole('radio', { name: 'Medium' }).getAttribute('aria-checked')).toBe('true');
+  expect(group.getByText('Rowdy is a Medium word on the wiki’s Conflict Level page, so Medium is set.')).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+  expect(system('sys-a')).toMatchObject({
+    conflictWord: 'Rowdy',
+    conflict: 'medium',
+    economy: 'Prospecting // Opulent'
+  });
+
+  // 06i: chosen by hand, the word doesn't move it; the amber note offers the wiki's level.
+  act(() => {
+    openSystemEditor('sys-a');
+  });
+  const again = within(screen.getByRole('group', { name: 'Conflict' }));
+  await userEvent.click(
+    within(again.getByRole('radiogroup', { name: 'Conflict level' })).getByRole('radio', { name: 'High' })
+  );
+  const word = again.getByRole('combobox', { name: 'The map’s word' });
+  await userEvent.clear(word);
+  await userEvent.type(word, 'Peaceful');
+  expect(again.getByText('You chose High. The wiki lists Peaceful as Low; your choice stays.')).toBeTruthy();
+  await userEvent.click(again.getByRole('button', { name: 'Use Low' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+  expect(system('sys-a')).toMatchObject({ conflictWord: 'Peaceful', conflict: 'low' });
+
+  // 06j: the outlaws' word sets Pirate.
+  act(() => {
+    openSystemEditor('sys-a');
+  });
+  const outlaw = within(screen.getByRole('group', { name: 'Conflict' }));
+  await userEvent.click(
+    within(outlaw.getByRole('radiogroup', { name: 'Conflict level' })).getByRole('radio', { name: 'Low' })
+  ); // clear it
+  const box = outlaw.getByRole('combobox', { name: 'The map’s word' });
+  await userEvent.clear(box);
+  await userEvent.type(box, 'Pirate Controlled');
+  expect(outlaw.getByText('Pirate Controlled is the wiki’s word for an outlaw system.')).toBeTruthy();
+});

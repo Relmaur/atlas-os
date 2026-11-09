@@ -4,7 +4,7 @@
 // planet sheet (35), and the orbit diagram draws from the planets.
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { planetFamily } from '@atlas/core/facts';
-import { economyType, strengthStars } from '@atlas/core/galaxy-map';
+import { conflictPair, economyParts, economyType, strengthStars } from '@atlas/core/galaxy-map';
 import { homeSummary } from '@atlas/core/home';
 import { notesForSystem, systemPin } from '@atlas/core/notes';
 import { systemOrbit } from '@atlas/core/orbit';
@@ -14,6 +14,8 @@ import {
   STAR_CLASSES,
   lastVisit,
   moonParent,
+  planetMapped,
+  unmappedPlanets,
   type Planet,
   type System
 } from '@atlas/core/systems-model';
@@ -33,6 +35,7 @@ import { GlyphSlots, TOOL, slotsOf, useGlyphTable } from '../portal/glyph-parts.
 import { HEX, addressAsNames, glyphName, glyphsToFind, sendsToFirstPlanet } from '@atlas/core/portal';
 import { groupGlyphs } from '@atlas/core/location';
 import { DangerPills, nothingLogged, planetScanLine } from './PlanetScan.tsx';
+import { InfestedTag, NotMappedTag, NotMappedText } from '../parts/RowTags.tsx';
 import { discoveryWhen } from './DiscoveryFields.tsx';
 import { openPlanetSheet, planetHref, usePlanetSheet } from './planet-sheet-store.ts';
 import type { FactsFile } from '@atlas/core/facts';
@@ -74,7 +77,11 @@ export function SystemDetails() {
   }
   const current = homeSummary(state, now).current;
   const here = current?.id === system.id && lastVisit(system) !== undefined;
-  const orbit = systemOrbit(system, planet => planetFamily(facts, planet).family);
+  const orbit = systemOrbit(
+    system,
+    planet => planetFamily(facts, planet).family,
+    planet => planetFamily(facts, planet).infested
+  );
   const place = [system.region, system.galaxy].filter(Boolean).join(' · ');
   const linked = notesForSystem(state.notes, system.id);
 
@@ -156,9 +163,15 @@ export function SystemDetails() {
       <PortalAddress system={system} />
 
       <section aria-labelledby="planetsTitle" className="flex flex-col gap-2">
-        <h2 id="planetsTitle" className={SECTION_TITLE}>
-          Planets & moons · {system.planets.length}
-        </h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 id="planetsTitle" className={SECTION_TITLE}>
+            Planets & moons · {system.planets.length}
+          </h2>
+          {/* Round 7c: how many still need their glyph, only once the system has its address and only when some do. */}
+          {unmappedPlanets(system) > 0 && (
+            <span className="text-caption text-[#a5f3fc] shrink-0">{`${String(unmappedPlanets(system))} not mapped`}</span>
+          )}
+        </div>
         <ul className="rounded-card bg-panel border border-hairline divide-y divide-hairline overflow-hidden">
           {/* A moon tied to its planet sits inside that planet's row, indented; the rest keep the log's order. */}
           {system.planets
@@ -169,6 +182,7 @@ export function SystemDetails() {
                   planet={body}
                   href={planetHref(system.id, body.id)}
                   facts={facts}
+                  unmapped={planetMapped(system, body) === false}
                   moon={moon}
                   editing={planetSheet.open && planetSheet.systemId === system.id && planetSheet.planetId === body.id}
                   onEdit={() => {
@@ -271,8 +285,11 @@ const stars = (n: number, of: number) => (
 // pairs read as it shows them: "Yellow F4", "Prospecting // Opulent" with the economy's type and stars beneath.
 function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
   const map = facts?.galaxyMap ?? null;
-  const type = economyType(map, system.economy);
-  const strength = strengthStars(map, system.economyStrength) ?? (system.wealth || null);
+  // A pair typed in one field before 3.26 ("High Tech // Balanced") reads as its two parts; the text stays as typed.
+  const parts = economyParts(system);
+  const conflict = conflictPair(system, CONFLICT_LEVELS);
+  const type = economyType(map, parts.name);
+  const strength = strengthStars(map, parts.strength) ?? (system.wealth || null);
   const economy = system.economy || system.economyStrength;
   const cells: [string, ReactNode, { wide?: boolean; tone?: string }?][] = [
     [
@@ -326,12 +343,16 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
     ['Race', system.race ? RACES[system.race] : missing],
     [
       'Conflict',
-      system.conflict === 'pirate' ? (
-        <SeverityPill danger size="M">
-          Pirate (outlaw)
-        </SeverityPill>
-      ) : system.conflict ? (
-        CONFLICT_LEVELS[system.conflict]
+      // The map's pair, like the economy's: "Rowdy // Medium"; an outlaw system is one crimson pill (03f).
+      conflict?.pirate ? (
+        <span>
+          <SeverityPill danger size="M">
+            {conflict.text}
+          </SeverityPill>
+          <span className="sr-only">, outlaw system</span>
+        </span>
+      ) : conflict ? (
+        conflict.text
       ) : (
         missing
       )
@@ -595,6 +616,7 @@ function PlanetRow({
   href,
   facts,
   editing,
+  unmapped,
   moon = false,
   onEdit
 }: {
@@ -602,12 +624,14 @@ function PlanetRow({
   href: string;
   facts: FactsFile | null;
   editing: boolean;
+  /** No glyph yet, in a system that has its address (round 7c). */
+  unmapped: boolean;
   /** A moon inside its planet's row: indented, with a smaller marker. */
   moon?: boolean;
   onEdit: () => void;
 }) {
   const base = planet.tags.includes('base');
-  const { family, relic } = planetFamily(facts, planet);
+  const { family, relic, infested } = planetFamily(facts, planet);
   const line = planetScanLine(planet, facts);
   return (
     <a
@@ -627,14 +651,25 @@ function PlanetRow({
         <PlanetMarker
           family={family}
           relic={relic}
+          infested={infested}
           size={moon ? (base ? 18 : 16) : base ? 28 : 26}
           base={base}
           unlogged={nothingLogged(planet)}
         />
       </span>
       <span className="flex-1 min-w-0">
+        {/* Round 7c: on its own line above the name, so the name keeps its width (c19). */}
+        {unmapped && (
+          <span className="flex mb-1">
+            <NotMappedTag what="planet" />
+          </span>
+        )}
         <span className="flex flex-wrap items-center gap-2">
-          <span className="text-row font-semibold text-ink-bright break-words">{planet.name}</span>
+          <span className="text-row font-semibold text-ink-bright break-words">
+            {planet.name}
+            {unmapped && <NotMappedText what="planet" />}
+          </span>
+          {infested && <InfestedTag />}
           {base && (
             <span className="h-[22px] px-2 rounded-full bg-scanner-cyan-tint border border-scanner-cyan-edge text-quantity-cyan text-pill uppercase inline-flex items-center">
               Base
@@ -655,7 +690,7 @@ function PlanetRow({
             </>
           )}
         </span>
-        <DangerPills planet={planet} facts={facts?.planets ?? null} />
+        <DangerPills planet={planet} facts={facts} />
       </span>
       <i className="ph ph-caret-right text-ink-muted shrink-0" aria-hidden="true" />
     </a>

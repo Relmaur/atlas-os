@@ -306,7 +306,11 @@ function Hero({ system, now }: { system: System | undefined; now: number }) {
       </section>
     );
   }
-  const orbit = systemOrbit(system, planet => planetFamily(facts, planet).family);
+  const orbit = systemOrbit(
+    system,
+    planet => planetFamily(facts, planet).family,
+    planet => planetFamily(facts, planet).infested
+  );
   const note = system.notes.split('\n').find(line => line.trim());
   return (
     <section id="homeNow" aria-labelledby="homeSystemName" className="hero-card overflow-hidden">
@@ -556,7 +560,11 @@ function HeroDesk({ system, now }: { system: System | undefined; now: number }) 
         </div>
       </section>
     );
-  const orbit = systemOrbit(system, planet => planetFamily(facts, planet).family);
+  const orbit = systemOrbit(
+    system,
+    planet => planetFamily(facts, planet).family,
+    planet => planetFamily(facts, planet).infested
+  );
   const place = heroPlace(system);
   const note = system.notes.split('\n').find(line => line.trim());
   return (

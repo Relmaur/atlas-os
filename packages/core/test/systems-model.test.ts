@@ -251,3 +251,26 @@ test('a system’s discovery: an older log reads it as empty; damaged values rea
     discoveredTime: ''
   });
 });
+
+test('3.39: a log from before the conflict word comes through as typed, word empty; a word round-trips', () => {
+  // Shaped like a real early log (invented names): the game's whole line typed as the biome, the economy's pair
+  // typed in one field, a conflict level picked.
+  const old = {
+    name: 'Testra Gate',
+    economy: 'High Tech // Balanced',
+    wealth: 2,
+    conflict: 'medium',
+    planets: [{ id: 'pl-1', name: 'Veyl IV', biome: 'Icy Abhorrence Planet', tags: ['base'] }]
+  };
+  const system = normalizeSystem(old);
+  expect(system).toMatchObject({
+    economy: 'High Tech // Balanced',
+    economyStrength: '',
+    wealth: 2,
+    conflict: 'medium'
+  });
+  expect(system.conflictWord).toBe('');
+  expect(system.planets[0]).toMatchObject(old.planets[0] ?? {});
+  const worded = normalizeSystem({ ...old, conflictWord: 'Rowdy' });
+  expect(normalizeSystem(JSON.parse(JSON.stringify(worded)) as Record<string, unknown>)).toEqual(worded);
+});

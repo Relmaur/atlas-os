@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { planetFamily, type FactsFile } from '@atlas/core/facts';
 import { formatAgo } from '@atlas/core/format';
-import { economyType, strengthStars } from '@atlas/core/galaxy-map';
+import { conflictPair, economyParts, economyType, strengthStars } from '@atlas/core/galaxy-map';
 import { homeSummary } from '@atlas/core/home';
 import { notesForSystem, systemPin } from '@atlas/core/notes';
 import { systemOrbit } from '@atlas/core/orbit';
@@ -15,9 +15,12 @@ import {
   STAR_CLASSES,
   lastVisit,
   moonParent,
+  planetMapped,
+  unmappedPlanets,
   type Planet,
   type System
 } from '@atlas/core/systems-model';
+import { InfestedTag, NotMappedTag, NotMappedText } from '../parts/RowTags.tsx';
 import { logVisit, toggleFavorite } from '../actions.ts';
 import { useAppState } from '../useAppState.ts';
 import { useNow } from '../useNow.ts';
@@ -67,7 +70,11 @@ export function SystemDesk() {
   if (!system) return <SystemDetails />; // its "System not found"
   const current = homeSummary(state, now).current;
   const here = current?.id === system.id && lastVisit(system) !== undefined;
-  const orbit = systemOrbit(system, planet => planetFamily(facts, planet).family);
+  const orbit = systemOrbit(
+    system,
+    planet => planetFamily(facts, planet).family,
+    planet => planetFamily(facts, planet).infested
+  );
   const first = system.visits[0];
   const sub = [
     system.region,
@@ -183,6 +190,10 @@ export function SystemDesk() {
               <h2 id="planetsTitle" className={SECTION_TITLE}>
                 Planets & moons · {system.planets.length}
               </h2>
+              {/* Round 7c: only once the system has its address, and only when some planet lacks its glyph. */}
+              {unmappedPlanets(system) > 0 && (
+                <span className="text-caption text-[#a5f3fc] ml-auto">{`${String(unmappedPlanets(system))} not mapped`}</span>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -262,13 +273,14 @@ const stars = (n: number, of: number) => (
 // follows on its own row once logged. A value that doesn't fit ends after two lines, with the rest as a tooltip.
 function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
   const map = facts?.galaxyMap ?? null;
-  const type = economyType(map, system.economy);
-  const strength = strengthStars(map, system.economyStrength) ?? (system.wealth || null);
+  // A pair typed in one field before 3.26 ("High Tech // Balanced") reads as its two parts; the text stays as typed.
+  const parts = economyParts(system);
+  const type = economyType(map, parts.name);
+  const strength = strengthStars(map, parts.strength) ?? (system.wealth || null);
   const economy = [system.economy, system.economyStrength].filter(Boolean);
-  const raceConflict = [
-    system.race ? RACES[system.race] : '',
-    system.conflict && system.conflict !== 'pirate' ? CONFLICT_LEVELS[system.conflict] : ''
-  ].filter(Boolean);
+  // The race leads; the conflict pair ("Rowdy // Medium") sits under it, so the row keeps six facts (d19b, d20b).
+  const race = system.race ? RACES[system.race] : '';
+  const conflict = conflictPair(system, CONFLICT_LEVELS);
   const cells: { label: string; value: ReactNode; title?: string }[] = [
     {
       label: 'Star',
@@ -329,19 +341,21 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
     { label: 'Wealth', value: strength ? stars(strength, 3) : missing },
     {
       label: 'Race · conflict',
-      title: raceConflict.join(' · '),
+      title: [race, conflict?.text].filter(Boolean).join(' · '),
       value:
-        raceConflict.length || system.conflict === 'pirate' ? (
-          <span className="line-clamp-2">
-            {raceConflict.join(' · ')}
-            {system.conflict === 'pirate' && (
-              <>
-                {raceConflict.length > 0 && ' '}
+        race || conflict ? (
+          <span className="flex flex-col min-w-0">
+            {race && <span className="truncate">{race}</span>}
+            {conflict?.pirate ? (
+              <span className="mt-0.5">
                 <SeverityPill danger size="M">
-                  Pirate (outlaw)
+                  {conflict.text}
                 </SeverityPill>
-              </>
-            )}
+                <span className="sr-only">, outlaw system</span>
+              </span>
+            ) : conflict ? (
+              <span className="truncate text-ink-soft">{conflict.text}</span>
+            ) : null}
           </span>
         ) : (
           missing
@@ -396,7 +410,8 @@ function PlanetCard({
 }) {
   const base = planet.tags.includes('base');
   const parent = moonParent(system.planets, planet);
-  const { family, relic } = planetFamily(facts, planet);
+  const { family, relic, infested } = planetFamily(facts, planet);
+  const unmapped = planetMapped(system, planet) === false;
   const line = planetScanLine(planet, facts);
   const scan = [line.text, line.temperature].filter(Boolean).join(' · ');
   return (
@@ -415,16 +430,20 @@ function PlanetCard({
         <PlanetMarker
           family={family}
           relic={relic}
+          infested={infested}
           size={parent ? 18 : base ? 28 : 26}
           base={base}
           unlogged={nothingLogged(planet)}
         />
       </span>
       <span className="flex-1 min-w-0 flex flex-col gap-1">
+        {unmapped && <NotMappedTag what="planet" />}
         <span className="flex items-center gap-2 min-w-0">
           <span title={planet.name} className="truncate text-[15px] font-semibold text-ink-bright">
             {planet.name}
+            {unmapped && <NotMappedText what="planet" />}
           </span>
+          {infested && <InfestedTag />}
           {base && (
             <span className="shrink-0 h-[22px] px-2 rounded-tag bg-scanner-cyan-tint border border-scanner-cyan-edge text-quantity-cyan text-pill uppercase inline-flex items-center">
               Base
@@ -452,7 +471,7 @@ function PlanetCard({
             )}
           </span>
         )}
-        <DangerPills planet={planet} facts={facts?.planets ?? null} />
+        <DangerPills planet={planet} facts={facts} />
       </span>
     </a>
   );

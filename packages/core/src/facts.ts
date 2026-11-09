@@ -4,7 +4,15 @@
 // file, so nothing here ever applies a rule the mirror can no longer show.
 import { z } from 'zod';
 import { GlyphTableSchema } from './glyphs.ts';
-import { PlanetFactsSchema, biomeFor, isReliquary, reliquaryMainBiome } from './planets.ts';
+import {
+  PlanetFactsSchema,
+  biomeFor,
+  isInfested,
+  isReliquary,
+  reliquaryMainBiome,
+  weatherSource,
+  type WeatherClass
+} from './planets.ts';
 import { GalaxyMapFactsSchema } from './galaxy-map.ts';
 
 export const ClassCountsSchema = z.object({ C: z.int(), B: z.int(), A: z.int(), S: z.int() });
@@ -55,6 +63,10 @@ export const FACT_VALUES = {
   'reliquary-main-biome': z.literal(true),
   // The hazard readings a scan can show (Temperature °C, Radiation Rad, Toxicity Tox).
   'hazard-readings': z.array(z.object({ name: z.string().min(1), unit: z.string() })).min(1),
+  // Biomes whose weather names don't tell the storm status (the Weather page): no severity from a table, ever.
+  'unrated-weather-biomes': z.array(z.string().min(1)).min(1),
+  // Of those, the biomes whose worlds never have storms: their weather reads "No storms".
+  'stormless-biomes': z.array(z.string().min(1)).min(1),
   // Light years per region (one step of a portal address's X, Y or Z): distances from a galaxy's centre.
   'region-light-years': z.int().positive()
 } as const;
@@ -140,14 +152,16 @@ export function biomeFamily(file: FactsFile | null, biome: string): BiomeFamily 
 export function planetFamily(
   file: FactsFile | null,
   planet: { biome: string; descriptor?: string }
-): { family: BiomeFamily | null; relic: boolean } {
+): { family: BiomeFamily | null; relic: boolean; infested: boolean } {
   const planets = file?.planets ?? null;
+  // An Infested world (round 4b) by its name, wherever the player typed it (an older log has it in Biome).
+  const infested = isInfested(planets, planet.descriptor ?? '') || isInfested(planets, planet.biome);
   const relic = isReliquary(planets, planet);
-  if (!relic) return { family: biomeFamily(file, planet.biome || planet.descriptor || ''), relic: false };
-  if (!getFact(file, 'reliquary-main-biome')) return { family: null, relic };
+  if (!relic) return { family: biomeFamily(file, planet.biome || planet.descriptor || ''), relic: false, infested };
+  if (!getFact(file, 'reliquary-main-biome')) return { family: null, relic, infested };
   const picked = biomeFamily(file, planet.biome);
   const main = reliquaryMainBiome(planets, planet.descriptor ?? '');
-  return { family: picked ?? (main ? biomeFamily(file, main.name) : null), relic };
+  return { family: picked ?? (main ? biomeFamily(file, main.name) : null), relic, infested };
 }
 
 /**
@@ -168,4 +182,24 @@ export function readingText(file: FactsFile | null, planet: { hazard: string; te
   if (planet.temperature === null) return '';
   const { unit } = hazardReading(file, planet.hazard);
   return [String(planet.temperature).replace('-', '−'), unit].filter(Boolean).join(' ');
+}
+
+/**
+ * What a weather word says about storms. On a world the Weather page says never storms (Exotic, Dead): "No storms",
+ * whatever the name ("Obsidian Heat" is a name, not a storm level). On one whose names don't tell (Mega Exotic, Gas
+ * Giant, Waterworld): nothing, never a severity borrowed from another biome's table. Otherwise the wiki's tables.
+ */
+export function weatherReading(
+  file: FactsFile | null,
+  biome: string,
+  weather: string
+): { cls: Exclude<WeatherClass, 'other'>; biome: string } | { cls: 'stormless'; biome: string } | null {
+  const planets = file?.planets ?? null;
+  if (!weather.trim()) return null;
+  const own = biomeFor(planets, biome)?.name.toLowerCase();
+  const listed = (id: 'stormless-biomes' | 'unrated-weather-biomes') =>
+    Boolean(own) && (getFact(file, id)?.value ?? []).some(name => name.toLowerCase() === own);
+  if (listed('stormless-biomes')) return { cls: 'stormless', biome: biomeFor(planets, biome)?.name ?? biome };
+  if (listed('unrated-weather-biomes')) return null;
+  return weatherSource(planets, biome, weather);
 }

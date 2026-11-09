@@ -44,6 +44,11 @@ export interface Planet {
   orbits: string;
   /** This body's portal glyph (glyph 1 of an address here, from Photo Mode on it): one digit, or ''. Added in 3.30. */
   portalGlyph: string;
+  /**
+   * Lines the planet's discovery menu displays, as the game words them ("Vile Brood Detected"): properties of the
+   * planet, not resources. Added in 3.39; an older log reads it as empty.
+   */
+  detected: string[];
 }
 /** What a planet's colour is read from: its biome, and its description for a Reliquary world or an unset biome. */
 export type PlanetLike = Pick<Planet, 'biome' | 'descriptor'>;
@@ -81,6 +86,8 @@ export interface System {
   discoveredOn: string;
   discoveredTime: string;
   conflict: ConflictLevel | '';
+  /** The galaxy map's conflict word: "Peaceful" (added in 3.39; an older log reads it as empty). `conflict` holds its level. */
+  conflictWord: string;
   tags: string[];
   favorite: boolean;
   rating: number;
@@ -242,7 +249,11 @@ export function normalizePlanetScan(
     hazard: word(planet.hazard).toLowerCase().slice(0, 20),
     ...discoveryOf(planet),
     orbits: typeof planet.orbits === 'string' && SAFE_ID.test(planet.orbits) ? planet.orbits : '',
-    portalGlyph: normalizePortalGlyph(planet.portalGlyph)
+    portalGlyph: normalizePortalGlyph(planet.portalGlyph),
+    detected: (Array.isArray(planet.detected) ? (planet.detected as unknown[]) : [])
+      .filter((line): line is string => typeof line === 'string' && Boolean(line.trim()))
+      .map(line => line.trim().slice(0, 60))
+      .slice(0, 8)
   };
 }
 
@@ -278,6 +289,7 @@ export function normalizeSystem(raw: Record<string, unknown>): System {
     planetCount: clampInt(raw.planetCount, 0, 15), // a portal's planet index is one hex digit
     ...discoveryOf(raw),
     conflict: oneOf(CONFLICT_LEVELS, raw.conflict),
+    conflictWord: toText(raw.conflictWord, '').trim().slice(0, 40),
     tags: tagList(raw.tags),
     favorite: !!raw.favorite,
     rating: clampInt(raw.rating, 0, 5),
@@ -435,3 +447,14 @@ export function rankOutlaw(
         a.system.name.localeCompare(b.system.name)
     );
 }
+
+/**
+ * Mapped (round 7c): a system is mapped once it has its portal address, a planet once it has its own glyph (glyph 1).
+ * A planet is only asked about once its system is mapped, so nothing asks twice: null until then.
+ */
+export const systemMapped = (system: Pick<System, 'glyphs'>): boolean => system.glyphs.length === 12;
+export const planetMapped = (system: Pick<System, 'glyphs'>, planet: Pick<Planet, 'portalGlyph'>): boolean | null =>
+  systemMapped(system) ? Boolean(planet.portalGlyph) : null;
+/** How many of a system's planets still need their glyph (0 while the system itself has no address). */
+export const unmappedPlanets = (system: System): number =>
+  system.planets.filter(planet => planetMapped(system, planet) === false).length;

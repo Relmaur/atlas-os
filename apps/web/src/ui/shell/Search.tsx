@@ -4,12 +4,13 @@
 // it floats beside the rail. Either way the search key opens it.
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { search } from '@atlas/core/search';
-import { searchSystems, type System } from '@atlas/core/systems-model';
+import { searchSystems, systemMapped, type System } from '@atlas/core/systems-model';
 import { gearOrder, type GearItem } from '@atlas/core/gear';
 import { noteExcerpt, searchNotes, type Note } from '@atlas/core/notes';
 import type { PreparedEntry } from '@atlas/core/search';
 import { appState } from '../../app/store.ts';
 import { Highlight, SourceBadge, categoryIcon } from '../codex/bits.tsx';
+import { NotMappedTag, NotMappedText } from '../parts/RowTags.tsx';
 import { StarDot } from '../parts/SystemBits.tsx';
 import { openSystem, openSystemEditor } from '../systems/panel-store.ts';
 import { findBookHits, flash, snippetAround, type BookHit } from './book-search.ts';
@@ -464,8 +465,13 @@ export function Search() {
           >
             <StarDot system={system} />
           </span>,
-          <Highlight text={system.name} tokens={tokens} />,
-          [system.region, ...system.tags].filter(Boolean).join(' · ') || system.galaxy
+          <>
+            <Highlight text={system.name} tokens={tokens} />
+            {!systemMapped(system) && <NotMappedText what="system" />}
+          </>,
+          [system.region, ...system.tags].filter(Boolean).join(' · ') || system.galaxy,
+          // Round 7c: on a one-line row the tag sits at the trailing end (19, Ctrl K).
+          systemMapped(system) ? undefined : <NotMappedTag what="system" />
         )
       );
     } else if (hit.type === 'wiki') {

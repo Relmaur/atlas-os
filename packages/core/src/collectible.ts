@@ -23,7 +23,7 @@ export type ArtShape =
   | ({ kind: 'path'; d: string } & Paint)
   | ({ kind: 'circle'; cx: number; cy: number; r: number } & Paint)
   | { kind: 'star'; cx: number; cy: number; r: number; colour: StarClass | '' }
-  | { kind: 'planet'; cx: number; cy: number; r: number; family: string | null; base: boolean }
+  | { kind: 'planet'; cx: number; cy: number; r: number; family: string | null; base: boolean; infested?: boolean }
   | { kind: 'text'; x: number; y: number; text: string };
 export interface ArtGroup {
   shapes: ArtShape[];
@@ -110,7 +110,7 @@ export interface SystemArtInput {
   conflict: number;
   wealth: number;
   manufacturing: boolean;
-  planets: { family: string | null; base: boolean }[];
+  planets: { family: string | null; base: boolean; infested?: boolean }[];
   /** Another moment at the same place: the same system, its worlds elsewhere. */
   edition?: number;
 }
@@ -202,7 +202,17 @@ export function systemArt(input: SystemArtInput, W = 300, H = 420): CardArt {
     fg.push({
       start,
       spin: { seconds: 26 * (orbit / baseR) ** 1.5 },
-      shapes: [{ kind: 'planet', cx: cx + orbit, cy, r, family: planet.family, base: planet.base }]
+      shapes: [
+        {
+          kind: 'planet',
+          cx: cx + orbit,
+          cy,
+          r,
+          family: planet.family,
+          base: planet.base,
+          ...(planet.infested && { infested: true })
+        }
+      ]
     });
   });
   return { width: W, height: H, cx, cy, base: '#050a14', bg, mid, fg };
@@ -458,11 +468,15 @@ const worlds = (system: System) => {
   return count ? `${String(count)} world${count === 1 ? '' : 's'}` : '';
 };
 
+/** Whether a planet is an Infested world (round 4b): its disc gets the spore ring on the cards too. */
+type InfestedOf = (planet: PlanetLike) => boolean;
+
 /** The art's inputs from a logged system. A system with no address keys on its id, until an address settles it. */
 export function systemArtInput(
   system: System,
   family: (planet: PlanetLike) => BiomeFamily | null,
-  edition?: number
+  edition?: number,
+  infestedOf: InfestedOf = () => false
 ): SystemArtInput {
   return {
     galaxy: system.galaxy || 'Euclid',
@@ -473,7 +487,11 @@ export function systemArtInput(
     conflict: LEVEL[system.conflict] ?? 1,
     wealth: system.wealth || 1,
     manufacturing: system.economy === 'Manufacturing',
-    planets: system.planets.map(planet => ({ family: family(planet), base: planet.tags.includes('base') })),
+    planets: system.planets.map(planet => ({
+      family: family(planet),
+      base: planet.tags.includes('base'),
+      ...(infestedOf(planet) && { infested: true })
+    })),
     ...(edition === undefined ? {} : { edition })
   };
 }
@@ -484,7 +502,11 @@ const facts = (system: System) =>
   );
 const placeOf = (system: System) => [system.region, system.galaxy].filter(Boolean).join(' · ');
 
-function systemCard(system: System, family: (planet: PlanetLike) => BiomeFamily | null): CollectionCard {
+function systemCard(
+  system: System,
+  family: (planet: PlanetLike) => BiomeFamily | null,
+  infestedOf: InfestedOf
+): CollectionCard {
   const addressed = Boolean(system.glyphs);
   return {
     id: `system:${system.id}`,
@@ -503,7 +525,7 @@ function systemCard(system: System, family: (planet: PlanetLike) => BiomeFamily 
     trust: addressed ? 'ADDRESSED' : 'LOGGED',
     seal: seal(system.galaxy, system.glyphs || system.id),
     href: `#system/${system.id}`,
-    art: () => systemArt(systemArtInput(system, family))
+    art: () => systemArt(systemArtInput(system, family, undefined, infestedOf))
   };
 }
 
@@ -537,7 +559,8 @@ function fleetCard(item: GearItem): CollectionCard {
 function firstCard(
   first: First,
   log: { systems: System[]; gear: GearItem[] },
-  family: (planet: PlanetLike) => BiomeFamily | null
+  family: (planet: PlanetLike) => BiomeFamily | null,
+  infestedOf: InfestedOf
 ): CollectionCard | null {
   const [group = '', value = ''] = first.key.split(':');
   const earliest = [...log.systems]
@@ -572,7 +595,7 @@ function firstCard(
       pills: facts(earliest),
       seal: seal('first', first.key, earliest.glyphs || earliest.id),
       href: `#system/${earliest.id}`,
-      art: () => systemArt(systemArtInput(earliest, family, seedOf('first', first.key)))
+      art: () => systemArt(systemArtInput(earliest, family, seedOf('first', first.key), infestedOf))
     };
   const item = [...log.gear]
     .sort((a, b) => (Date.parse(a.createdAt) || 0) - (Date.parse(b.createdAt) || 0))
@@ -597,10 +620,13 @@ function firstCard(
 /** Every card the log has earned, newest first. */
 export function collection(
   log: { systems: System[]; gear: GearItem[] },
-  family: (planet: PlanetLike) => BiomeFamily | null
+  family: (planet: PlanetLike) => BiomeFamily | null,
+  infestedOf: InfestedOf = () => false
 ): CollectionCard[] {
-  const firstCards = logFirsts(log, family).flatMap(first => firstCard(first, log, family) ?? []);
-  return [...log.systems.map(system => systemCard(system, family)), ...log.gear.map(fleetCard), ...firstCards].sort(
-    (a, b) => b.at - a.at || a.title.localeCompare(b.title)
-  );
+  const firstCards = logFirsts(log, family).flatMap(first => firstCard(first, log, family, infestedOf) ?? []);
+  return [
+    ...log.systems.map(system => systemCard(system, family, infestedOf)),
+    ...log.gear.map(fleetCard),
+    ...firstCards
+  ].sort((a, b) => b.at - a.at || a.title.localeCompare(b.title));
 }

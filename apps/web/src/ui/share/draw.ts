@@ -13,6 +13,7 @@ import {
   type ShareFormat
 } from '@atlas/core/share';
 import { Rng, seedOf } from '@atlas/core/seed';
+import { sporeDots } from '../parts/spores.ts';
 import { RACES, STAR_CLASSES, type StarClass } from '@atlas/core/systems-model';
 
 const DISPLAY = 'Orbitron, sans-serif';
@@ -308,6 +309,9 @@ export function drawPostcard(canvas: HTMLCanvasElement, scene: PostcardScene): v
       c.fill();
       c.restore();
     } else disc(c, x, y, r, '#475569');
+    if (planet.infested)
+      for (const dot of sporeDots(x, y, r))
+        disc(c, dot.x, dot.y, dot.r, planet.family ? token(`--color-biome-${planet.family}`, '#94a3b8') : '#475569');
     if (planet.base) ring(c, x, y, r + 12, '#22d3ee', 3);
     const label = card.labels?.[planet.index];
     if (label) {
@@ -544,6 +548,10 @@ function paintShapes(c: CanvasRenderingContext2D, group: ArtGroup, art: CardArt)
       disc(c, shape.cx, shape.cy, shape.r * 0.6, token(`--color-star-${shape.colour}-core`, '#fff7d6'), 0.9);
     } else if (shape.kind === 'planet') {
       planetDisc(c, shape.cx, shape.cy, shape.r, shape.family);
+      // The Infested spore ring, as the SVG marker draws it (round 4b).
+      if (shape.infested)
+        for (const dot of sporeDots(shape.cx, shape.cy, shape.r))
+          disc(c, dot.x, dot.y, dot.r, shape.family ? token(`--color-biome-${shape.family}`, '#94a3b8') : '#475569');
       if (shape.base) ring(c, shape.cx, shape.cy, shape.r + 5, '#22d3ee', 1.4);
     } else if (shape.kind === 'text') {
       put(c, shape.text, shape.x, shape.y, { font: `400 9px ${MONO}`, colour: '#64748b', align: 'center', spacing: 2 });

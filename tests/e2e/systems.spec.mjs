@@ -238,13 +238,14 @@ test('d14: the system editor panel at 1024, 1440 and 1920 pairs its fields, keep
       const box = el => el.getBoundingClientRect();
       const field = name =>
         [...document.querySelectorAll('#systemEditor label')].find(l => l.firstChild?.textContent?.trim() === name);
-      const group = name =>
-        document.querySelector(
-          `#systemEditor [role=radiogroup][aria-labelledby="${[...document.querySelectorAll('#systemEditor p')].find(p => p.textContent === name)?.id}"]`
+      // d14b: the conflict column (the map's word over its level) sits beside Dominant race.
+      const label = text =>
+        [...document.querySelectorAll('#systemEditor p, #systemEditor label')].find(
+          el => el.firstChild?.textContent?.trim() === text
         );
       return [
         [field('Name'), field('Region')],
-        [group('Dominant race'), group('Conflict')]
+        [label('Dominant race'), label('Conflict · the map’s word')]
       ]
         .map(([a, b]) => [box(a), box(b)])
         .map(([a, b]) => ({ sameRow: Math.abs(a.y - b.y) < 2, apart: b.x >= a.right }));
@@ -268,8 +269,14 @@ test('d14: the system editor panel at 1024, 1440 and 1920 pairs its fields, keep
 test('d19: the orbit band draws when a system opens after coming from another screen', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'the band is the Workbench’s');
   await page.goto('./#home');
-  await page.getByRole('link', { name: /^Systems/ }).first().click();
-  await page.locator('#systemList').getByRole('button', { name: /Hesper Drift/ }).click();
+  await page
+    .getByRole('link', { name: /^Systems/ })
+    .first()
+    .click();
+  await page
+    .locator('#systemList')
+    .getByRole('button', { name: /Hesper Drift/ })
+    .click();
   const band = page.getByRole('region', { name: 'Orbit diagram' });
   await expect(band.locator('svg').first()).toBeVisible();
 });

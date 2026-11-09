@@ -22,6 +22,8 @@ export interface OrbitPlanet {
   /** Relative disc size, 1 when not logged. */
   size: number;
   base: boolean;
+  /** An Infested world (round 4b): the marker's spore ring. */
+  infested?: boolean;
   /** For a moon tied to its planet: that planet's position in the same list. Left out otherwise. */
   moonOf?: number;
 }
@@ -210,7 +212,8 @@ export function orbitSentence(system: string, starColour: string, planets: Orbit
  */
 export function systemOrbit(
   system: Pick<System, 'id' | 'galaxy' | 'glyphs' | 'planets'>,
-  familyOf: (planet: PlanetLike) => string | null
+  familyOf: (planet: PlanetLike) => string | null,
+  infestedOf: (planet: PlanetLike) => boolean = () => false
 ): { seed: [string, string]; planets: OrbitPlanet[] } {
   return {
     seed: [system.galaxy, system.glyphs || system.id],
@@ -221,6 +224,7 @@ export function systemOrbit(
         family: familyOf(planet),
         size: 1, // the log doesn't hold planet sizes
         base: planet.tags.includes('base'),
+        ...(infestedOf(planet) && { infested: true }),
         ...(parent && { moonOf: system.planets.indexOf(parent) })
       };
     })

@@ -274,7 +274,14 @@ test('35: an older planet keeps its words; a shared prefix leaves the biome to t
   expect(box('Biome').value).toBe('Hot Moon'); // a typed word is never replaced
   await userEvent.clear(box('Description'));
   await userEvent.type(box('Description'), 'Abandoned');
-  expect(sheet.getByText('Used by Barren, Dead: pick the biome below.')).toBeTruthy();
+  // A name several biomes use asks right under Description (35e), with the biome to pick as buttons.
+  const which = sheet.getByRole('radiogroup', { name: 'Which biome is this Abandoned world?' });
+  expect(within(which).getByText('Abandoned names two kinds of world on the wiki.')).toBeTruthy();
+  expect(
+    within(which)
+      .getAllByRole('radio')
+      .map(radio => radio.textContent)
+  ).toEqual(['Barren', 'Dead']);
   await userEvent.click(sheet.getByRole('button', { name: 'Cancel' }));
   expect(planet('pl-o')).toMatchObject({ biome: 'Hot Moon', descriptor: '', notes: 'typed in 3.25' });
 });
@@ -490,4 +497,109 @@ test('d16: on the Workbench a planet has a breadcrumb, the bodies either side, E
   expect(screen.getByRole('region', { name: 'The scan' })).toBeTruthy();
   await userEvent.click(within(nav).getByRole('button', { name: 'Edit body' }));
   expect(getPlanetSheet()).toMatchObject({ open: true, systemId: 'sys-a', planetId: 'pl-l' });
+});
+
+const INFESTED_FACTS: FactsFile = {
+  ...FACTS,
+  planets: {
+    ...FACTS.planets!,
+    infested: {
+      page: 'Biome Subtype - Infested',
+      path: 'wiki/world/Biome_Subtype_-_Infested.md',
+      revId: 1,
+      sets: [
+        { biome: 'Frozen', names: ['Infested', 'Icy Abhorrence'] },
+        { biome: 'Scorched', names: ['Infested', 'Fiery Dreadworld'] }
+      ],
+      alone: ['Icy Abhorrence', 'Fiery Dreadworld'],
+      flora: ['Twisted', 'Screaming']
+    },
+    detected: [{ page: 'Vile Brood', path: 'wiki/mechanics/Vile_Brood.md', revId: 1, label: 'Vile Brood Detected' }]
+  }
+};
+
+test('35d: an Infested name sets its biome, never Planet or Moon; Infested flora first; Vile Brood is a switch', async () => {
+  setFactsForTests(INFESTED_FACTS);
+  render(
+    <>
+      <SystemDetails />
+      <PlanetSheet />
+    </>
+  );
+  await userEvent.click(screen.getByRole('button', { name: /^Add body/ }));
+  const sheet = within(document.getElementById('planetSheet') as HTMLElement);
+  await userEvent.type(sheet.getByRole('textbox', { name: 'Name' }), 'Veyl IV');
+  const box = (name: string) => sheet.getByRole<HTMLInputElement>('combobox', { name });
+  await userEvent.type(box('Description'), 'Icy Abhorrence');
+  expect(box('Biome').value).toBe('Frozen');
+  expect(sheet.getByText(/world’s name/).textContent).toBe(
+    'Icy Abhorrence is an Infested Frozen world’s name, so Biome is set to Frozen. It takes no “Planet” or “Moon”, so that choice stays yours.'
+  );
+  expect(sheet.getByRole('link', { name: 'Infested' }).getAttribute('href')).toBe(
+    'wiki/#/a/wiki%2Fworld%2FBiome_Subtype_-_Infested.md'
+  );
+  // The Planet/Moon choice stays the player's: nothing picked it.
+  expect(sheet.getAllByRole('radio', { checked: true }).map(radio => radio.textContent)).not.toContain('Planet');
+  // Flora offers the Infested page's words first.
+  await userEvent.click(box('Flora'));
+  expect(sheet.getByText('Infested flora · wiki')).toBeTruthy();
+  // Vile Brood isn't a resource chip: it's a switch, as the discovery menu shows it.
+  expect(sheet.queryByRole('button', { name: /Vile Brood/ })).toBeNull();
+  const brood = sheet.getByRole('switch', { name: 'Vile Brood Detected' });
+  expect(brood.getAttribute('aria-checked')).toBe('false');
+  await userEvent.click(brood);
+  await userEvent.click(sheet.getByRole('button', { name: 'Add body' }));
+  const saved = appState.systems[0]?.planets.find(item => item.name === 'Veyl IV');
+  expect(saved).toMatchObject({
+    descriptor: 'Icy Abhorrence',
+    biome: 'Frozen',
+    body: '',
+    detected: ['Vile Brood Detected']
+  });
+  expect(saved?.resources).not.toContain('Vile Brood Detected');
+});
+
+test('35e: "Infested" asks which biome right under Description, the biome already set pre-picked', async () => {
+  setFactsForTests(INFESTED_FACTS);
+  render(
+    <>
+      <SystemDetails />
+      <PlanetSheet />
+    </>
+  );
+  await userEvent.click(screen.getByRole('button', { name: /^Add body/ }));
+  const sheet = within(document.getElementById('planetSheet') as HTMLElement);
+  const box = (name: string) => sheet.getByRole<HTMLInputElement>('combobox', { name });
+  await userEvent.type(box('Biome'), 'Frozen');
+  await userEvent.type(box('Description'), 'Infested');
+  const which = sheet.getByRole('radiogroup', { name: 'Which biome is this Infested world?' });
+  expect(within(which).getByText('Infested on which biome? The wiki uses this name for two.')).toBeTruthy();
+  expect(within(which).getByRole('radio', { name: 'Frozen' }).getAttribute('aria-checked')).toBe('true');
+  expect(within(which).getByText('Frozen was already set, so it’s picked. Biome follows this choice.')).toBeTruthy();
+  await userEvent.click(within(which).getByRole('radio', { name: 'Scorched' }));
+  expect(box('Biome').value).toBe('Scorched');
+});
+
+test('36d: an Infested world’s view says so, and an older log’s "Vile Brood Detected" resource reads as its own line', () => {
+  setFactsForTests(INFESTED_FACTS);
+  section = 'planet';
+  param = 'sys-a/pl-h';
+  const hogaw = appState.systems[0]?.planets.find(item => item.id === 'pl-h');
+  Object.assign(hogaw ?? {}, {
+    descriptor: 'Icy Abhorrence',
+    body: 'planet',
+    flora: 'Twisted',
+    resources: [...(hogaw?.resources ?? []), 'Vile Brood Detected']
+  });
+  render(<PlanetDetails />);
+  expect(screen.getByRole('link', { name: 'Infested' }).parentElement?.textContent).toBe('Infested · Frozen biome');
+  // A stand-alone name shows alone, as the game does: no "Planet" after it.
+  expect(screen.getByText('Icy Abhorrence')).toBeTruthy();
+  expect(screen.queryByText('Icy Abhorrence Planet')).toBeNull();
+  // The discovery menu's line closes The scan; it's no longer counted among the resources.
+  const scan = within(screen.getByRole('region', { name: 'The scan' }));
+  expect(scan.getByText('Vile Brood Detected')).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'Resources · 4' })).toBeTruthy();
+  // Typed as a resource by an earlier version: still there, as typed.
+  expect(appState.systems[0]?.planets.find(item => item.id === 'pl-h')?.resources).toContain('Vile Brood Detected');
 });

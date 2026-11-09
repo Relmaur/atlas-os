@@ -62,12 +62,16 @@ test('d01: the Workbench detail has the band, the name with Log a visit, six fac
   expect(screen.getByText(/Oshaun Sector · Euclid · first visited .* · 2 visits/)).toBeTruthy();
   const terms = screen.getAllByRole('term').map(term => term.textContent);
   expect(terms).toEqual(['Star', 'On the map', 'Economy', 'Wealth', 'Race · conflict', 'Your rating']);
-  expect(screen.getByText('Korvax · Medium')).toBeTruthy();
+  // The race leads; the conflict sits under it, so the row keeps six facts (d19b, d20b).
+  const raceCell = screen.getByTitle('Korvax · Medium');
+  expect([...raceCell.querySelectorAll('span span')].map(line => line.textContent)).toEqual(['Korvax', 'Medium']);
   // A moon tied to its planet says which; a card opens the planet in the panel.
   const cards = within(screen.getByRole('region', { name: /Planets & moons/ })).getAllByRole('link');
+  expect(screen.getByText('2 not mapped')).toBeTruthy();
   expect(cards.map(card => card.textContent)).toEqual([
-    expect.stringMatching(/^Ekora PrimeBase/),
-    expect.stringMatching(/^Tessa MinorOrbits Ekora Prime/)
+    // 7c: the system has its address, so a planet with no glyph yet says so above its name (03e, d16).
+    expect.stringMatching(/^No glyphEkora Prime, Not mapped: no planet glyph yetBase/),
+    expect.stringMatching(/^No glyphTessa Minor, Not mapped: no planet glyph yetOrbits Ekora Prime/)
   ]);
   await userEvent.click(cards[0]!);
   expect(getPlanetSheet()).toMatchObject({ open: true, systemId: 'sys-a', planetId: 'pl-1' });

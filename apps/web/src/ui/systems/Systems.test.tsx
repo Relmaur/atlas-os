@@ -30,6 +30,7 @@ beforeEach(() => {
         {
           id: 'sys-a',
           name: 'Ekwa Nexus',
+          glyphs: '10010C4BAB22',
           region: 'Odyalutai',
           star: 'yellow',
           rating: 5,
@@ -40,13 +41,14 @@ beforeEach(() => {
         {
           id: 'sys-b',
           name: 'Hesper Drift',
+          glyphs: '20020C4BAB22',
           race: 'korvax',
           favorite: true,
           tags: ['mining', 'trade-hub'],
           notes: 'S-class hauler',
           createdAt: ago(100)
         },
-        { id: 'sys-c', name: 'Outlaw Den', tags: ['outlaw'], createdAt: ago(200) }
+        { id: 'sys-c', name: 'Outlaw Den', glyphs: '30030C4BAB22', tags: ['outlaw'], createdAt: ago(200) }
       ]
     })
   );
@@ -165,7 +167,41 @@ test('d01: on the Workbench each system is one row: star, name (★ for a favour
 
 test('d01: from ten systems the filter field drops the word, so its placeholder is never cut off', () => {
   setWide(true);
-  setAppState(buildState({ systems: Array.from({ length: 12 }, (_, i) => ({ id: `s${String(i)}`, name: `S${String(i)}` })) }));
+  setAppState(
+    buildState({ systems: Array.from({ length: 12 }, (_, i) => ({ id: `s${String(i)}`, name: `S${String(i)}` })) })
+  );
   render(<Systems />);
   expect(screen.getByPlaceholderText('Filter 12')).toBeTruthy();
+});
+
+test('7c (02b, d01b): a system with no address says so above its name, inside its one link; Not mapped filters them', async () => {
+  setAppState(
+    buildState({
+      systems: [
+        { id: 'sys-a', name: 'Ekwa Nexus', glyphs: '10010C4BAB22', star: 'yellow' },
+        { id: 'sys-n', name: 'Dissonant System #1', tags: ['harmonic-camp'] }
+      ]
+    })
+  );
+  render(<Systems />);
+  // A label, not a button: the card's name is the one way in, and a screen reader hears the tag after the name.
+  expect(
+    screen.getByRole('button', { name: /^Dissonant System #1 ?, Not mapped: no portal address yet$/ })
+  ).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /^No address/ })).toBeNull();
+  expect(screen.getAllByText('No address')).toHaveLength(1);
+  const chips = within(screen.getByRole('group', { name: 'Filters' }));
+  const chip = chips.getByRole('button', { name: /Not mapped/ });
+  expect(chip.textContent).toBe('Not mapped1');
+  await userEvent.click(chip);
+  expect(screen.queryByRole('button', { name: /^Ekwa Nexus/ })).toBeNull();
+  expect(screen.getByRole('button', { name: /^Dissonant System #1/ })).toBeTruthy();
+
+  // On the Workbench the row grows to fit the tag above the name (d01b).
+  act(() => {
+    setSystemFilter(DEFAULT_FILTER);
+  });
+  setWide(true);
+  render(<Systems />);
+  expect(screen.getAllByText('No address').length).toBeGreaterThan(0);
 });

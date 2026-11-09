@@ -1,9 +1,9 @@
 // What the galaxy map says about a system, as the wiki words it: the spectral class ("F4", whose first letter gives
-// the star's colour), and the economy, a name ("Prospecting", one of the Mining economy's four) and a strength word
-// ("Opulent", a strong ★★★ economy). The wiki index reads them from the archived pages into wiki/facts.json; nothing
+// the star's colour), the economy, a name ("Prospecting", one of the Mining economy's four) and a strength word
+// ("Opulent", a strong ★★★ economy), and the conflict word ("Peaceful", a Low conflict). The wiki index reads them from the archived pages into wiki/facts.json; nothing
 // here hard-codes a game word.
 import { z } from 'zod';
-import { STAR_CLASSES, type StarClass } from './systems-model.ts';
+import { STAR_CLASSES, type ConflictLevel, type StarClass } from './systems-model.ts';
 
 const SourceSchema = z.object({ page: z.string(), path: z.string(), revId: z.int() });
 const STAR_KEYS = Object.keys(STAR_CLASSES) as [StarClass, ...StarClass[]];
@@ -18,7 +18,17 @@ export const GalaxyMapFactsSchema = z.object({
     // The galaxy map's strength words, by stars: 1 weak, 2 average, 3 strong.
     strength: z.object({ 1: z.array(z.string()), 2: z.array(z.string()), 3: z.array(z.string()) }),
     types: z.array(SourceSchema.extend({ name: z.string(), names: z.array(z.string()).min(1) })).min(1)
-  })
+  }),
+  // The Conflict Level page's words by level (an older file has none): "Peaceful" is Low, "Pirate Controlled" an
+  // outlaw system.
+  conflict: SourceSchema.extend({
+    levels: z.object({
+      low: z.array(z.string()),
+      medium: z.array(z.string()),
+      high: z.array(z.string()),
+      pirate: z.array(z.string())
+    })
+  }).optional()
 });
 export type GalaxyMapFacts = z.infer<typeof GalaxyMapFactsSchema>;
 
@@ -75,6 +85,31 @@ export function parseEconomyNames(body: string): string[] {
   return [...new Set(out)];
 }
 
+/** The Conflict Level page's words, from its "### Low (Level - 1 ★)" … "### Outlaw systems (Skull)" lists. */
+export function parseConflictWords(body: string): NonNullable<GalaxyMapFacts['conflict']>['levels'] | null {
+  const out = { low: [] as string[], medium: [] as string[], high: [] as string[], pirate: [] as string[] };
+  let level: keyof typeof out | null = null;
+  for (const line of body.split('\n')) {
+    const heading = /^###\s+(.+)$/.exec(line)?.[1]?.toLowerCase();
+    if (heading !== undefined) {
+      level = heading.startsWith('low')
+        ? 'low'
+        : heading.startsWith('medium')
+          ? 'medium'
+          : heading.startsWith('high')
+            ? 'high'
+            : heading.startsWith('outlaw')
+              ? 'pirate'
+              : null;
+      continue;
+    }
+    if (line.startsWith('## ')) level = null;
+    const item = /^\s*[-*]\s+(.+)$/.exec(line)?.[1]?.trim();
+    if (level && item) out[level].push(item);
+  }
+  return out.low.length && out.medium.length && out.high.length ? out : null;
+}
+
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /** The star colour a spectral class gives: "F4" → yellow; null when its letter isn't one the game uses. */
@@ -104,3 +139,42 @@ export const economyNames = (facts: GalaxyMapFacts | null): string[] =>
 
 export const strengthWords = (facts: GalaxyMapFacts | null): string[] =>
   facts ? [...facts.economy.strength[1], ...facts.economy.strength[2], ...facts.economy.strength[3]] : [];
+
+/** The conflict level a galaxy-map word stands for: "Peaceful" → low, "Pirate Controlled" → pirate. */
+export function conflictLevelOf(facts: GalaxyMapFacts | null, word: string): ConflictLevel | null {
+  const levels = facts?.conflict?.levels;
+  if (!levels || !word.trim()) return null;
+  return (
+    (['low', 'medium', 'high', 'pirate'] as const).find(level => levels[level].some(other => same(other, word))) ?? null
+  );
+}
+
+export const conflictWords = (facts: GalaxyMapFacts | null): Record<ConflictLevel, string[]> | null =>
+  facts?.conflict?.levels ?? null;
+
+/**
+ * The economy as the player logged it: the name and strength fields, or, in a log from before they were apart, both
+ * typed in the name field as the map shows them ("High Tech // Balanced"). Read only; what was typed stays as typed.
+ */
+export function economyParts(system: { economy: string; economyStrength: string }): { name: string; strength: string } {
+  const pair = /^(.+?)\s*\/\/\s*(.+)$/.exec(system.economy.trim());
+  if (pair?.[1] && pair[2] && !system.economyStrength.trim()) return { name: pair[1].trim(), strength: pair[2].trim() };
+  return { name: system.economy.trim(), strength: system.economyStrength.trim() };
+}
+
+/**
+ * A system's conflict as the map's pair reads (round 4b), like the economy's: "Rowdy // Medium"; a word that is its
+ * own level once ("Medium", never "Medium // Medium"); the level alone when no word is logged. An outlaw system is
+ * one pill with the map's word ("Pirate Controlled"), or "Pirate (outlaw)" without one.
+ */
+export function conflictPair(
+  system: { conflict: ConflictLevel | ''; conflictWord: string },
+  labels: Record<ConflictLevel, string>
+): { text: string; pirate: boolean; word: string; level: string } | null {
+  const word = system.conflictWord.trim();
+  if (system.conflict === 'pirate') return { text: word || labels.pirate, pirate: true, word, level: labels.pirate };
+  const level = system.conflict ? labels[system.conflict] : '';
+  if (!word && !level) return null;
+  const text = word && level && !same(word, level) ? `${word} // ${level}` : word || level;
+  return { text, pirate: false, word, level };
+}

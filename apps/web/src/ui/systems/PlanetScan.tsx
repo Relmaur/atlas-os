@@ -4,18 +4,25 @@
 // word combobox fed by the wiki's lists (wiki/facts.json → planets); what the player types is kept as typed.
 // Temperature, the resources level and the discoverer are the player's own entries (ADR-0003).
 import { useState, type ReactNode, type RefObject, type SubmitEvent } from 'react';
-import { getFact, hazardReading, planetFamily, readingText, type FactsFile } from '@atlas/core/facts';
+import { getFact, hazardReading, planetFamily, readingText, weatherReading, type FactsFile } from '@atlas/core/facts';
 import {
   SENTINEL_LEVELS,
   SENTINEL_SHORT,
   WEATHER_SHORT,
   biomeFor,
+  biomesNamed,
+  detectedLine,
+  detectedLines,
+  infestedFlora,
+  infestedNames,
   isDangerSentinels,
+  isInfested,
+  namedWorlds,
+  standsAlone,
   isDangerWeather,
   resourceChoices,
   scanLogged,
   sentinelLevel,
-  weatherSource,
   type PlanetFacts,
   type SentinelLevel
 } from '@atlas/core/planets';
@@ -36,14 +43,18 @@ export const codexHref = (path: string): string => `wiki/#/a/${encodeURIComponen
 const unique = (items: string[]) => [...new Set(items.filter(Boolean))];
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-/** "Frostbound Planet": the description and planet or moon, as the game writes the line under the name. */
-export function planetKind(planet: Pick<Planet, 'descriptor' | 'body'>): string {
-  return [planet.descriptor, planet.body ? PLANET_BODIES[planet.body] : ''].filter(Boolean).join(' ');
+/**
+ * "Frostbound Planet": the description and planet or moon, as the game writes the line under the name. A name the
+ * wiki marks as standing alone ("Icy Abhorrence") is shown alone, as the game shows it (round 4b).
+ */
+export function planetKind(planet: Pick<Planet, 'descriptor' | 'body'>, wiki: PlanetFacts | null = null): string {
+  const body = planet.body && !standsAlone(wiki, planet.descriptor) ? PLANET_BODIES[planet.body] : '';
+  return [planet.descriptor, body].filter(Boolean).join(' ');
 }
 
 /** The row's one scan line (03b): "Frostbound Planet · Icy Blasts" and "−60.8 °C", or what's still missing. */
 export function planetScanLine(planet: Planet, facts: FactsFile | null): { text: string; temperature: string } {
-  const kind = planetKind(planet) || planet.biome;
+  const kind = planetKind(planet, facts?.planets ?? null) || planet.biome;
   if (!scanLogged(planet).rows) {
     // A description or biome is a start; "Planet" alone is nothing logged yet (03b).
     const missing = planet.descriptor || planet.biome ? 'not scanned yet' : 'nothing logged yet';
@@ -60,11 +71,13 @@ export const nothingLogged = (planet: Planet): boolean =>
   !planet.descriptor && !planet.biome && !scanLogged(planet).any;
 
 /** The danger pills a planet's row carries (03b): crimson, with the mark, naming what they're about. */
-export function DangerPills({ planet, facts }: { planet: Planet; facts: PlanetFacts | null }) {
-  const weather = weatherSource(facts, planet.biome || planet.descriptor, planet.weather);
-  const level = sentinelLevel(facts, planet.sentinels);
+export function DangerPills({ planet, facts }: { planet: Planet; facts: FactsFile | null }) {
+  const weather = weatherReading(facts, planet.biome || planet.descriptor, planet.weather);
+  const level = sentinelLevel(facts?.planets ?? null, planet.sentinels);
   const pills = [
-    weather && isDangerWeather(weather.cls) ? `${WEATHER_SHORT[weather.cls]} weather` : '',
+    weather && weather.cls !== 'stormless' && isDangerWeather(weather.cls)
+      ? `${WEATHER_SHORT[weather.cls]} weather`
+      : '',
     level && isDangerSentinels(level) ? `${SENTINEL_SHORT[level]} sentinels` : ''
   ].filter(Boolean);
   if (!pills.length) return null;
@@ -79,14 +92,95 @@ export function DangerPills({ planet, facts }: { planet: Planet; facts: PlanetFa
   );
 }
 
-/** The weather's pill, quiet or crimson by the wiki's table; nothing for a word the wiki doesn't rate. */
-export function WeatherPill({ facts, biome, weather }: { facts: PlanetFacts | null; biome: string; weather: string }) {
-  const source = weatherSource(facts, biome, weather);
-  return source ? <SeverityPill danger={isDangerWeather(source.cls)}>{WEATHER_SHORT[source.cls]}</SeverityPill> : null;
+/**
+ * The weather's pill, quiet or crimson by the wiki's table; "No storms" on Exotic and Dead worlds (never red); nothing
+ * for a word the wiki doesn't rate, nor on Mega Exotic, Gas Giant or Waterworld (round 4b).
+ */
+export function WeatherPill({ facts, biome, weather }: { facts: FactsFile | null; biome: string; weather: string }) {
+  const source = weatherReading(facts, biome, weather);
+  return source ? <WeatherSeverity cls={source.cls} /> : null;
+}
+function WeatherSeverity({ cls }: { cls: 'clear' | 'normal' | 'extreme' | 'stormless' }) {
+  if (cls === 'stormless') return <SeverityPill danger={false}>No storms</SeverityPill>;
+  return <SeverityPill danger={isDangerWeather(cls)}>{WEATHER_SHORT[cls]}</SeverityPill>;
 }
 export function SentinelPill({ facts, sentinels }: { facts: PlanetFacts | null; sentinels: string }) {
   const level = sentinelLevel(facts, sentinels);
   return level ? <SeverityPill danger={isDangerSentinels(level)}>{SENTINEL_SHORT[level]}</SeverityPill> : null;
+}
+
+const COUNT_WORDS = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+
+/**
+ * Which world an ambiguous name is (35e), asked right under Description: "Infested" fits five biomes, "Corrupted" an
+ * Infested Scorched or an Exotic (Glitch) world. The biome already set is pre-picked when it fits; picking sets Biome.
+ */
+function WorldChooser({
+  name,
+  worlds,
+  biome,
+  preset,
+  facts,
+  onPick
+}: {
+  name: string;
+  worlds: { biome: string; label: string }[];
+  biome: string;
+  preset: boolean;
+  facts: FactsFile | null;
+  onPick: (biome: string) => void;
+}) {
+  const count = COUNT_WORDS[worlds.length] ?? String(worlds.length);
+  // All of them Infested worlds: the question already says so, so each button names only the biome.
+  const infestedOnly = worlds.every(world => world.label === `Infested ${world.biome}`);
+  const picked = worlds.find(world => same(world.biome, biome));
+  return (
+    <div
+      role="radiogroup"
+      aria-label={`Which biome is this ${name} world?`}
+      className="flex flex-col gap-2 p-3 rounded-control bg-[rgba(34,211,238,0.06)] border border-scanner-cyan-edge"
+    >
+      <span className="text-sub text-[#cffafe]">
+        {infestedOnly
+          ? `${name} on which biome? The wiki uses this name for ${count}.`
+          : `${name} names ${count} kinds of world on the wiki.`}
+      </span>
+      <div className="flex flex-wrap gap-1.5">
+        {worlds.map(world => {
+          const on = picked === world;
+          const family = planetFamily(facts, { biome: world.biome }).family;
+          return (
+            <button
+              key={world.biome}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => {
+                onPick(world.biome);
+              }}
+              className={`h-9 px-2.5 rounded-[10px] border inline-flex items-center gap-1.5 text-[13px] font-semibold ${
+                on
+                  ? 'border-scanner-cyan-glow bg-scanner-cyan-tint text-[#cffafe]'
+                  : 'border-control-edge bg-slate-ground text-ink hover:border-control-edge-hover'
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: family ? `var(--color-biome-${family})` : 'var(--color-ink-muted)' }}
+              />
+              {infestedOnly ? world.biome : world.label}
+            </button>
+          );
+        })}
+      </div>
+      {picked && (
+        <span className="text-caption text-ink-muted">
+          {preset ? `${picked.biome} was already set, so it’s picked. ` : ''}Biome follows this choice.
+        </span>
+      )}
+    </div>
+  );
 }
 
 const CARD = 'rounded-card bg-panel border border-hairline p-4 flex flex-col gap-3 min-w-0';
@@ -143,6 +237,8 @@ interface Draft {
   discoveredOn: string;
   discoveredTime: string;
   orbits: string;
+  /** The discovery menu's lines switched on ("Vile Brood Detected"). */
+  detected: string[];
 }
 
 const draftOf = (planet: Planet | undefined): Draft => ({
@@ -168,7 +264,8 @@ const draftOf = (planet: Planet | undefined): Draft => ({
   discoveredTime: planet?.discoveredTime ?? '',
   // Kept as stored, even when it no longer points at a planet: the picker then reads "Not set", and saving
   // without touching it leaves the link as it was.
-  orbits: planet?.orbits ?? ''
+  orbits: planet?.orbits ?? '',
+  detected: planet?.detected ?? []
 });
 
 /**
@@ -207,12 +304,26 @@ export function PlanetForm({
 
   const own = biomeFor(wiki, draft.biome);
   const fromPrefix = biomeFor(wiki, draft.descriptor);
-  const sharedBy = wiki?.biomes.filter(entry => entry.descriptors.some(name => same(name, draft.descriptor))) ?? [];
+  const infested = isInfested(wiki, draft.descriptor);
+  const alone = standsAlone(wiki, draft.descriptor);
+  const infestedList = infestedNames(wiki, own?.name);
+  // An ambiguous name ("Infested", "Corrupted") asks right under Description (35e). An existing planet whose biome
+  // already fits isn't asked again; typing the name in this session asks, with the fitting biome pre-picked.
+  const worlds = namedWorlds(wiki, draft.descriptor);
+  const fits = worlds.some(world => same(world.biome, draft.biome));
+  const [asking, setAsking] = useState(false);
+  // Whether the biome already set fitted when the question came up: the note then says it was pre-picked.
+  const [prePicked, setPrePicked] = useState(false);
+  const askWorld = worlds.length > 0 && (asking || !fits);
+  // A line the discovery menu shows is on when the planet has it, or when an earlier version filed it as a resource.
+  const lines = detectedLines(wiki);
+  const lineOn = (label: string) =>
+    draft.detected.some(item => same(item, label)) || draft.resources.some(item => detectedLine(wiki, item) === label);
   const { family, relic } = planetFamily(facts, { biome: draft.biome, descriptor: draft.descriptor });
-  const weather = weatherSource(wiki, draft.biome || draft.descriptor, draft.weather);
+  const weather = weatherReading(facts, draft.biome || draft.descriptor, draft.weather);
   const level = sentinelLevel(wiki, draft.sentinels);
   // The draft's body is one of PLANET_BODIES' keys or '': the segments offer nothing else.
-  const kind = planetKind({ descriptor: draft.descriptor, body: draft.body as Planet['body'] });
+  const kind = planetKind({ descriptor: draft.descriptor, body: draft.body as Planet['body'] }, wiki);
   // What a moon can orbit: the system's other planets that aren't moons themselves, in the log's order.
   // The readings a scan can show, from the wiki; without it, only a temperature.
   const reading = hazardReading(facts, draft.hazard);
@@ -225,10 +336,46 @@ export function PlanetForm({
   const subtitle = [kind, own?.name ?? draft.biome].filter(Boolean).join(' · ') || 'Nothing from the scan yet';
   const unlogged = !draft.biome && !draft.descriptor;
 
-  // Word lists, the current biome's first (c14).
+  // Word lists, the current biome's first (c14). Infested names follow (35d): the current biome's, then the rest with
+  // the biome each overlays; a name the wiki marks as standing alone says so, and one used over several biomes says how many.
+  const meta = (text: string) => <span className="text-caption text-ink-muted">{text}</span>;
+  const overCount = (name: string) => biomesNamed(wiki, name).length;
+  const infestedMeta = (name: string, biome?: string) =>
+    standsAlone(wiki, name)
+      ? meta('no Planet or Moon')
+      : overCount(name) > 1
+        ? meta(`${String(overCount(name))} biomes`)
+        : biome
+          ? meta(biome)
+          : undefined;
+  const otherInfested = (wiki?.infested?.sets ?? [])
+    .filter(set => !own || !same(set.biome, own.name))
+    .flatMap(set => set.names.map(name => ({ name, biome: set.biome })))
+    .filter(entry => !infestedList.own.includes(entry.name))
+    .filter((entry, k, all) => all.findIndex(other => other.name === entry.name) === k)
+    .sort((a, b) => a.name.localeCompare(b.name));
   const descriptorGroups: WordGroup[] = wiki
     ? [
-        ...(own ? [{ label: `${own.name} names · wiki`, options: own.descriptors.map(value => ({ value })) }] : []),
+        ...(own ? [{ label: `${own.name} · wiki`, options: own.descriptors.map(value => ({ value })) }] : []),
+        ...(own && infestedList.own.length
+          ? [
+              {
+                label: `Infested ${own.name} · wiki`,
+                options: infestedList.own.map(value => ({ value, extra: infestedMeta(value) }))
+              }
+            ]
+          : []),
+        ...(otherInfested.length
+          ? [
+              {
+                label: own && infestedList.own.length ? 'Other Infested worlds · wiki' : 'Infested worlds · wiki',
+                options: otherInfested.map(entry => ({
+                  value: entry.name,
+                  extra: infestedMeta(entry.name, entry.biome)
+                }))
+              }
+            ]
+          : []),
         {
           label: own ? 'Other biomes · wiki' : 'Names · wiki',
           options: unique(wiki.biomes.filter(entry => entry !== own).flatMap(entry => entry.descriptors))
@@ -286,6 +433,18 @@ export function PlanetForm({
     : [];
   const lifeGroup = (words: string[] | undefined): WordGroup[] =>
     words?.length ? [{ label: 'Discovery menu · wiki', options: words.map(value => ({ value })) }] : [];
+  // An Infested world's flora words come first once its name is picked (the Infested page's own list).
+  const floraGroups: WordGroup[] = [
+    ...(infested && infestedFlora(wiki).length
+      ? [
+          {
+            label: 'Infested flora · wiki',
+            options: infestedFlora(wiki).map(value => ({ value, extra: meta('Infested flora word') }))
+          }
+        ]
+      : []),
+    ...lifeGroup(wiki?.life.flora)
+  ];
   const levelGroups: WordGroup[] = levels.length
     ? [{ label: 'From your log', options: levels.map(value => ({ value })) }]
     : [];
@@ -293,7 +452,7 @@ export function PlanetForm({
   // What the ship's scan can list, from the wiki: the biome's own, the star's metal, deposits, finds.
   const choices = resourceChoices(wiki, draft.biome || draft.descriptor, system.star);
   const grouped = choices.flatMap(choice => choice.names);
-  const others = draft.resources.filter(name => !grouped.some(other => same(other, name)));
+  const others = draft.resources.filter(name => !grouped.some(other => same(other, name)) && !detectedLine(wiki, name));
   const has = (name: string) => draft.resources.some(item => same(item, name));
   const toggle = (name: string) => {
     set({
@@ -324,7 +483,17 @@ export function PlanetForm({
         flora: draft.flora,
         fauna: draft.fauna,
         abundance: draft.abundance,
-        resources: [...draft.resources, ...(pending && !has(pending) ? [pending] : [])].join(','),
+        // A line an earlier version filed as a resource stays as typed while it's on; switching it off removes it.
+        resources: [...draft.resources, ...(pending && !has(pending) ? [pending] : [])]
+          .filter(item => {
+            const line = detectedLine(wiki, item);
+            return !line || lineOn(line);
+          })
+          .join(','),
+        detected: lines
+          .map(line => line.label)
+          .filter(lineOn)
+          .join(','),
         temperature: draft.temperature,
         hazard: draft.hazard,
         discoveredBy: draft.discoveredBy,
@@ -339,7 +508,17 @@ export function PlanetForm({
     onDone(false);
   };
 
-  const descriptorHint = fromPrefix ? (
+  const descriptorHint = askWorld ? undefined : fromPrefix && infested && wiki?.infested ? (
+    <>
+      {draft.descriptor.trim()} is an{' '}
+      <a href={codexHref(wiki.infested.path)} className="text-scanner-cyan-pale underline hover:text-quantity-cyan">
+        Infested
+      </a>{' '}
+      {fromPrefix.name} world’s name
+      {same(fromPrefix.name, draft.biome) ? `, so Biome is set to ${fromPrefix.name}.` : '.'}
+      {alone && ' It takes no “Planet” or “Moon”, so that choice stays yours.'}
+    </>
+  ) : fromPrefix ? (
     <>
       {draft.descriptor.trim()} is one of the{' '}
       <a href={codexHref(fromPrefix.path)} className="text-scanner-cyan-pale underline hover:text-quantity-cyan">
@@ -347,16 +526,17 @@ export function PlanetForm({
       </a>{' '}
       biome’s names{same(fromPrefix.name, draft.biome) ? `, so Biome is set to ${fromPrefix.name}.` : '.'}
     </>
-  ) : sharedBy.length > 1 ? (
-    `Used by ${sharedBy.map(entry => entry.name).join(', ')}: pick the biome below.`
   ) : !draft.descriptor ? (
     'The word before “Planet” or “Moon”. It usually tells the biome.'
   ) : undefined;
-  const weatherHint = weather
-    ? `${WEATHER_SHORT[weather.cls]} on the wiki’s ${weather.biome} weather table.`
-    : !draft.weather
-      ? 'Severity comes from the wiki’s weather tables: Clear, Normal or Extreme.'
-      : undefined;
+  const weatherHint =
+    weather?.cls === 'stormless'
+      ? 'No storms: the wiki’s Weather page says Exotic and Dead worlds always lack storms.'
+      : weather
+        ? `${WEATHER_SHORT[weather.cls]} on the wiki’s ${weather.biome} weather table.`
+        : !draft.weather
+          ? 'Severity comes from the wiki’s weather tables: Clear, Normal or Extreme.'
+          : undefined;
   const sentinelHint = level
     ? `${draft.sentinels.trim()} is a ${SENTINEL_SHORT[level]} level on the wiki’s Sentinel page.`
     : !draft.sentinels
@@ -434,12 +614,29 @@ export function PlanetForm({
             value={draft.descriptor}
             onChange={descriptor => {
               const match = biomeFor(wiki, descriptor);
+              const ask = namedWorlds(wiki, descriptor);
+              setAsking(ask.length > 0);
+              setPrePicked(ask.some(world => same(world.biome, draft.biome)));
               set({ descriptor, ...(match && !biomeChosen ? { biome: match.name } : {}) });
             }}
             groups={descriptorGroups}
             placeholder="e.g. Frostbound, Verdant, Toxic"
             hint={descriptorHint}
           />
+          {askWorld && (
+            <WorldChooser
+              name={draft.descriptor.trim()}
+              worlds={worlds}
+              biome={draft.biome}
+              preset={prePicked}
+              facts={facts}
+              onPick={(biome: string) => {
+                setPrePicked(false);
+                setBiomeChosen(true);
+                set({ biome });
+              }}
+            />
+          )}
           <Segments
             label="Planet or moon"
             hideLabel
@@ -555,7 +752,7 @@ export function PlanetForm({
               set({ weather: value });
             }}
             groups={weatherGroups}
-            trail={weather ? weatherPill(weather.cls) : undefined}
+            trail={weather ? <WeatherSeverity cls={weather.cls} /> : undefined}
             placeholder="e.g. Icy Blasts"
             hint={weatherHint}
           />
@@ -587,7 +784,7 @@ export function PlanetForm({
               onChange={value => {
                 set({ flora: value });
               }}
-              groups={lifeGroup(wiki?.life.flora)}
+              groups={floraGroups}
               placeholder="e.g. Rich"
             />
             <WordCombobox
@@ -649,6 +846,39 @@ export function PlanetForm({
               </span>
             </span>
           </div>
+          {/* The discovery menu's lines (35d): a property of the planet, switched on as the game shows it. Neutral. */}
+          {lines.map(line => (
+            <div
+              key={line.label}
+              className="flex items-center gap-3 px-3.5 py-3 rounded-control border border-hairline bg-slate-ground"
+            >
+              <span className="flex-1 min-w-0">
+                <span id={`${titleId}-${line.page.replace(/\W+/g, '-')}`} className="block text-sm text-ink-bright">
+                  {line.label}
+                </span>
+                <span className="block text-caption text-ink-muted">As the discovery menu shows it</span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={lineOn(line.label)}
+                aria-labelledby={`${titleId}-${line.page.replace(/\W+/g, '-')}`}
+                onClick={() => {
+                  const on = lineOn(line.label);
+                  set({
+                    detected: on
+                      ? draft.detected.filter(item => !same(item, line.label))
+                      : [...draft.detected, line.label],
+                    // Off also takes away a copy an earlier version filed under resources.
+                    ...(on
+                      ? { resources: draft.resources.filter(item => detectedLine(wiki, item) !== line.label) }
+                      : {})
+                  });
+                }}
+                className="switch shrink-0"
+              />
+            </div>
+          ))}
         </Group>
 
         <Group

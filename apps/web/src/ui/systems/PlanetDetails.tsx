@@ -4,8 +4,8 @@
 // fill it in from the scan. From lg (round 6, d16) it fills the detail pane: a breadcrumb with the previous and next
 // body, then three columns (the scan; resources and notes; discovery and the portal glyph) that fold as it narrows.
 import { useEffect, type ReactNode } from 'react';
-import { hazardReading, planetFamily, readingText } from '@atlas/core/facts';
-import { biomeFor, resourceSource, scanLogged } from '@atlas/core/planets';
+import { hazardReading, planetFamily, readingText, weatherReading } from '@atlas/core/facts';
+import { biomeFor, detectedLine, resourceSource, scanLogged } from '@atlas/core/planets';
 import { moonParent } from '@atlas/core/systems-model';
 import { glyphName } from '@atlas/core/portal';
 import { useAppState } from '../useAppState.ts';
@@ -32,6 +32,38 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
     <div className="grid grid-cols-[minmax(7rem,38%)_1fr] items-center gap-3 px-4 min-h-[52px] py-2.5">
       <dt className="text-sub text-ink-muted">{label}</dt>
       <dd className="flex flex-wrap items-center gap-2 text-row text-ink-bright min-w-0 break-words">{children}</dd>
+    </div>
+  );
+}
+
+/**
+ * A line the planet's discovery menu shows (36d), worded as the game shows it, at the end of The scan. Vile Brood
+ * says what it means, from its wiki page: Juicy Grubs, and the Brood Mother a crushed one summons. Neutral.
+ */
+function DetectedLine({ label, page }: { label: string; page: string | undefined }) {
+  const codex = (name: string) =>
+    wikiEntries().find(entry => entry.title.toLowerCase() === name.toLowerCase() && !entry.removed)?.path;
+  const link = (name: string, text: string) => {
+    const path = codex(name);
+    return path ? (
+      <a href={codexHref(path)} className="text-scanner-cyan-pale underline hover:text-quantity-cyan">
+        {text}
+      </a>
+    ) : (
+      text
+    );
+  };
+  return (
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 px-4 py-3">
+      <dt className="contents">
+        <i className="ph-bold ph-bug-beetle text-ink-label mt-0.5" aria-hidden="true" />
+        <span className="text-row text-ink-bright">{label}</span>
+      </dt>
+      {page === 'Vile Brood' && (
+        <dd className="col-start-2 text-sub text-ink-muted">
+          {link('Juicy Grub', 'Juicy Grubs')} here; crushing one summons a {link('Brood Mother', 'Brood Mother')}.
+        </dd>
+      )}
     </div>
   );
 }
@@ -70,10 +102,19 @@ export function PlanetDetails() {
   const edit = () => {
     openPlanetSheet(system.id, planet.id);
   };
-  const { family, relic } = planetFamily(facts, planet);
+  const { family, relic, infested } = planetFamily(facts, planet);
   const logged = scanLogged(planet);
-  const biomeName = biomeFor(wiki, planet.biome)?.name ?? planet.biome;
-  const kind = planetKind(planet);
+  const biomeName = biomeFor(wiki, planet.biome || planet.descriptor)?.name ?? planet.biome;
+  const kind = planetKind(planet, wiki);
+  // The discovery menu's lines (round 4b): the planet's own, and any an earlier version filed under its resources.
+  const lines = [
+    ...new Set([
+      ...planet.detected.map(item => detectedLine(wiki, item) ?? item),
+      ...planet.resources.flatMap(item => detectedLine(wiki, item) ?? [])
+    ])
+  ];
+  const resources = planet.resources.filter(item => !detectedLine(wiki, item));
+  const stormless = weatherReading(facts, planet.biome || planet.descriptor, planet.weather)?.cls === 'stormless';
   const parent = moonParent(system.planets, planet);
   const temperature = readingText(facts, planet);
   const reading = hazardReading(facts, planet.hazard);
@@ -103,10 +144,21 @@ export function PlanetDetails() {
     header: (
       <header className="flex items-center gap-5">
         <span className="w-24 h-24 grid place-items-center shrink-0">
-          <PlanetMarker family={family} relic={relic} size={72} unlogged={nothingLogged(planet)} />
+          <PlanetMarker family={family} relic={relic} infested={infested} size={72} unlogged={nothingLogged(planet)} />
         </span>
         <div className="flex flex-col gap-title-sub min-w-0">
-          <p className="text-label uppercase text-ink-label">{biomeName ? `${biomeName} biome` : 'Not scanned yet'}</p>
+          <p className="text-label uppercase text-ink-label">
+            {/* An Infested world names its family (36d); the word links to the wiki's page. Never red. */}
+            {infested && wiki?.infested && (
+              <>
+                <a href={codexHref(wiki.infested.path)} className="text-scanner-cyan-pale hover:underline">
+                  Infested
+                </a>
+                {' · '}
+              </>
+            )}
+            {biomeName ? `${biomeName} biome` : 'Not scanned yet'}
+          </p>
           <h1
             id="planetTitle"
             className="font-display text-[28px] font-extrabold leading-[1.1] text-ink-bright break-words"
@@ -169,7 +221,7 @@ export function PlanetDetails() {
               {planet.weather && (
                 <Row label="Weather">
                   {planet.weather}
-                  <WeatherPill facts={wiki} biome={planet.biome || planet.descriptor} weather={planet.weather} />
+                  <WeatherPill facts={facts} biome={planet.biome || planet.descriptor} weather={planet.weather} />
                 </Row>
               )}
               {planet.abundance && <Row label="Resources">{planet.abundance}</Row>}
@@ -186,6 +238,9 @@ export function PlanetDetails() {
                   <span className="font-mono">{temperature}</span>
                 </Row>
               )}
+              {lines.map(line => (
+                <DetectedLine key={line} label={line} page={wiki?.detected?.find(item => item.label === line)?.page} />
+              ))}
             </dl>
           </section>
         )}
@@ -205,13 +260,13 @@ export function PlanetDetails() {
     ) : null,
     resources: logged.any ? (
       <>
-        {planet.resources.length > 0 && (
+        {resources.length > 0 && (
           <section aria-labelledby="resourcesTitle" className="flex flex-col gap-2">
             <h2 id="resourcesTitle" className={SECTION_TITLE}>
-              Resources · {planet.resources.length}
+              Resources · {resources.length}
             </h2>
             <ul className={CARD}>
-              {planet.resources.map(name => {
+              {resources.map(name => {
                 const source = resourceSource(wiki, name, planet.biome || planet.descriptor, system.star);
                 const page = codexPage(name);
                 return (
@@ -286,8 +341,9 @@ export function PlanetDetails() {
       <>
         {logged.any && (
           <p className="text-caption text-ink-muted">
-            As you logged it from the scan. Biome, weather and sentinel levels from the No Man’s Sky wiki, CC BY-NC-SA
-            3.0.
+            As you logged it from the scan.
+            {stormless && ' No storms: the wiki’s Weather page says Exotic and Dead worlds always lack storms.'} Biome,
+            weather and sentinel levels from the No Man’s Sky wiki, CC BY-NC-SA 3.0.
           </p>
         )}
       </>

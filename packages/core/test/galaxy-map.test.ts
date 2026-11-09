@@ -55,3 +55,32 @@ test('lookups read as a player types', () => {
   expect(strengthStars(FACTS, 'opulent')).toBe(3);
   expect(strengthStars(null, 'Opulent')).toBeNull();
 });
+
+test('3.39: the Conflict Level page’s words by level, and an economy pair typed in one field', async () => {
+  const { conflictLevelOf, economyParts, parseConflictWords } = await import('../src/galaxy-map.ts');
+  const levels = parseConflictWords(await page('Conflict_Level.md'));
+  expect(levels?.low).toContain('Peaceful');
+  expect(levels?.medium).toContain('Rowdy');
+  expect(levels?.high).toContain('Lawless');
+  expect(levels?.pirate).toEqual(['Pirate Controlled']);
+  const facts = { conflict: { page: 'Conflict Level', path: 'c', revId: 1, levels } } as unknown as GalaxyMapFacts; // only `conflict` is read
+  expect(conflictLevelOf(facts, ' peaceful ')).toBe('low');
+  expect(conflictLevelOf(facts, 'Pirate Controlled')).toBe('pirate');
+  expect(conflictLevelOf(facts, 'Grumpy')).toBeNull();
+  expect(conflictLevelOf(null, 'Peaceful')).toBeNull();
+
+  // Logged before the name and strength were apart: read as the two, never rewritten.
+  expect(economyParts({ economy: 'High Tech // Balanced', economyStrength: '' })).toEqual({
+    name: 'High Tech',
+    strength: 'Balanced'
+  });
+  expect(economyParts({ economy: 'Prospecting', economyStrength: 'Opulent' })).toEqual({
+    name: 'Prospecting',
+    strength: 'Opulent'
+  });
+  // Both fields filled: the player's fields win, whatever the first one says.
+  expect(economyParts({ economy: 'A // B', economyStrength: 'Opulent' })).toEqual({
+    name: 'A // B',
+    strength: 'Opulent'
+  });
+});

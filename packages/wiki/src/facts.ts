@@ -46,6 +46,18 @@ export const FACTS = {
     quote: 'This inventory begins with 10 Technology slots installed. The maximum number of inventory slots for this category is 60 (6x10)',
     value: { columns: 10, slots: { any: 60 } }
   },
+  // Weather words that say nothing about storms: the "Other Biomes" table's biomes (Mega Exotic's Red, Green and Blue
+  // are one biome). Of them, Dead and Exotic never have storms at all.
+  'unrated-weather-biomes': {
+    page: 'Weather',
+    quote: "The rest of the game's biomes do not feature weather names that relate to their storm status",
+    value: ['Dead', 'Exotic', 'Mega Exotic', 'Gas Giant', 'Waterworld']
+  },
+  'stormless-biomes': {
+    page: 'Weather',
+    quote: 'Dead and Exotic worlds will always lack storms',
+    value: ['Dead', 'Exotic']
+  },
   // Biome families for the planet marker: each quote is from its biome's own section of the Biome page.
   'biome-lush': {
     page: 'Biome',

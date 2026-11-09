@@ -16,7 +16,16 @@ import {
   type FilterChip,
   type SystemFilter
 } from '@atlas/core/systems-list';
-import { OUTLAW_TAG, SORTS, lastVisit, outlawStatus, type PlanetLike, type System } from '@atlas/core/systems-model';
+import {
+  OUTLAW_TAG,
+  SORTS,
+  lastVisit,
+  outlawStatus,
+  systemMapped,
+  type PlanetLike,
+  type System
+} from '@atlas/core/systems-model';
+import { NotMappedTag, NotMappedText } from '../parts/RowTags.tsx';
 import { useAppState } from '../useAppState.ts';
 import { useNow } from '../useNow.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
@@ -64,7 +73,7 @@ export function Systems() {
   const current = homeSummary(state, now).current;
   // "You are here" only for a system actually visited, as on Home.
   const hereId = current && lastVisit(current) ? current.id : null;
-  const familyOf = (planet: PlanetLike) => planetFamily(facts, planet).family;
+  const familyOf = (planet: PlanetLike) => planetFamily(facts, planet);
   const logNew = () => {
     openSystemEditor();
   };
@@ -184,6 +193,7 @@ function ChipRail({ chips, sort }: { chips: FilterChip[]; sort: SystemFilter['so
             />
           )}
           {item.id === 'favorites' && <span aria-hidden="true">★</span>}
+          {item.icon && <i className={`ph-bold ph-${item.icon}`} aria-hidden="true" />}
           {item.label}
           {item.count !== null && <span className="font-mono">{item.count}</span>}
         </button>
@@ -250,13 +260,16 @@ function SystemCard({
   here: boolean;
   now: number;
   restockHours: number;
-  familyOf: (planet: PlanetLike) => string | null;
+  familyOf: (planet: PlanetLike) => { family: string | null; infested: boolean };
 }) {
   const open = useSectionParam() === system.id;
   const last = lastVisit(system);
   const visited = last ? `Last visit ${formatAgo(last.at, now)}` : 'Never visited';
   const meta = systemMeta(system);
   const status = system.tags.includes(OUTLAW_TAG) ? outlawStatus(system, restockHours, now) : null;
+  // Round 7c: no address yet. A label above the name inside the card's one link, never a second tap target (02b).
+  const mapped = systemMapped(system);
+  const notMapped = mapped ? null : <NotMappedTag what="system" />;
   // The whole card opens the system: the name's button stretches over it, so the heading stays a heading.
   const name = (
     <button
@@ -268,8 +281,10 @@ function SystemCard({
       className="text-left break-words focus-visible:outline-none after:absolute after:inset-0 after:content-['']"
     >
       {system.name}
+      {!mapped && <NotMappedText what="system" />}
     </button>
   );
+
   const badge = status ? (
     <OutlawPill status={status} />
   ) : system.rating ? (
@@ -282,7 +297,11 @@ function SystemCard({
     'relative rounded-card bg-panel-glass border transition-colors duration-[var(--duration-micro)] hover:border-control-edge has-[button:focus-visible]:outline-2 has-[button:focus-visible]:outline-offset-2 has-[button:focus-visible]:outline-scanner-cyan-glow';
 
   if (system.star || system.planets.length) {
-    const orbit = systemOrbit(system, familyOf);
+    const orbit = systemOrbit(
+      system,
+      planet => familyOf(planet).family,
+      planet => familyOf(planet).infested
+    );
     return (
       <article className={`${card} overflow-hidden border-hero-edge`}>
         <div className="h-[74px] hero-grid">
@@ -298,6 +317,7 @@ function SystemCard({
           />
         </div>
         <div className="px-card pt-3 pb-3.5 flex flex-col gap-2">
+          {notMapped}
           <div className="flex justify-between items-center gap-2">
             <h2 className="font-display text-[17px] font-bold text-ink-bright min-w-0">{name}</h2>
             {badge}
@@ -329,6 +349,7 @@ function SystemCard({
           <span className="w-2 h-2 rounded-full bg-ink-disabled" />
         </span>
         <div className="min-w-0 flex-1">
+          {notMapped && <div className="mb-1">{notMapped}</div>}
           <h2 className="font-display text-base font-bold text-ink-bright">{name}</h2>
           <p className="mt-0.5 text-caption text-ink-muted">
             {meta.length > 0 && <MetaLine parts={meta} />}
@@ -475,7 +496,7 @@ function SystemRows({
                   openSystem(system.id);
                 }}
                 aria-current={open ? 'true' : undefined}
-                className={`system-row w-full grid grid-cols-[10px_minmax(0,1fr)_auto] items-center gap-3 px-[18px] h-[58px] border-t border-hairline text-left ${
+                className={`system-row w-full grid grid-cols-[10px_minmax(0,1fr)_auto] items-center gap-3 px-[18px] min-h-[58px] py-2 border-t border-hairline text-left ${
                   open
                     ? 'bg-scanner-cyan-tint shadow-[inset_3px_0_0_var(--color-scanner-cyan-glow)]'
                     : 'hover:bg-[rgba(148,163,184,0.06)]'
@@ -483,8 +504,11 @@ function SystemRows({
               >
                 <StarDot system={system} size="w-2.5 h-2.5" />
                 <span className="min-w-0 flex flex-col gap-0.5">
+                  {/* Round 7c (d01b): the tag above the name; the row grows to fit it. */}
+                  {!systemMapped(system) && <NotMappedTag what="system" />}
                   <span title={system.name} className="truncate text-sm font-semibold text-ink-bright">
                     {system.name}
+                    {!systemMapped(system) && <NotMappedText what="system" />}
                     {system.favorite && (
                       <>
                         <span className="text-units-amber-text" aria-hidden="true">

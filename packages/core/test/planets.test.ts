@@ -200,14 +200,147 @@ test('round 4: a Reliquary world takes its main biome’s colour from its name, 
       ]
     }
   };
-  expect(planetFamily(file, { biome: '', descriptor: 'Frozen Relic' })).toEqual({ family: 'frozen', relic: true });
+  expect(planetFamily(file, { biome: '', descriptor: 'Frozen Relic' })).toEqual({
+    family: 'frozen',
+    relic: true,
+    infested: false
+  });
   // "Abandoned" fits several sets: slate, until the player picks the biome.
   expect(planetFamily(file, { biome: 'The Reliquary', descriptor: 'Abandoned' })).toEqual({
     family: null,
-    relic: true
+    relic: true,
+    infested: false
   });
-  expect(planetFamily(file, { biome: 'Frozen', descriptor: 'Frostbound' })).toEqual({ family: 'frozen', relic: false });
+  expect(planetFamily(file, { biome: 'Frozen', descriptor: 'Frostbound' })).toEqual({
+    family: 'frozen',
+    relic: false,
+    infested: false
+  });
   // Without the wiki's sentence, no Reliquary world borrows a colour.
   const rest = Object.fromEntries(Object.entries(file.facts).filter(([id]) => id !== 'reliquary-main-biome'));
   expect(planetFamily({ ...file, facts: rest }, { biome: '', descriptor: 'Frozen Relic' }).family).toBeNull();
+});
+
+test('4b: Infested names by the biome they overlay, the stand-alone ones, the flora words, and who has to choose', async () => {
+  const { discoveryLine, infestedFlora, isInfested, namedWorlds, parseInfested, parseSubBiomes, standsAlone } =
+    await import('../src/planets.ts');
+  const infested = parseInfested(await page('world/Biome_Subtype_-_Infested.md'));
+  expect(infested.sets.find(set => set.set === 'Frozen')?.names).toEqual(['Infested', 'Icy Abhorrence', 'Frozen Hell']);
+  expect(infested.sets.map(set => set.set)).toEqual(['Lush', 'Toxic', 'Scorched', 'Irradiated', 'Frozen', 'Barren']);
+  expect(infested.sets.flatMap(set => set.names)).not.toContain(''); // the table's blank cells
+  // The page's footnote "1": names that take no "Planet" or "Moon". Twelve of them.
+  expect(infested.alone).toHaveLength(12);
+  expect(infested.alone).toContain('Icy Abhorrence');
+  expect(infested.alone).not.toContain('Infested');
+  expect(infested.alone).not.toContain('Worm-ridden');
+  expect(infested.flora).toEqual(['Infected', 'Diseased', 'Twisted', 'Screaming', 'Viral', 'Invasive']);
+  expect(parseSubBiomes(await page('world/Biome_-_Exotic.md')).find(sub => sub.name === 'Glitch')?.names).toContain(
+    'Corrupted'
+  );
+  expect(discoveryLine(await page('mechanics/Vile_Brood.md'))).toBe('Vile Brood Detected');
+  expect(discoveryLine(await page('building/Ancient_Bones.md'))).toBeNull();
+
+  const facts: PlanetFacts = {
+    ...FACTS,
+    biomes: [
+      ...FACTS.biomes,
+      {
+        page: 'Biome - Exotic',
+        path: 'e',
+        revId: 1,
+        name: 'Exotic',
+        descriptors: ['Corrupted', 'Metallic'],
+        weather: weather([], [], []),
+        subBiomes: [{ name: 'Glitch', names: ['Corrupted'] }]
+      }
+    ],
+    infested: {
+      page: 'Biome Subtype - Infested',
+      path: 'i',
+      revId: 1,
+      sets: [
+        { biome: 'Frozen', names: ['Infested', 'Icy Abhorrence'] },
+        { biome: 'Barren', names: ['Infested', 'Tainted'] },
+        { biome: 'Scorched', names: ['Infested', 'Corrupted'] }
+      ],
+      alone: ['Icy Abhorrence'],
+      flora: ['Twisted', 'Screaming']
+    }
+  };
+  // As typed, any case, with or without the body's word: the biome it overlays.
+  expect(biomeFor(facts, 'icy abhorrence')?.name).toBe('Frozen');
+  expect(biomeFor(facts, 'Tainted Planet')?.name).toBe('Barren');
+  expect(isInfested(facts, 'Icy Abhorrence')).toBe(true);
+  expect(isInfested(facts, 'Frostbound')).toBe(false);
+  expect(standsAlone(facts, 'icy abhorrence')).toBe(true);
+  expect(standsAlone(facts, 'Tainted')).toBe(false);
+  expect(infestedFlora(facts)).toEqual(['Twisted', 'Screaming']);
+  // "Infested" and "Corrupted" fit several worlds: the player picks, worded as the wiki groups them.
+  expect(biomeFor(facts, 'Infested')).toBeNull();
+  // In the Infested table's own column order.
+  expect(namedWorlds(facts, 'Infested').map(world => world.label)).toEqual([
+    'Infested Frozen',
+    'Infested Barren',
+    'Infested Scorched'
+  ]);
+  const corrupted = namedWorlds(facts, 'Corrupted');
+  expect(corrupted).toHaveLength(2);
+  expect(corrupted).toEqual(
+    expect.arrayContaining([
+      { biome: 'Scorched', label: 'Infested Scorched' },
+      { biome: 'Exotic', label: 'Exotic (Glitch)' }
+    ])
+  );
+  expect(namedWorlds(facts, 'Icy Abhorrence')).toEqual([]); // one world: nothing to ask
+  // Older files have no Infested block: nothing changes for them.
+  expect(biomeFor(FACTS, 'Icy Abhorrence')).toBeNull();
+});
+
+test('4b: Vile Brood is a line the discovery menu shows, not a resource', async () => {
+  const { detectedLine, resourceChoices, resourceSource } = await import('../src/planets.ts');
+  const facts: PlanetFacts = {
+    ...FACTS,
+    detected: [{ page: 'Vile Brood', path: 'v', revId: 1, label: 'Vile Brood Detected' }]
+  };
+  expect(detectedLine(facts, 'vile brood detected')).toBe('Vile Brood Detected');
+  expect(detectedLine(facts, 'Vile Brood')).toBe('Vile Brood Detected');
+  expect(detectedLine(facts, 'Copper')).toBeNull();
+  expect(resourceChoices(facts, '', '').flatMap(group => group.names)).not.toContain('Vile Brood Detected');
+  expect(resourceSource(facts, 'Vile Brood Detected', '', '')).toBeNull();
+});
+
+test('4b: Exotic and Dead weather says "No storms"; Mega Exotic, Gas Giant and Waterworld names say nothing', async () => {
+  const { weatherReading } = await import('../src/facts.ts');
+  const cite = (value: unknown) => ({ page: 'Weather', path: 'w', url: 'u', revId: 1, quote: 'q', value });
+  const biome = (name: string, descriptors: string[]) => ({
+    page: `Biome - ${name}`,
+    path: name,
+    revId: 1,
+    name,
+    descriptors,
+    weather: { clear: [], normal: [], extreme: [], other: [] }
+  });
+  const planets: PlanetFacts = {
+    ...FACTS,
+    biomes: [...FACTS.biomes, biome('Exotic', ['Metallic']), biome('Waterworld', ['Ocean'])]
+  };
+  const file = {
+    schema: 1 as const,
+    facts: {
+      'stormless-biomes': cite(['Dead', 'Exotic']),
+      'unrated-weather-biomes': cite(['Dead', 'Exotic', 'Mega Exotic', 'Gas Giant', 'Waterworld'])
+    },
+    planets
+  };
+  expect(weatherReading(file, 'Metallic Planet', 'Obsidian Heat')).toEqual({ cls: 'stormless', biome: 'Exotic' });
+  // Even a word another biome's table rates as a storm: the page says these worlds always lack them.
+  expect(weatherReading(file, 'Exotic', 'Deep Freeze')?.cls).toBe('stormless');
+  // A Waterworld always says "Coastal Storms": no pill, never a severity borrowed from another table.
+  expect(weatherReading(file, 'Ocean', 'Coastal Storms')).toBeNull();
+  expect(weatherReading(file, 'Waterworld', 'Deep Freeze')).toBeNull();
+  // Other worlds still read their table.
+  expect(weatherReading(file, 'Frozen', 'Deep Freeze')).toEqual({ cls: 'extreme', biome: 'Frozen' });
+  expect(weatherReading(file, 'Exotic', '')).toBeNull();
+  // An older facts file without the sentences: the tables, as before.
+  expect(weatherReading({ ...file, facts: {} }, 'Exotic', 'Obsidian Heat')).toBeNull();
 });
