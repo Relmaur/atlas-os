@@ -342,6 +342,42 @@ export function ringsInView(cam: Camera, w: number, h: number, step: number, max
   return radii;
 }
 
+/**
+ * The part of a circle round the core (`radius` in regions) that crosses the view, with `margin` pixels to spare:
+ * null when none of it does, `full` while the circle is small enough to draw whole, else the arc's ends as angles
+ * (radians, clockwise from east as the screen runs). Zoomed into a region the rim is ~300,000 px round; drawn whole
+ * (and dashed) a phone renders hundreds of thousands of dashes a frame, so only the arc on screen is drawn.
+ */
+export function arcInView(
+  cam: Camera,
+  w: number,
+  h: number,
+  radius: number,
+  margin = 8
+): { full: true } | { from: number; to: number } | null {
+  const core = project(cam, w, h, 0, 0);
+  const r = radius * cam.ppr;
+  const corners = [
+    [-margin, -margin],
+    [w + margin, -margin],
+    [w + margin, h + margin],
+    [-margin, h + margin]
+  ] as const;
+  const dx = Math.max(-margin - core.x, 0, core.x - (w + margin));
+  const dy = Math.max(-margin - core.y, 0, core.y - (h + margin));
+  const near = Math.hypot(dx, dy);
+  const far = Math.max(...corners.map(([x, y]) => Math.hypot(x - core.x, y - core.y)));
+  if (r < near || r > far) return null;
+  if (r <= 2 * (w + h)) return { full: true };
+  // Bigger than that and still crossing the view, the core is outside it: the view spans less than half a turn.
+  const toward = Math.atan2(h / 2 - core.y, w / 2 - core.x);
+  const turns = corners.map(([x, y]) => {
+    const d = Math.atan2(y - core.y, x - core.x) - toward;
+    return Math.atan2(Math.sin(d), Math.cos(d));
+  });
+  return { from: toward + Math.min(...turns), to: toward + Math.max(...turns) };
+}
+
 /** Where a ring's label goes when zoomed in: where it leaves the view's right edge, else its bottom edge. */
 export function ringLabelAt(
   cam: Camera,

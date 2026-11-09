@@ -97,6 +97,12 @@ test.describe('round 7: two systems in one region', () => {
     const crumbs = page.getByRole('navigation', { name: 'Zoom level' });
     await expect(crumbs.getByRole('button', { name: '4BA·B22' })).toHaveAttribute('aria-current', 'location');
     await expect(page.getByRole('button', { name: /^Centre the core/ })).toBeVisible();
+    // Zoomed in, the rim is ~300,000 px round: drawn whole, Safari took seconds a frame (3.38.0). Only what's on
+    // screen is drawn, so nothing on the map is far bigger than the map.
+    const biggest = await page.evaluate(() =>
+      Math.max(...[...document.querySelectorAll('#mapGalaxy svg circle')].map(c => Number(c.getAttribute('r'))))
+    );
+    expect(biggest).toBeLessThan(2000);
     await page.getByRole('button', { name: 'Whole galaxy (zoom out)' }).click();
     await expect(crumbs.getByRole('button', { name: 'Euclid' })).toHaveAttribute('aria-current', 'location');
     const { violations } = await new AxeBuilder({ page }).analyze();

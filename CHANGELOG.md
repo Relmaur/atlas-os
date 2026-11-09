@@ -6,6 +6,10 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.38.1] - 2026-11-08
+### Fixed
+- The galaxy map no longer slows to a crawl on a phone once you zoom into a group or a region of systems. Zoomed in, the galaxy's rim and rings were still drawn whole, hundreds of thousands of pixels round; now only the part on screen is drawn.
+
 ## [3.38.0] - 2026-11-08
 ### Added
 - Map options, from the gear on a phone's Map or the Map options button on a computer: colour the map's dots by star class, by race (Gek, Korvax, Vy'keen) or bases only, and turn the trail off. A key explains every mark on the map and follows your choice. The list and the selected system's card take the same colours; Reset puts it all back. It's saved on this device only, never in your log, sync or an export.

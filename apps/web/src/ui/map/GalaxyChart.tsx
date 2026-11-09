@@ -16,6 +16,7 @@ import {
   regionCode,
   ringLabelAt,
   ringStep,
+  arcInView,
   ringsInView,
   scaleBar,
   zoomAt,
@@ -711,25 +712,28 @@ export function GalaxyChart({
       >
         <g key={fade} className={fade ? 'map-fade' : undefined}>
           <defs>
-            <radialGradient id="gmGlow" cx="50%" cy="50%" r="50%">
+            {/* Placed on the core in the map's own pixels and painted over the view, not as a circle the size of the
+                galaxy: zoomed in, that circle is ~300,000 px across. Past the rim the gradient pads to transparent. */}
+            <radialGradient id="gmGlow" gradientUnits="userSpaceOnUse" cx={core.x} cy={core.y} r={rim}>
               <stop offset="0" stopColor="#1e3a5f" stopOpacity={0.55} />
               <stop offset=".35" stopColor="#0f2440" stopOpacity={0.35} />
               <stop offset="1" stopColor="#0b1325" stopOpacity={0} />
             </radialGradient>
           </defs>
-          {rim < 4e5 && <circle cx={core.x} cy={core.y} r={rim} fill="url(#gmGlow)" />}
+          <rect width={w} height={h} fill="url(#gmGlow)" />
           {spiral > 0 && (
             <g opacity={spiral}>
               <GalaxySpiral name={galaxy.name} type={galaxy.type} cx={core.x} cy={core.y} r={rim} />
             </g>
           )}
           {rings.map(r => (
-            <circle
+            <Ring
               key={r}
-              cx={core.x}
-              cy={core.y}
-              r={r * cam.ppr}
-              fill="none"
+              cam={cam}
+              w={w}
+              h={h}
+              radius={r}
+              core={core}
               stroke="#94a3b8"
               strokeOpacity={level === 'galaxy' ? 0.16 : 0.13}
             />
@@ -761,15 +765,16 @@ export function GalaxyChart({
               </text>
             ) : null;
           })}
-          <circle
-            cx={core.x}
-            cy={core.y}
-            r={rim}
-            fill="none"
+          <Ring
+            cam={cam}
+            w={w}
+            h={h}
+            radius={RIM_REGIONS}
+            core={core}
             stroke="#94a3b8"
             strokeOpacity={0.38}
             strokeWidth={1.2}
-            strokeDasharray="3 5"
+            dash={[3, 5]}
           />
           {level === 'galaxy' && (
             <text
@@ -1005,5 +1010,48 @@ function MapTool({
     >
       <i className={`ph-bold ${icon}`} aria-hidden="true" />
     </button>
+  );
+}
+
+/**
+ * A circle round the core, drawn whole while it's small and as the arc on screen once it's huge (arcInView), so a
+ * zoomed-in map doesn't rasterise a 300,000 px dashed circle every frame. The dashes keep their place on the circle
+ * as the arc's ends move, so panning doesn't make them crawl.
+ */
+function Ring({
+  cam,
+  w,
+  h,
+  radius,
+  core,
+  stroke,
+  strokeOpacity,
+  strokeWidth = 1,
+  dash
+}: {
+  cam: Camera;
+  w: number;
+  h: number;
+  radius: number;
+  core: { x: number; y: number };
+  stroke: string;
+  strokeOpacity: number;
+  strokeWidth?: number;
+  dash?: [number, number];
+}) {
+  const arc = arcInView(cam, w, h, radius);
+  if (!arc) return null;
+  const r = radius * cam.ppr;
+  const look = { fill: 'none', stroke, strokeOpacity, strokeWidth, strokeDasharray: dash?.join(' ') };
+  if ('full' in arc) return <circle cx={core.x} cy={core.y} r={r} {...look} />;
+  const end = (a: number) => `${(core.x + r * Math.cos(a)).toFixed(2)},${(core.y + r * Math.sin(a)).toFixed(2)}`;
+  const period = dash ? dash[0] + dash[1] : 0;
+  const offset = period ? (((arc.from * r) % period) + period) % period : undefined;
+  return (
+    <path
+      d={`M${end(arc.from)} A${r.toFixed(2)},${r.toFixed(2)} 0 0 1 ${end(arc.to)}`}
+      {...look}
+      strokeDashoffset={offset}
+    />
   );
 }

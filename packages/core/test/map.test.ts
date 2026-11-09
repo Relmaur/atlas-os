@@ -2,6 +2,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { normalizeSystem } from '../src/systems-model.ts';
 import {
+  arcInView,
   clusterEntries,
   clustersOf,
   coreChip,
@@ -243,4 +244,19 @@ test('light years and ordinals read as the design writes them', () => {
     '23rd',
     '101st'
   ]);
+});
+
+test('arcInView: a small circle is drawn whole, a huge one only where it crosses the view, one off screen not at all', () => {
+  const galaxy = galaxyCamera(358, 384);
+  assert.deepEqual(arcInView(galaxy, 358, 384, RIM_REGIONS), { full: true });
+  // Zoomed into a region on the rim: ~330,000 px round, so just the arc on screen, less than half a turn.
+  const deep = { x: RIM_REGIONS, z: 0, ppr: 160 };
+  const arc = arcInView(deep, 358, 384, RIM_REGIONS);
+  assert.ok(arc && 'from' in arc);
+  assert.ok(arc.to - arc.from > 0 && arc.to - arc.from < Math.PI);
+  assert.ok((arc.to - arc.from) * RIM_REGIONS * 160 < 2000); // a screen's worth of arc, not the whole circle
+  // The same place, a ring 100 regions in: well off this view.
+  assert.equal(arcInView(deep, 358, 384, RIM_REGIONS - 100), null);
+  // In a region near the core, the rim is nowhere near.
+  assert.equal(arcInView({ x: 10, z: 10, ppr: 160 }, 358, 384, RIM_REGIONS), null);
 });
