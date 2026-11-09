@@ -1620,6 +1620,20 @@ label.list-row:active {
   .nav-sub > i {
     font-size: 13px;
   }
+  /* Says the rows under Systems are the last few visited, not the whole list. */
+  .nav-sub-caption {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px 2px 36px;
+    font: 600 9.5px/1 var(--font-sans);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-label);
+  }
+  .nav-sub-caption > i {
+    font-size: 11px;
+  }
   .nav-section {
     padding: 12px 10px 4px;
     font: 600 10px/1 var(--font-sans);

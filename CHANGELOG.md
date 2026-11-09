@@ -6,6 +6,10 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.39.1] - 2026-11-09
+### Changed
+- On a computer, the systems under Systems in the open sidebar sit under a small "Recent" caption with a clock, so they read as the last few you visited, not the whole list. Screen readers hear them as "Recent systems".
+
 ## [3.39.0] - 2026-11-09
 ### Added
 - **Infested worlds.** Their names come from the wiki's Infested page ("Icy Abhorrence", "Frozen Hell", "Infested Paradise"…), and each sets the biome it overlays (Icy Abhorrence is a Frozen world) with that biome's colour, weather and resources. Everywhere a planet is drawn (rows, the orbit diagram, the planet's own page, cards and saved pictures), an Infested world wears a ring of small spores in its biome's colour. Rows add a quiet INFESTED tag, and the planet's page reads "Infested · Frozen biome". The names the wiki marks as standing alone show without "Planet" or "Moon", as the game does, and never pick Planet or Moon for you. Flora offers the six Infested words first.

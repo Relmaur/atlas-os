@@ -263,7 +263,14 @@ test('d02: the sidebar counts the Map, the Codex and the Guides, and Favourites 
     toggleNav();
     void showSection('systems');
   });
+  const recent = screen.getByRole('group', { name: 'Recent systems' });
+  expect(
+    within(recent)
+      .getAllByRole('link')
+      .map(a => a.textContent)
+  ).toEqual([expect.stringContaining('Ekwa Nexus'), expect.stringContaining('Hesper Drift')]);
   const link = screen.getByRole('link', { name: /^Favourites/ });
+  expect(within(recent).queryByRole('link', { name: /^Favourites/ })).toBeNull();
   expect(link.textContent).toContain('1');
   await userEvent.click(link);
   expect(favourites).toBe(true);

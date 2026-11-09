@@ -195,7 +195,8 @@ function Link({ item, open, at, children }: { item: Item; open: boolean; at: str
   );
 }
 
-// Under Systems when the sidebar is open: where you are and the two before it.
+// Under Systems when the sidebar is open: where you are and the two before it, under a "Recent" caption (owner,
+// 2026-11-09: three rows alone read like an incomplete list of systems).
 function RecentSystems() {
   const { systems } = useAppState();
   const recent = [...systems].sort((a, b) => latest(b).localeCompare(latest(a))).slice(0, 3);
@@ -204,13 +205,21 @@ function RecentSystems() {
   const section = useSection();
   return (
     <>
-      {recent.map((system, i) => (
-        <a key={system.id} href={appHref(`#system/${encodeURIComponent(system.id)}`)} className="nav-link nav-sub">
-          <StarDot system={system} size="w-[7px] h-[7px]" />
-          <span className="nav-name">{system.name}</span>
-          <span className="nav-count">{i === 0 ? 'here' : short(latest(system))}</span>
-        </a>
-      ))}
+      {recent.length > 0 && (
+        <div role="group" aria-label="Recent systems" className="nav-group">
+          <span className="nav-sub-caption" aria-hidden="true">
+            <i className="ph-bold ph-clock-counter-clockwise" />
+            Recent
+          </span>
+          {recent.map((system, i) => (
+            <a key={system.id} href={appHref(`#system/${encodeURIComponent(system.id)}`)} className="nav-link nav-sub">
+              <StarDot system={system} size="w-[7px] h-[7px]" />
+              <span className="nav-name">{system.name}</span>
+              <span className="nav-count">{i === 0 ? 'here' : short(latest(system))}</span>
+            </a>
+          ))}
+        </div>
+      )}
       {favourites > 0 && (
         // The Systems list's own Favourites filter (d02), from wherever in Systems you are.
         <a
