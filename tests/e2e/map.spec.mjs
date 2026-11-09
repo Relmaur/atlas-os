@@ -103,6 +103,33 @@ test.describe('round 7: two systems in one region', () => {
     expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
   });
 
+  test('7b: Map options, the sheet on a phone and the popover on a computer, pass axe and say what changed', async ({
+    page
+  }, testInfo) => {
+    await page.goto('./#map/Euclid');
+    const desk = testInfo.project.name === 'desktop';
+    await page.getByRole('button', { name: 'Map options' }).click();
+    const options = page.getByRole('dialog', { name: 'Map options' });
+    await expect(options).toBeVisible();
+    await options.getByText('Race', { exact: true }).click();
+    await options.getByRole('switch', { name: 'Trail' }).click();
+    await expect(options.getByText('Race not logged')).toBeVisible();
+    const axe = await new AxeBuilder({ page }).include(desk ? '#sec-map' : 'body').analyze();
+    expect(axe.violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
+    await page.keyboard.press('Escape');
+    await expect(options).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Map options, 2 changed' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Map options: Race colours, Trail off' })).toBeVisible();
+    // A preference of this device: its own key, never the log.
+    const kept = await page.evaluate(() => [
+      localStorage.getItem('atlas_map_options'),
+      localStorage.getItem('nms_master_os_state')
+    ]);
+    expect(JSON.parse(kept[0])).toEqual({ colour: 'race', trail: false });
+    expect(kept[1]).not.toContain('"trail"');
+    await expectNoHorizontalOverflow(page);
+  });
+
   test('with reduced motion a zoom still lands, as a fade', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('./#map/Euclid');

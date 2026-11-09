@@ -17,6 +17,7 @@ import { FitSquare, GalaxyView } from './GalaxyView.tsx';
 import { useMedia } from '../parts/useMedia.ts';
 import { openSearch } from '../shell/Search.tsx';
 import { GalaxyGlyph } from './GalaxyGlyph.tsx';
+import { MapOptionsGear } from './MapOptions.tsx';
 
 const plural = (n: number, word: string) => `${String(n)} ${word}${n === 1 ? '' : 's'}`;
 
@@ -131,7 +132,11 @@ export function MapScreen() {
   return (
     <div className="flex flex-col gap-4 pt-[env(safe-area-inset-top)] max-w-2xl lg:max-w-none">
       <header className="flex flex-col gap-1.5">
-        <h1 className="font-display text-screen-title text-ink-bright mt-4 lg:mt-0">Map</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="font-display text-screen-title text-ink-bright mt-4 lg:mt-0">Map</h1>
+          {/* Round 7b: the gear opens Map options, one galaxy's only. */}
+          {galaxy && galaxy.placed.length > 0 && <MapOptionsGear />}
+        </div>
         <p id="mapSummary" className="font-mono text-[12px] text-ink-muted">
           {summary}
         </p>

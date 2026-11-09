@@ -6,6 +6,11 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.38.0] - 2026-11-08
+### Added
+- Map options, from the gear on a phone's Map or the Map options button on a computer: colour the map's dots by star class, by race (Gek, Korvax, Vy'keen) or bases only, and turn the trail off. A key explains every mark on the map and follows your choice. The list and the selected system's card take the same colours; Reset puts it all back. It's saved on this device only, never in your log, sync or an export.
+- When an option is changed, a chip on the map ("Race colours · Trail off") and a dot on the gear say so; tapping the chip opens the options.
+
 ## [3.37.0] - 2026-11-08
 ### Changed
 - One galaxy's map is drawn at true scale: it opens on the whole galaxy, with its core, its rim and rings in light years, and a pin for each group of your systems (pins that would overlap become one). Zoom to a group and each region is a dot; zoom to a region and the systems logged there fan out round their one point. A breadcrumb shows how far in you are and takes you back up, a small locator shows where you are in the whole galaxy, and when the core is off screen a chip on the edge points to it with its distance. Pinch, drag, the mouse wheel or the + and − buttons zoom; Fit frames all your systems.

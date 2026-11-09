@@ -5,9 +5,12 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { formatLightYears } from '@atlas/core/location';
 import { clustersOf, frameCamera, project, tide, type GalaxyJourney, type Journey } from '@atlas/core/map';
 import { openSystemEditor } from '../systems/panel-store.ts';
-import { GalaxyChart, isBase, type MapHover, type MapModel, type MapPick } from './GalaxyChart.tsx';
+import { GalaxyChart, type MapHover, type MapModel, type MapPick } from './GalaxyChart.tsx';
+import { isBase } from './map-paint.ts';
 import { GalaxyGlyph } from './GalaxyGlyph.tsx';
 import { ClusterCard, MapList, SystemCard, UnaddressedList, UnplacedNote } from './GalaxyPanel.tsx';
+import { MapOptionsButton, MapOptionsSheet } from './MapOptions.tsx';
+import { setMapOptionsOpen } from './map-options-store.ts';
 import { useMapCamera } from './useMapCamera.ts';
 
 const plural = (n: number, word: string) => `${String(n)} ${word}${n === 1 ? '' : 's'}`;
@@ -84,6 +87,14 @@ export function GalaxyView({
       return next;
     });
   };
+
+  // Map options close with the galaxy (another galaxy, or another screen).
+  useEffect(
+    () => () => {
+      setMapOptionsOpen(false);
+    },
+    []
+  );
 
   const nothing = galaxy.placed.length === 0;
   const chosenCluster = pick?.kind === 'cluster' ? model.clusters.find(c => c.id === pick.id) : undefined;
@@ -217,8 +228,11 @@ export function GalaxyView({
               </a>
               {picker}
             </span>
-            <span title={summary} className="min-w-0 truncate font-mono text-[12px] text-ink-muted">
-              {summary}
+            <span className="flex items-center gap-3 min-w-0">
+              <span title={summary} className="min-w-0 truncate font-mono text-[12px] text-ink-muted">
+                {summary}
+              </span>
+              <MapOptionsButton />
             </span>
           </div>
           <div className="relative flex-1 min-h-0">
@@ -256,6 +270,7 @@ export function GalaxyView({
         {empty}
       </section>
       {rest}
+      <MapOptionsSheet />
     </div>
   );
 }

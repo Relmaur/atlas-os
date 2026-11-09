@@ -30,6 +30,8 @@ import {
 } from '@atlas/core/map';
 import { STAR_CLASSES, type System } from '@atlas/core/systems-model';
 import { GalaxySpiral } from './GalaxySpiral.tsx';
+import { changedOptions, setMapOptionsOpen, useMapOptions } from './map-options-store.ts';
+import { isBase, paint } from './map-paint.ts';
 import type { MapCamera } from './useMapCamera.ts';
 
 export type MapPick = { kind: 'system'; i: number } | { kind: 'cluster'; id: string };
@@ -43,10 +45,6 @@ export interface MapModel {
   stackOf: number[]; // system index → stack index
   clusterOf: number[]; // system index → cluster index
 }
-
-export const isBase = (system: System) =>
-  system.tags.includes('base') || system.planets.some(planet => planet.tags.includes('base'));
-export const starColour = (system: System) => (system.star ? STAR_CLASSES[system.star].color : null);
 
 const MONO = "'JetBrains Mono', monospace";
 const halo = { paintOrder: 'stroke', stroke: '#050811', strokeWidth: 3.2, strokeLinejoin: 'round' } as const;
@@ -76,6 +74,8 @@ export function GalaxyChart({
   onFocus: (i: number | null) => void;
 }) {
   const { galaxy, clusters, stacks, stackOf, clusterOf } = model;
+  const options = useMapOptions();
+  const changed = changedOptions(options);
   const box = useRef<HTMLDivElement>(null);
   const { size, setSize, goTo, jump, fade } = camera;
   // Until the box is measured (and in tests, where nothing is) the map is drawn at the board's 358 × 384.
@@ -375,12 +375,13 @@ export function GalaxyChart({
       strokeOpacity={dash ? 0.7 : 1}
     />
   );
+  // Coloured as Map options say (round 7b); the fill cross-fades when the choice changes (.map-dot).
   const dot = (system: System, x: number, y: number, r: number) => {
-    const fill = starColour(system);
+    const { fill, shrink } = paint(system, options.colour);
     return fill ? (
-      <circle cx={x} cy={y} r={r} fill={fill} />
+      <circle className="map-dot" cx={x} cy={y} r={r - shrink} fill={fill} />
     ) : (
-      <circle cx={x} cy={y} r={r * 0.85} fill="#050811" stroke="#94a3b8" strokeWidth={1.5} />
+      <circle className="map-dot" cx={x} cy={y} r={r * 0.85} fill="#050811" stroke="#94a3b8" strokeWidth={1.5} />
     );
   };
 
@@ -808,6 +809,8 @@ export function GalaxyChart({
               d={`M${trail.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}`}
               fill="none"
               stroke="#fbbf24"
+              className="map-trail"
+              opacity={options.trail ? 1 : 0}
               strokeOpacity={level === 'galaxy' ? 0.28 : 0.34}
               strokeDasharray={level === 'galaxy' ? '3 4' : undefined}
               strokeLinejoin="round"
@@ -850,6 +853,19 @@ export function GalaxyChart({
         </ol>
       </nav>
 
+      {changed.length > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            setMapOptionsOpen(true);
+          }}
+          aria-label={`Map options: ${changed.join(', ')}`}
+          className="absolute left-2.5 top-11 h-[26px] max-w-[calc(100%-104px)] pl-2 pr-2.5 rounded-[8px] inline-flex items-center gap-1.5 bg-[rgba(5,8,17,0.82)] border border-scanner-cyan-edge-strong text-scanner-cyan-text text-[11.5px] font-semibold truncate"
+        >
+          <i className="ph-bold ph-sliders-horizontal text-[13px]" aria-hidden="true" />
+          <span className="truncate">{changed.join(' · ')}</span>
+        </button>
+      )}
       {level !== 'galaxy' && (
         <button
           type="button"

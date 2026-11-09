@@ -7,7 +7,9 @@ import { clusterEntries, ordinal, regionCode, type Cluster } from '@atlas/core/m
 import { RACES, type System } from '@atlas/core/systems-model';
 import { Button, buttonClass } from '../parts/Button.tsx';
 import { openSystem, openSystemEditor } from '../systems/panel-store.ts';
-import { isBase, starColour, type MapHover, type MapModel, type MapPick } from './GalaxyChart.tsx';
+import type { MapHover, MapModel, MapPick } from './GalaxyChart.tsx';
+import { useMapOptions } from './map-options-store.ts';
+import { isBase, paint } from './map-paint.ts';
 
 const planetsOf = (system: System) => system.planetCount || system.planets.length;
 const distance = (regions: number, lyPerRegion: number | null) =>
@@ -18,32 +20,37 @@ const plural = (n: number, word: string) => `${String(n)} ${word}${n === 1 ? '' 
 export const MANY = 40;
 const CAPPED = 5;
 
+// The card's mark and the list's dots take the colour Map options chose (round 7b), like the map's own dots.
 function StarMark({ system, size = 40 }: { system: System; size?: number }) {
-  const fill = starColour(system);
+  const { fill, shrink } = paint(system, useMapOptions().colour);
   return (
     <svg width={size} height={size} viewBox="-20 -20 40 40" aria-hidden="true" className="shrink-0">
-      {fill ? <circle r={9} fill={fill} /> : <circle r={8} fill="#050811" stroke="#94a3b8" strokeWidth={1.5} />}
+      {fill ? (
+        <circle className="map-dot" r={9 - shrink} fill={fill} />
+      ) : (
+        <circle className="map-dot" r={8} fill="#050811" stroke="#94a3b8" strokeWidth={1.5} />
+      )}
       {isBase(system) && <circle r={13} fill="none" stroke="#22d3ee" strokeWidth={2} />}
     </svg>
   );
 }
 
-function Dot({ system }: { system: System }) {
-  const fill = starColour(system);
-  return isBase(system) ? (
+function Dot({ system, ring = true }: { system: System; ring?: boolean }) {
+  const { fill } = paint(system, useMapOptions().colour);
+  return ring && isBase(system) ? (
     <span
       aria-hidden="true"
       className="w-[18px] h-[18px] rounded-full grid place-items-center shadow-[inset_0_0_0_2px_#22d3ee] justify-self-center"
     >
       <span
-        className={`w-2.5 h-2.5 rounded-full ${fill ? '' : 'border border-ink-muted'}`}
+        className={`map-dot-bg w-2.5 h-2.5 rounded-full ${fill ? '' : 'border border-ink-muted'}`}
         style={fill ? { background: fill } : undefined}
       />
     </span>
   ) : (
     <span
       aria-hidden="true"
-      className={`w-2.5 h-2.5 rounded-full justify-self-center ${fill ? '' : 'border-[1.5px] border-ink-muted'}`}
+      className={`map-dot-bg w-2.5 h-2.5 rounded-full justify-self-center ${fill ? '' : 'border-[1.5px] border-ink-muted'}`}
       style={fill ? { background: fill } : undefined}
     />
   );
@@ -114,7 +121,7 @@ export function SystemCard({
                       : 'border-control-edge bg-slate-ground text-ink-soft'
                   }`}
                 >
-                  <Dot system={{ ...member, tags: [], planets: [] }} />
+                  <Dot system={member} ring={false} />
                   <span className="truncate min-w-0">{member.name}</span>
                   <span className="font-mono text-[11px] font-medium text-ink-muted">{ordinal(m + 1)}</span>
                 </button>

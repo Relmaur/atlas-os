@@ -1048,6 +1048,18 @@ label.list-row:active {
   }
 }
 
+/* Map options (round 7b, c18): a new colour choice cross-fades the dots in 160 ms and the trail fades; the global
+   reduced-motion rule makes both instant. */
+.map-dot {
+  transition: fill 160ms ease;
+}
+.map-dot-bg {
+  transition: background-color 160ms ease;
+}
+.map-trail {
+  transition: opacity 160ms ease;
+}
+
 /* One galaxy (round 7, c17): with reduced motion a zoom is a 120 ms fade instead of a camera move. The global rule
    above zeroes every animation, so this one states its own duration. */
 .map-fade {
