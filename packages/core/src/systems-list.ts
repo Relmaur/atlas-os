@@ -1,5 +1,6 @@
 // What the Systems screen shows (pure): the filtered, sorted list, the tag cloud and the summary lines, plus the
 // Outlaw Run's "Paste a list" parser.
+import { conflictReading, type ConflictReading } from './galaxy-map.ts';
 import {
   CONFLICT_LEVELS,
   OUTLAW_TAG,
@@ -129,118 +130,227 @@ export function systemsLine(systems: System[]): string {
     .join(' · ');
 }
 
-// The Systems screen's chip rail (design 02): All, then each star colour, Favourites, every tag, each race and
-// conflict level, only those the log actually has. Star colours and Favourites carry counts. Star, race and conflict
-// pick one at a time (a system has one of each); tags combine. All clears the chips but keeps the search and sort.
-export interface FilterChip {
-  id: string;
+// The Systems filters (round 8, c21): a panel with the same groups on a phone (a sheet) and the Workbench (a
+// popover), and the active filters as removable chips under the toolbar. Facet values come from the wiki's lists
+// (star classes, races, conflict levels) and show only when the log has them; a group with one value left is
+// hidden, unless that value is on. Tags are the player's own, exactly as typed, most used first. Counts are the
+// whole log's, so they don't jump as filters change; the match count is the live one.
+export interface FacetOption {
+  value: string;
   label: string;
-  count: number | null;
-  /** Star chips draw the star's colour beside the label. */
-  star?: StarClass;
-  /** A Phosphor icon drawn before the label ("map-pin-plus" on Not mapped). */
-  icon?: string;
+  count: number;
   on: boolean;
+  /** Star class options draw the star's colour. */
+  star?: StarClass;
+  /** Conflict options draw 1–3 stars, or the skull for an outlaw system (0 with `pirate`). */
+  stars?: number;
+  pirate?: boolean;
+  /** What a screen reader hears: "Medium, 2 of 3 stars, 16 systems". */
+  spoken: string;
   /** What tapping it sets on the filter. */
   next: Partial<SystemFilter>;
 }
+export interface ShowOnly {
+  key: 'favorites' | 'unmapped';
+  label: string;
+  hint: string;
+  count: number;
+  on: boolean;
+  next: Partial<SystemFilter>;
+}
+export interface ActiveFilter {
+  id: string;
+  label: string;
+  /** "Remove filter: Yellow star", "Remove filter: tag base". */
+  spoken: string;
+  star?: StarClass;
+  stars?: number;
+  pirate?: boolean;
+  favourite?: boolean;
+  /** What removing it sets on the filter. */
+  next: Partial<SystemFilter>;
+}
+export interface FilterPanel {
+  showOnly: ShowOnly[];
+  star: FacetOption[];
+  race: FacetOption[];
+  conflict: FacetOption[];
+  tags: FacetOption[];
+  active: ActiveFilter[];
+}
 
-export function filterChips(systems: System[], filter: SystemFilter): FilterChip[] {
+const systemsWord = (n: number) => plural(n, 'system');
+export const CLEAR_FILTERS: Partial<SystemFilter> = {
+  tags: [],
+  star: '',
+  race: '',
+  conflict: '',
+  favorites: false,
+  unmapped: false
+};
+const CONFLICT_STAR_COUNT: Record<ConflictLevel, number> = { low: 1, medium: 2, high: 3, pirate: 0 };
+const conflictName = (level: ConflictLevel) => (level === 'pirate' ? 'Pirate' : CONFLICT_LEVELS[level]);
+
+export function filterPanel(systems: System[], filter: SystemFilter): FilterPanel {
   const count = (keep: (system: System) => boolean) => systems.filter(keep).length;
-  const chipped = Boolean(
-    filter.tags.length || filter.star || filter.race || filter.conflict || filter.favorites || filter.unmapped
-  );
-  const chips: FilterChip[] = [
-    {
-      id: 'all',
-      label: 'All',
-      count: systems.length,
-      on: !chipped,
-      next: { tags: [], star: '', race: '', conflict: '', favorites: false, unmapped: false }
-    }
-  ];
-  // Round 7c: the systems with no address yet, right after All, only while there are some (or it's on).
-  const unmapped = count(system => !systemMapped(system));
-  if (unmapped || filter.unmapped)
-    chips.push({
-      id: 'unmapped',
-      label: 'Not mapped',
-      count: unmapped,
-      icon: 'map-pin-plus',
-      on: filter.unmapped,
-      next: { unmapped: !filter.unmapped }
+  // A one-at-a-time group: the values the log has; hidden when one is left and it isn't the one picked.
+  const facet = <K extends 'star' | 'race' | 'conflict'>(
+    key: K,
+    values: Exclude<SystemFilter[K], ''>[],
+    describe: (value: Exclude<SystemFilter[K], ''>, n: number) => Omit<FacetOption, 'count' | 'on' | 'next' | 'value'>
+  ): FacetOption[] => {
+    const options = values.flatMap(value => {
+      const n = count(system => system[key] === value);
+      const on = filter[key] === value;
+      return n || on ? [{ value, count: n, on, next: { [key]: on ? '' : value }, ...describe(value, n) }] : [];
     });
-  (Object.keys(STAR_CLASSES) as StarClass[]).forEach(star => {
-    const n = count(system => system.star === star);
-    if (n)
-      chips.push({
-        id: `star-${star}`,
-        label: STAR_CLASSES[star].label,
+    return options.length > 1 || options.some(option => option.on) ? options : [];
+  };
+  const star = facet('star', Object.keys(STAR_CLASSES) as StarClass[], (value, n) => ({
+    label: STAR_CLASSES[value].label,
+    star: value,
+    spoken: `${STAR_CLASSES[value].label}, ${systemsWord(n)}`
+  }));
+  const race = facet('race', Object.keys(RACES) as Race[], (value, n) => ({
+    label: RACES[value],
+    spoken: `${RACES[value]}, ${systemsWord(n)}`
+  }));
+  const conflict = facet('conflict', Object.keys(CONFLICT_LEVELS) as ConflictLevel[], (value, n) => ({
+    label: conflictName(value),
+    stars: CONFLICT_STAR_COUNT[value],
+    pirate: value === 'pirate',
+    spoken:
+      value === 'pirate'
+        ? `Pirate, outlaw, ${systemsWord(n)}`
+        : `${CONFLICT_LEVELS[value]}, ${String(CONFLICT_STAR_COUNT[value])} of 3 stars, ${systemsWord(n)}`
+  }));
+  const tagged = (tag: string) => count(system => systemTags(system).has(tag));
+  const tags = tagCounts(systems)
+    .map(([tag]) => [tag, tagged(tag)] as const)
+    .sort((a, b) => b[1] - a[1])
+    .map(([tag, n]): FacetOption => {
+      const on = filter.tags.includes(tag);
+      return {
+        value: tag,
+        label: tag,
         count: n,
-        star,
-        on: filter.star === star,
-        next: { star: filter.star === star ? '' : star }
-      });
-  });
-  const favorites = count(system => system.favorite);
-  if (favorites)
-    chips.push({
-      id: 'favorites',
+        on,
+        spoken: `${tag}, ${systemsWord(n)}`,
+        next: { tags: on ? filter.tags.filter(item => item !== tag) : [...filter.tags, tag] }
+      };
+    });
+  const showOnly: ShowOnly[] = [];
+  const favourites = count(system => system.favorite);
+  if (favourites || filter.favorites)
+    showOnly.push({
+      key: 'favorites',
       label: 'Favourites',
-      count: favorites,
+      hint: 'Systems you starred',
+      count: favourites,
       on: filter.favorites,
       next: { favorites: !filter.favorites }
     });
-  tagCounts(systems).forEach(([tag]) => {
-    const on = filter.tags.includes(tag);
-    chips.push({
+  const unmapped = count(system => !systemMapped(system));
+  if (unmapped || filter.unmapped)
+    showOnly.push({
+      key: 'unmapped',
+      label: 'Not mapped',
+      hint: 'No portal address yet',
+      count: unmapped,
+      on: filter.unmapped,
+      next: { unmapped: !filter.unmapped }
+    });
+
+  const active: ActiveFilter[] = [];
+  if (filter.star)
+    active.push({
+      id: 'star',
+      label: STAR_CLASSES[filter.star].label,
+      spoken: `Remove filter: ${STAR_CLASSES[filter.star].label} star`,
+      star: filter.star,
+      next: { star: '' }
+    });
+  if (filter.race)
+    active.push({
+      id: 'race',
+      label: RACES[filter.race],
+      spoken: `Remove filter: ${RACES[filter.race]}`,
+      next: { race: '' }
+    });
+  if (filter.conflict)
+    active.push({
+      id: 'conflict',
+      label: conflictName(filter.conflict),
+      spoken:
+        filter.conflict === 'pirate'
+          ? 'Remove filter: Pirate, outlaw'
+          : `Remove filter: ${CONFLICT_LEVELS[filter.conflict]} conflict, ${String(CONFLICT_STAR_COUNT[filter.conflict])} of 3`,
+      stars: CONFLICT_STAR_COUNT[filter.conflict],
+      pirate: filter.conflict === 'pirate',
+      next: { conflict: '' }
+    });
+  filter.tags.forEach(tag => {
+    active.push({
       id: `tag-${tag}`,
       label: tag,
-      count: null,
-      on,
-      next: { tags: on ? filter.tags.filter(item => item !== tag) : [...filter.tags, tag] }
+      spoken: `Remove filter: tag ${tag}`,
+      next: { tags: filter.tags.filter(item => item !== tag) }
     });
   });
-  (Object.keys(RACES) as Race[]).forEach(race => {
-    if (count(system => system.race === race))
-      chips.push({
-        id: `race-${race}`,
-        label: RACES[race],
-        count: null,
-        on: filter.race === race,
-        next: { race: filter.race === race ? '' : race }
-      });
-  });
-  (Object.keys(CONFLICT_LEVELS) as ConflictLevel[]).forEach(conflict => {
-    if (count(system => system.conflict === conflict))
-      chips.push({
-        id: `conflict-${conflict}`,
-        label: conflict === 'pirate' ? CONFLICT_LEVELS.pirate : `${CONFLICT_LEVELS[conflict]} conflict`,
-        count: null,
-        on: filter.conflict === conflict,
-        next: { conflict: filter.conflict === conflict ? '' : conflict }
-      });
-  });
-  return chips;
+  if (filter.favorites)
+    active.push({
+      id: 'favorites',
+      label: 'Favourites',
+      spoken: 'Remove filter: Favourites',
+      favourite: true,
+      next: { favorites: false }
+    });
+  if (filter.unmapped)
+    active.push({
+      id: 'unmapped',
+      label: 'Not mapped',
+      spoken: 'Remove filter: Not mapped',
+      next: { unmapped: false }
+    });
+  return { showOnly, star, race, conflict, tags, active };
+}
+
+const list = (items: string[]) =>
+  items.length < 2 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} and ${items.at(-1) ?? ''}`;
+
+/** 02g: what clashes when nothing matches, "Nothing is Purple, Pirate and tagged “home” at once." */
+export function nothingMatches(filter: SystemFilter): string {
+  const tags = filter.tags.map(tag => `“${tag}”`);
+  const traits = [
+    filter.star ? STAR_CLASSES[filter.star].label : '',
+    filter.race ? RACES[filter.race] : '',
+    filter.conflict ? (filter.conflict === 'pirate' ? 'Pirate' : `${CONFLICT_LEVELS[filter.conflict]} conflict`) : '',
+    filter.favorites ? 'a favourite' : '',
+    filter.unmapped ? 'not mapped' : '',
+    tags.length ? `tagged ${list(tags)}` : ''
+  ].filter(Boolean);
+  const q = filter.q.trim();
+  const is = traits.length ? `is ${list(traits)}${traits.length > 1 || tags.length > 1 ? ' at once' : ''}` : '';
+  const what = [is, q ? `matches “${q}”` : ''].filter(Boolean).join(' and ');
+  return `Nothing ${what || 'matches'}.`;
 }
 
 // The one-line summary under a system's name, as parts; the economy part carries the wealth for its stars.
 export interface MetaPart {
   text: string;
   wealth?: number;
+  /** The conflict, as the game shows it: "★★ Rowdy" (c22). An outlaw system isn't here: it's a pill above the name. */
+  conflict?: ConflictReading;
 }
 export function systemMeta(system: System): MetaPart[] {
   const parts: MetaPart[] = [
     { text: system.region },
     { text: system.galaxy },
     { text: system.race ? RACES[system.race] : '' },
-    { text: system.economy, wealth: system.wealth },
-    {
-      text: system.conflict
-        ? `${CONFLICT_LEVELS[system.conflict]}${system.conflict === 'pirate' ? '' : ' conflict'}`
-        : ''
-    }
+    { text: system.economy, wealth: system.wealth }
   ];
+  const conflict = conflictReading(system, CONFLICT_LEVELS);
+  if (conflict && !conflict.pirate) parts.push({ text: conflict.text, conflict });
   return parts.filter(part => part.text || part.wealth);
 }
 

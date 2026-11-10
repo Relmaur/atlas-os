@@ -514,7 +514,10 @@ const INFESTED_FACTS: FactsFile = {
       alone: ['Icy Abhorrence', 'Fiery Dreadworld'],
       flora: ['Twisted', 'Screaming']
     },
-    detected: [{ page: 'Vile Brood', path: 'wiki/mechanics/Vile_Brood.md', revId: 1, label: 'Vile Brood Detected' }]
+    detected: [
+      { page: 'They Who Returned', path: 'wiki/missions/They_Who_Returned.md', revId: 1, label: 'Dissonance Detected' },
+      { page: 'Vile Brood', path: 'wiki/mechanics/Vile_Brood.md', revId: 1, label: 'Vile Brood Detected' }
+    ]
   }
 };
 
@@ -602,4 +605,19 @@ test('36d: an Infested world’s view says so, and an older log’s "Vile Brood 
   expect(screen.getByRole('heading', { name: 'Resources · 4' })).toBeTruthy();
   // Typed as a resource by an earlier version: still there, as typed.
   expect(appState.systems[0]?.planets.find(item => item.id === 'pl-h')?.resources).toContain('Vile Brood Detected');
+});
+
+test('36d: a dissonant planet’s typed "Dissonance Detected" reads as its own line, as Vile Brood does, and stays typed', () => {
+  setFactsForTests(INFESTED_FACTS);
+  section = 'planet';
+  param = 'sys-a/pl-h';
+  const hogaw = appState.systems[0]?.planets.find(item => item.id === 'pl-h');
+  const before = hogaw?.resources.length ?? 0;
+  Object.assign(hogaw ?? {}, { resources: [...(hogaw?.resources ?? []), 'Dissonance Detected'] });
+  render(<PlanetDetails />);
+  const scan = within(screen.getByRole('region', { name: 'The scan' }));
+  expect(scan.getByText('Dissonance Detected')).toBeTruthy();
+  expect(scan.getByText(/Corrupted Sentinels here/)).toBeTruthy();
+  expect(screen.getByRole('heading', { name: `Resources · ${String(before)}` })).toBeTruthy();
+  expect(appState.systems[0]?.planets.find(item => item.id === 'pl-h')?.resources).toContain('Dissonance Detected');
 });

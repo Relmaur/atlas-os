@@ -6,6 +6,16 @@ Versions up to 2.6.0 were reconstructed from git history when the changelog was 
 
 ## [Unreleased]
 
+## [3.40.0] - 2026-11-09
+### Added
+- **Filters you can see and reach** on Systems. On a phone, Filters and Sort sit under search; Filters opens a sheet (640 wide and centred on a tablet) with every group in one place: Show only (Favourites, Not mapped), Star class, Race, Conflict and your tags, most used first, with a field to find one once you have more than 12. Filters apply as you tap and the count updates live. What's on stays visible as chips that wrap and remove themselves, with "4 of 47 systems · Clear all". When nothing matches, a card says what clashes ("Nothing is Purple, Pirate and tagged “home” at once"). On a computer the list's funnel opens the same groups as a popover, with the chips under the filter field. Sort is a proper list of its five orders. Every control is reachable by keyboard and screen reader, and every target is 44px on a phone.
+- **Outlaw systems stand out.** A pirate system wears a crimson pill with the skull above its name ("Pirate Controlled", or "Pirate (outlaw)" with no word logged), in the list and in the computer's rows; screen readers hear "outlaw system". Its card keeps a faint crimson edge, its rating stays beside the name and an Outlaw Run station's restock state moves to the card's foot.
+- **"Dissonance Detected"** works like "Vile Brood Detected": a switch in the planet sheet and its own line at the end of The scan, worded as the game shows it, with what it means (Dissonance Resonators and Corrupted Sentinels; an Echo Locator reveals a Harmonic Camp) and links into the Codex. It's no longer counted among a planet's resources; one you've already typed there stays as typed and reads as the line.
+
+### Changed
+- **Conflict reads as the game shows it**, stars and the map's word: "★★ Rowdy" in the list, the system's page and the computer's facts cell, in grey (amber stays for ratings). Screen readers hear "Conflict: Rowdy, medium, 2 of 3". The editor's level is now ★ · ★★ · ★★★ · skull with Clear, and its hints and note speak in stars ("so ★★ is set", "Use ★"). A word the wiki doesn't list is kept as typed, with no stars implied.
+- The sideways chip rail on Systems is gone (replaced by the filters above).
+
 ## [3.39.1] - 2026-11-09
 ### Changed
 - On a computer, the systems under Systems in the open sidebar sit under a small "Recent" caption with a clock, so they read as the last few you visited, not the whole list. Screen readers hear them as "Recent systems".

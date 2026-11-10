@@ -451,9 +451,16 @@ export function parseSubBiomes(body: string): { name: string; names: string[] }[
   return out;
 }
 
-/** A page saying planets with it display a line in their discovery menu: `display "Vile Brood Detected" in …`. */
+/**
+ * A page naming a line planets show in their discovery menu, as the game words it: the Vile Brood page's
+ * `display "Vile Brood Detected" in …`, or They Who Returned's `a planet … with "Dissonance Detected"` (owner,
+ * 2026-11-09: dissonant planets show it among their resources, as Vile Brood does).
+ */
 export function discoveryLine(body: string): string | null {
-  return /display "([^"]+ Detected)" in (?:their|the|its) discovery menu/i.exec(body)?.[1]?.trim() ?? null;
+  const line =
+    /display "([^"]+ Detected)" in (?:their|the|its) discovery menu/i.exec(body) ??
+    /\bplanets? [^."\n]*\bwith "([^"]+ Detected)"/i.exec(body);
+  return line?.[1]?.trim() ?? null;
 }
 
 /** The Star system page's metals by star colour: "Yellow star systems … will have [[Copper]] or [[Activated Copper]]". */

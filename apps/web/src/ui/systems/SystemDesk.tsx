@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { planetFamily, type FactsFile } from '@atlas/core/facts';
 import { formatAgo } from '@atlas/core/format';
-import { conflictPair, economyParts, economyType, strengthStars } from '@atlas/core/galaxy-map';
+import { conflictReading, economyParts, economyType, strengthStars } from '@atlas/core/galaxy-map';
 import { homeSummary } from '@atlas/core/home';
 import { notesForSystem, systemPin } from '@atlas/core/notes';
 import { systemOrbit } from '@atlas/core/orbit';
@@ -27,7 +27,7 @@ import { useNow } from '../useNow.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { useSectionParam } from '../shell/section-store.ts';
 import { Button } from '../parts/Button.tsx';
-import { SeverityPill } from '../parts/SeverityPill.tsx';
+import { ConflictText } from '../parts/Conflict.tsx';
 import { OrbitDiagram, PlanetMarker } from '../parts/StarChart.tsx';
 import { useMedia } from '../parts/useMedia.ts';
 import { useWidth } from '../parts/useWidth.ts';
@@ -278,9 +278,9 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
   const type = economyType(map, parts.name);
   const strength = strengthStars(map, parts.strength) ?? (system.wealth || null);
   const economy = [system.economy, system.economyStrength].filter(Boolean);
-  // The race leads; the conflict pair ("Rowdy // Medium") sits under it, so the row keeps six facts (d19b, d20b).
+  // The race leads; the conflict as the game shows it ("★★ Rowdy") sits under it, so the row keeps six facts (c22).
   const race = system.race ? RACES[system.race] : '';
-  const conflict = conflictPair(system, CONFLICT_LEVELS);
+  const conflict = conflictReading(system, CONFLICT_LEVELS);
   const cells: { label: string; value: ReactNode; title?: string }[] = [
     {
       label: 'Star',
@@ -341,20 +341,21 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
     { label: 'Wealth', value: strength ? stars(strength, 3) : missing },
     {
       label: 'Race · conflict',
-      title: [race, conflict?.text].filter(Boolean).join(' · '),
+      title: [race, conflict ? `${'★'.repeat(conflict.stars)} ${conflict.text}`.trim() : '']
+        .filter(Boolean)
+        .join(' · '),
       value:
         race || conflict ? (
           <span className="flex flex-col min-w-0">
             {race && <span className="truncate">{race}</span>}
             {conflict?.pirate ? (
               <span className="mt-0.5">
-                <SeverityPill danger size="M">
-                  {conflict.text}
-                </SeverityPill>
-                <span className="sr-only">, outlaw system</span>
+                <ConflictText reading={conflict} size="M" />
               </span>
             ) : conflict ? (
-              <span className="truncate text-ink-soft">{conflict.text}</span>
+              <span className="truncate text-ink-soft">
+                <ConflictText reading={conflict} />
+              </span>
             ) : null}
           </span>
         ) : (

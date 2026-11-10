@@ -4,7 +4,7 @@
 // planet sheet (35), and the orbit diagram draws from the planets.
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { planetFamily } from '@atlas/core/facts';
-import { conflictPair, economyParts, economyType, strengthStars } from '@atlas/core/galaxy-map';
+import { conflictReading, economyParts, economyType, strengthStars } from '@atlas/core/galaxy-map';
 import { homeSummary } from '@atlas/core/home';
 import { notesForSystem, systemPin } from '@atlas/core/notes';
 import { systemOrbit } from '@atlas/core/orbit';
@@ -25,7 +25,7 @@ import { useNow } from '../useNow.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
 import { goBack, useSectionParam } from '../shell/section-store.ts';
 import { Button } from '../parts/Button.tsx';
-import { SeverityPill } from '../parts/SeverityPill.tsx';
+import { ConflictText } from '../parts/Conflict.tsx';
 import { OrbitDiagram, PlanetMarker } from '../parts/StarChart.tsx';
 import { copyText, ShareSystemSheet } from '../share/ShareSheet.tsx';
 import { LinkedNoteRows } from '../notes/note-bits.tsx';
@@ -287,7 +287,7 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
   const map = facts?.galaxyMap ?? null;
   // A pair typed in one field before 3.26 ("High Tech // Balanced") reads as its two parts; the text stays as typed.
   const parts = economyParts(system);
-  const conflict = conflictPair(system, CONFLICT_LEVELS);
+  const conflict = conflictReading(system, CONFLICT_LEVELS);
   const type = economyType(map, parts.name);
   const strength = strengthStars(map, parts.strength) ?? (system.wealth || null);
   const economy = system.economy || system.economyStrength;
@@ -343,19 +343,8 @@ function Facts({ system, facts }: { system: System; facts: FactsFile | null }) {
     ['Race', system.race ? RACES[system.race] : missing],
     [
       'Conflict',
-      // The map's pair, like the economy's: "Rowdy // Medium"; an outlaw system is one crimson pill (03f).
-      conflict?.pirate ? (
-        <span>
-          <SeverityPill danger size="M">
-            {conflict.text}
-          </SeverityPill>
-          <span className="sr-only">, outlaw system</span>
-        </span>
-      ) : conflict ? (
-        conflict.text
-      ) : (
-        missing
-      )
+      // As the game shows it (c22, 03g): "★★ Rowdy"; an outlaw system is the crimson pill with the skull.
+      conflict ? <ConflictText reading={conflict} size="M" /> : missing
     ],
     [
       'Your rating',

@@ -21,7 +21,8 @@ export function Segments({
   onChange,
   clearable = false,
   rows = 1,
-  dense = false
+  dense = false,
+  danger
 }: {
   label: string;
   hideLabel?: boolean;
@@ -32,6 +33,8 @@ export function Segments({
   rows?: number;
   /** Tighter type, for four segments in half a desktop panel (d14's Race | Conflict). */
   dense?: boolean;
+  /** The one option that turns crimson when picked: the conflict's skull (c22), the game's danger. */
+  danger?: string;
 }) {
   const labelId = useId();
   const perRow = Math.ceil(options.length / rows);
@@ -57,9 +60,11 @@ export function Segments({
                     onChange(on && clearable ? '' : key);
                   }}
                   className={`flex-1 min-w-0 h-9 px-1 rounded-segment flex items-center justify-center gap-1.5 ${dense ? 'text-[12px]' : 'text-[13px]'} font-semibold transition-colors ${
-                    on
-                      ? 'bg-[rgba(16,185,129,0.18)] text-[#d1fae5] shadow-[inset_0_0_0_1px_rgba(52,211,153,0.45)]'
-                      : 'text-ink-soft hover:text-ink-bright'
+                    on && key === danger
+                      ? 'bg-danger-crimson-tint text-danger-crimson-text shadow-[inset_0_0_0_1px_var(--color-danger-crimson-edge)]'
+                      : on
+                        ? 'bg-[rgba(16,185,129,0.18)] text-[#d1fae5] shadow-[inset_0_0_0_1px_rgba(52,211,153,0.45)]'
+                        : 'text-ink-soft hover:text-ink-bright'
                   }`}
                 >
                   {extra}

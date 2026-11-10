@@ -239,6 +239,9 @@ test('4b: Infested names by the biome they overlay, the stand-alone ones, the fl
   );
   expect(discoveryLine(await page('mechanics/Vile_Brood.md'))).toBe('Vile Brood Detected');
   expect(discoveryLine(await page('building/Ancient_Bones.md'))).toBeNull();
+  expect(discoveryLine(await page('missions/They_Who_Returned.md'))).toBe('Dissonance Detected');
+  // Says "a 'Dissonance detected' sentinel level" in single quotes: not the discovery menu's own wording.
+  expect(discoveryLine(await page('places/Harmonic_Interface.md'))).toBeNull();
 
   const facts: PlanetFacts = {
     ...FACTS,

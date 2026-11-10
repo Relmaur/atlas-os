@@ -84,3 +84,34 @@ test('3.39: the Conflict Level page’s words by level, and an economy pair type
     strength: 'Opulent'
   });
 });
+
+test('c22: conflict reads as the game shows it, stars and the map’s word, and says it in words', async () => {
+  const { conflictReading } = await import('../src/galaxy-map.ts');
+  const { CONFLICT_LEVELS } = await import('../src/systems-model.ts');
+  const read = (conflict: '' | 'low' | 'medium' | 'high' | 'pirate', conflictWord: string) =>
+    conflictReading({ conflict, conflictWord }, CONFLICT_LEVELS);
+  expect(read('medium', 'Rowdy')).toEqual({
+    stars: 2,
+    pirate: false,
+    text: 'Rowdy',
+    levelNotSet: false,
+    spoken: 'Conflict: Rowdy, medium, 2 of 3'
+  });
+  // A word that is its own level is said once.
+  expect(read('medium', ' medium ')).toMatchObject({ stars: 2, text: 'Medium', spoken: 'Conflict: medium, 2 of 3' });
+  expect(read('high', '')).toMatchObject({ stars: 3, text: 'High', spoken: 'Conflict: high, 3 of 3' });
+  // A word the wiki doesn't list, with no level: kept as typed, no stars implied.
+  expect(read('', 'Calm')).toMatchObject({
+    stars: 0,
+    text: 'Calm',
+    levelNotSet: true,
+    spoken: 'Conflict: Calm, level not set'
+  });
+  expect(read('pirate', 'Pirate Controlled')).toMatchObject({
+    pirate: true,
+    text: 'Pirate Controlled',
+    spoken: 'Conflict: Pirate Controlled, outlaw system'
+  });
+  expect(read('pirate', '')).toMatchObject({ pirate: true, text: 'Pirate (outlaw)' });
+  expect(read('', ' ')).toBeNull();
+});

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { OUTLAW_TAG, STAR_CLASSES, type OutlawStatus, type System } from '@atlas/core/systems-model';
 import type { MetaPart } from '@atlas/core/systems-list';
 import { showToast } from '../../app/ui.ts';
+import { ConflictText } from './Conflict.tsx';
 
 // Falls back to showing the glyphs when the clipboard is unavailable (no permission, or not a secure context).
 export function copyGlyphs(glyphs: string): void {
@@ -70,12 +71,17 @@ export function WealthStars({ wealth }: { wealth: number }) {
   );
 }
 
-// The summary line under a system's name: "Region · Galaxy · Gek · Trading ★★ · Low conflict". Adjacent text is
-// emitted as one string, so the browser shapes (kerns) it as a single run.
+// The summary line under a system's name: "Region · Galaxy · Gek · Trading ★★ · ★★ Rowdy" (the conflict as the game
+// shows it, c22). Adjacent text is emitted as one string, so the browser shapes (kerns) it as a single run.
 export function MetaLine({ parts }: { parts: MetaPart[] }) {
   const out: ReactNode[] = [];
   let text = '';
   parts.forEach((part, i) => {
+    if (part.conflict) {
+      out.push(`${text}${i ? ' · ' : ''}`, <ConflictText key={i} reading={part.conflict} />);
+      text = '';
+      return;
+    }
     text += `${i ? ' · ' : ''}${part.text}${part.text && part.wealth ? ' ' : ''}`;
     if (part.wealth) {
       out.push(text, <WealthStars key={i} wealth={part.wealth} />);

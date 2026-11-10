@@ -162,19 +162,48 @@ export function economyParts(system: { economy: string; economyStrength: string 
   return { name: system.economy.trim(), strength: system.economyStrength.trim() };
 }
 
+/** A conflict level's stars, as the Galactic Map and the discovery menu number it (the wiki's Conflict Level page). */
+export const CONFLICT_STARS = { low: 1, medium: 2, high: 3 } as const;
+
+export interface ConflictReading {
+  /** 1–3 for Low, Medium, High; 0 for an outlaw system or a word with no level set. */
+  stars: 0 | 1 | 2 | 3;
+  pirate: boolean;
+  /** What reads beside the stars: the map's word, or the level's name when there's no word (or the word is it). */
+  text: string;
+  /** A word with no level chosen: "Calm · level not set". */
+  levelNotSet: boolean;
+  /** What a screen reader hears: "Conflict: Rowdy, medium, 2 of 3". */
+  spoken: string;
+}
+
 /**
- * A system's conflict as the map's pair reads (round 4b), like the economy's: "Rowdy // Medium"; a word that is its
- * own level once ("Medium", never "Medium // Medium"); the level alone when no word is logged. An outlaw system is
- * one pill with the map's word ("Pirate Controlled"), or "Pirate (outlaw)" without one.
+ * A system's conflict as the game shows it (round 8, c22): the level's stars and the map's word, "★★ Rowdy"; a word
+ * that is its own level once ("★★ Medium"); the level alone ("★★★ High"); a word with no level ("Calm", level not
+ * set). An outlaw system is the map's word ("Pirate Controlled"), or "Pirate (outlaw)" without one, drawn as a pill.
  */
-export function conflictPair(
+export function conflictReading(
   system: { conflict: ConflictLevel | ''; conflictWord: string },
   labels: Record<ConflictLevel, string>
-): { text: string; pirate: boolean; word: string; level: string } | null {
+): ConflictReading | null {
   const word = system.conflictWord.trim();
-  if (system.conflict === 'pirate') return { text: word || labels.pirate, pirate: true, word, level: labels.pirate };
-  const level = system.conflict ? labels[system.conflict] : '';
-  if (!word && !level) return null;
-  const text = word && level && !same(word, level) ? `${word} // ${level}` : word || level;
-  return { text, pirate: false, word, level };
+  if (system.conflict === 'pirate') {
+    const text = word || labels.pirate;
+    return { stars: 0, pirate: true, text, levelNotSet: false, spoken: `Conflict: ${text}, outlaw system` };
+  }
+  if (!system.conflict) {
+    if (!word) return null;
+    return { stars: 0, pirate: false, text: word, levelNotSet: true, spoken: `Conflict: ${word}, level not set` };
+  }
+  const stars = CONFLICT_STARS[system.conflict];
+  const level = labels[system.conflict];
+  const own = !word || same(word, level);
+  const said = `${level.toLowerCase()}, ${String(stars)} of 3`;
+  return {
+    stars,
+    pirate: false,
+    text: own ? level : word,
+    levelNotSet: false,
+    spoken: `Conflict: ${own ? said : `${word}, ${said}`}`
+  };
 }

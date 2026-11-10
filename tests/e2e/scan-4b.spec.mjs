@@ -69,7 +69,7 @@ const axe = async (page, include) => {
   expect(violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
 };
 
-test('phone 375: not-mapped tags and filter, the Infested row and view, Vile Brood, No storms, the conflict pair', async ({
+test('phone 375: not-mapped tags and filter, the Infested row and view, Vile Brood, No storms, the conflict reading', async ({
   page
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'phone', 'a phone');
@@ -80,15 +80,18 @@ test('phone 375: not-mapped tags and filter, the Infested row and view, Vile Bro
   await expect(
     list.getByRole('button', { name: /^Dissonant System #1 ?, Not mapped: no portal address yet$/ })
   ).toBeVisible();
-  await list.getByRole('button', { name: /^Not mapped/ }).click();
+  // Round 8: Not mapped is a switch in the Filters sheet.
+  await list.getByRole('button', { name: 'Filters' }).click();
+  await page.getByRole('switch', { name: /^Not mapped/ }).click();
+  await page.getByRole('button', { name: /^Show \d+ system/ }).click();
   await expect(list.getByRole('button', { name: /^Laeinen Gate/ })).toHaveCount(0);
-  await list.getByRole('button', { name: /^Not mapped/ }).click();
+  await list.getByRole('button', { name: 'Remove filter: Not mapped' }).click();
   await expectNoHorizontalOverflow(page);
   await axe(page, '#sec-systems');
 
   await page.goto('./#system/sys-lg');
   const detail = page.locator('#sec-system');
-  await expect(detail.getByText('Rowdy // Medium')).toBeVisible();
+  await expect(detail.getByText('★★ Rowdy')).toBeVisible(); // c22: as the game shows it
   await expect(detail.getByText('1 not mapped')).toBeVisible();
   const yastowma = detail.getByRole('link', { name: /^Yastowma ?, Not mapped: no planet glyph yet/ });
   await expect(yastowma).toContainText('Infested');
@@ -112,7 +115,7 @@ test('phone 375: not-mapped tags and filter, the Infested row and view, Vile Bro
   await expect(page.locator('#sec-system').getByText('Pirate (outlaw)')).toHaveCount(0);
 });
 
-test('Workbench 1024 / 1440 / 1920: the tag above the name, the conflict pair under the race, the editor columns', async ({
+test('Workbench 1024 / 1440 / 1920: the tag above the name, the conflict under the race, the editor columns', async ({
   page
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'sets its own widths');
@@ -127,8 +130,8 @@ test('Workbench 1024 / 1440 / 1920: the tag above the name, the conflict pair un
     await page.reload();
     const pane = page.locator('#sec-systems, #sec-system').first();
     await expect(page.getByText('No address').first()).toBeVisible();
-    const raceCell = page.getByTitle('Gek · Rowdy // Medium');
-    await expect(raceCell).toContainText('Rowdy // Medium');
+    const raceCell = page.getByTitle('Gek · ★★ Rowdy', { exact: true });
+    await expect(raceCell).toContainText('★★ Rowdy');
     const spills = await page.evaluate(() =>
       [...document.querySelectorAll('main *')]
         .filter(el => el instanceof HTMLElement && el.offsetParent && el.scrollWidth > el.clientWidth + 1)

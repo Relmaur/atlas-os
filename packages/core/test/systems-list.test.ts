@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {
   DEFAULT_FILTER,
   filterActive,
-  filterChips,
+  filterPanel,
+  nothingMatches,
   filterSystems,
   parseOutlawList,
   systemMeta,
@@ -104,49 +105,96 @@ test('the Systems line names one galaxy and counts several', () => {
   assert.equal(systemsLine([]), '0 systems · 0 planets · 0 visits');
 });
 
-test('chips: only what the log has, counts on stars and favourites, one star at a time, tags combine', () => {
+test('c21: the filter panel shows what the log has, counts the whole log, and lists what’s on as chips', () => {
   const log = [
     normalizeSystem({
       name: 'A',
       star: 'yellow',
       favorite: true,
       race: 'korvax',
-      tags: ['base'],
+      conflict: 'medium',
+      tags: ['base', 'frost-crystal-farm'],
       glyphs: '10010C4BAB22'
     }),
     normalizeSystem({
       name: 'B',
       star: 'yellow',
+      race: 'gek',
       conflict: 'pirate',
       tags: ['outlaw', 'base'],
       glyphs: '20020C4BAB22'
     }),
-    normalizeSystem({ name: 'C', star: 'red' })
+    normalizeSystem({ name: 'C', star: 'red', race: 'gek' })
   ];
-  const chips = filterChips(log, DEFAULT_FILTER);
+  const panel = filterPanel(log, DEFAULT_FILTER);
   assert.deepEqual(
-    chips.map(chip => [chip.label, chip.count, chip.on]),
+    panel.showOnly.map(row => [row.label, row.count, row.on]),
     [
-      ['All', 3, true],
-      ['Not mapped', 1, false],
-      ['Yellow', 2, false],
-      ['Red', 1, false],
       ['Favourites', 1, false],
-      ['base', null, false],
-      ['outlaw', null, false],
-      ['Korvax', null, false],
-      ['Pirate (outlaw)', null, false]
+      ['Not mapped', 1, false]
     ]
   );
-  assert.deepEqual(chips.find(chip => chip.id === 'star-yellow')?.next, { star: 'yellow' });
-  const filtered: SystemFilter = { ...DEFAULT_FILTER, q: 'x', sort: 'name', star: 'yellow', tags: ['base'] };
-  const on = filterChips(log, filtered);
-  const all = on[0];
-  assert.ok(all);
-  assert.equal(all.on, false);
-  assert.deepEqual(on.find(chip => chip.id === 'star-yellow')?.next, { star: '' }); // tapping it again clears it
-  assert.deepEqual(on.find(chip => chip.id === 'tag-outlaw')?.next, { tags: ['base', 'outlaw'] });
-  assert.deepEqual(all.next, { tags: [], star: '', race: '', conflict: '', favorites: false, unmapped: false }); // keeps q and sort
+  assert.deepEqual(
+    panel.star.map(option => [option.label, option.count]),
+    [
+      ['Yellow', 2],
+      ['Red', 1]
+    ]
+  );
+  assert.deepEqual(
+    panel.race.map(option => option.spoken),
+    ['Gek, 2 systems', 'Korvax, 1 system']
+  );
+  assert.deepEqual(
+    panel.conflict.map(option => option.spoken),
+    ['Medium, 2 of 3 stars, 1 system', 'Pirate, outlaw, 1 system']
+  );
+  // Tags exactly as stored, most used first, counted by systems.
+  assert.deepEqual(
+    panel.tags.map(option => [option.label, option.count]),
+    [
+      ['base', 2],
+      ['frost-crystal-farm', 1],
+      ['outlaw', 1]
+    ]
+  );
+  assert.deepEqual(panel.active, []);
+
+  const on: SystemFilter = {
+    ...DEFAULT_FILTER,
+    q: 'x',
+    sort: 'name',
+    star: 'yellow',
+    conflict: 'medium',
+    tags: ['base']
+  };
+  const picked = filterPanel(log, on);
+  assert.deepEqual(picked.star.find(option => option.value === 'yellow')?.next, { star: '' }); // tapping it again clears it
+  assert.deepEqual(picked.tags.find(option => option.value === 'outlaw')?.next, { tags: ['base', 'outlaw'] });
+  assert.deepEqual(
+    picked.active.map(chip => [chip.label, chip.spoken]),
+    [
+      ['Yellow', 'Remove filter: Yellow star'],
+      ['Medium', 'Remove filter: Medium conflict, 2 of 3'],
+      ['base', 'Remove filter: tag base']
+    ]
+  );
+  assert.deepEqual(picked.active[2]?.next, { tags: [] });
+
+  // A group with one value left is hidden, unless it's the one picked.
+  const korvax = [normalizeSystem({ name: 'K', race: 'korvax' }), normalizeSystem({ name: 'L', race: 'korvax' })];
+  assert.deepEqual(filterPanel(korvax, DEFAULT_FILTER).race, []);
+  assert.equal(filterPanel(korvax, { ...DEFAULT_FILTER, race: 'korvax' }).race.length, 1);
+});
+
+test('02g: when nothing matches, it says what clashes', () => {
+  assert.equal(
+    nothingMatches({ ...DEFAULT_FILTER, star: 'purple', conflict: 'pirate', tags: ['home'] }),
+    'Nothing is Purple, Pirate and tagged “home” at once.'
+  );
+  assert.equal(nothingMatches({ ...DEFAULT_FILTER, tags: ['a', 'b'] }), 'Nothing is tagged “a” and “b” at once.');
+  assert.equal(nothingMatches({ ...DEFAULT_FILTER, star: 'red', q: 'kesh' }), 'Nothing is Red and matches “kesh”.');
+  assert.equal(nothingMatches({ ...DEFAULT_FILTER, q: 'kesh' }), 'Nothing matches “kesh”.');
 });
 
 test('7c: Not mapped lists the systems with no address; mapped planets are only asked once their system is', async () => {
@@ -175,12 +223,12 @@ test('7c: Not mapped lists the systems with no address; mapped planets are only 
     ['Loose']
   );
   assert.equal(
-    filterChips([placed], DEFAULT_FILTER).some(chip => chip.id === 'unmapped'),
+    filterPanel([placed], DEFAULT_FILTER).showOnly.some(row => row.key === 'unmapped'),
     false
   ); // only when n > 0
 });
 
-test('meta parts: race and conflict as labels, economy carries its wealth, pirates aren’t "conflict"', () => {
+test('meta parts: race, economy with its wealth, and conflict as the game shows it; pirates aren’t in the line', () => {
   const system = normalizeSystem({ name: 'X', region: 'R', race: 'vykeen', economy: 'Mining', wealth: 2 });
   assert.deepEqual(systemMeta(system), [
     { text: 'R' },
@@ -188,10 +236,14 @@ test('meta parts: race and conflict as labels, economy carries its wealth, pirat
     { text: "Vy'keen" },
     { text: 'Mining', wealth: 2 }
   ]);
-  assert.deepEqual(systemMeta(normalizeSystem({ name: 'Y', galaxy: '', conflict: 'pirate' })).at(-1), {
-    text: 'Pirate (outlaw)'
-  });
-  assert.deepEqual(systemMeta(normalizeSystem({ name: 'Z', conflict: 'high' })).at(-1), { text: 'High conflict' });
+  // An outlaw system is a pill above the name (c22), never in the meta line.
+  assert.deepEqual(systemMeta(normalizeSystem({ name: 'Y', galaxy: '', conflict: 'pirate' })), [{ text: 'Euclid' }]);
+  assert.deepEqual(
+    systemMeta(normalizeSystem({ name: 'Z', conflict: 'medium', conflictWord: 'Rowdy' }))
+      .slice(1)
+      .map(part => [part.text, part.conflict?.stars]),
+    [['Rowdy', 2]]
+  );
 });
 
 test('a pasted outlaw list: one per line, glyphs normalised, notes may contain bars', () => {

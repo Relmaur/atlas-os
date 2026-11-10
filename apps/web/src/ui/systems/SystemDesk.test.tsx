@@ -63,8 +63,11 @@ test('d01: the Workbench detail has the band, the name with Log a visit, six fac
   const terms = screen.getAllByRole('term').map(term => term.textContent);
   expect(terms).toEqual(['Star', 'On the map', 'Economy', 'Wealth', 'Race · conflict', 'Your rating']);
   // The race leads; the conflict sits under it, so the row keeps six facts (d19b, d20b).
-  const raceCell = screen.getByTitle('Korvax · Medium');
-  expect([...raceCell.querySelectorAll('span span')].map(line => line.textContent)).toEqual(['Korvax', 'Medium']);
+  const raceCell = screen.getByTitle('Korvax · ★★ Medium');
+  expect([...raceCell.querySelectorAll('dd > span > span')].map(line => line.textContent)).toEqual([
+    'Korvax',
+    '★★ MediumConflict: medium, 2 of 3'
+  ]);
   // A moon tied to its planet says which; a card opens the planet in the panel.
   const cards = within(screen.getByRole('region', { name: /Planets & moons/ })).getAllByRole('link');
   expect(screen.getByText('2 not mapped')).toBeTruthy();

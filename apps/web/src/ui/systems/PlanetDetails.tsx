@@ -38,7 +38,8 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 /**
  * A line the planet's discovery menu shows (36d), worded as the game shows it, at the end of The scan. Vile Brood
- * says what it means, from its wiki page: Juicy Grubs, and the Brood Mother a crushed one summons. Neutral.
+ * says what it means, from its wiki page: Juicy Grubs, and the Brood Mother a crushed one summons. Dissonance
+ * Detected, from the Dissonance Resonator and Harmonic Interface pages. Neutral.
  */
 function DetectedLine({ label, page }: { label: string; page: string | undefined }) {
   const codex = (name: string) =>
@@ -56,12 +57,22 @@ function DetectedLine({ label, page }: { label: string; page: string | undefined
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 px-4 py-3">
       <dt className="contents">
-        <i className="ph-bold ph-bug-beetle text-ink-label mt-0.5" aria-hidden="true" />
+        <i
+          className={`ph-bold ${page === 'Vile Brood' ? 'ph-bug-beetle' : 'ph-waveform'} text-ink-label mt-0.5`}
+          aria-hidden="true"
+        />
         <span className="text-row text-ink-bright">{label}</span>
       </dt>
       {page === 'Vile Brood' && (
         <dd className="col-start-2 text-sub text-ink-muted">
           {link('Juicy Grub', 'Juicy Grubs')} here; crushing one summons a {link('Brood Mother', 'Brood Mother')}.
+        </dd>
+      )}
+      {/* From the Dissonance Resonator and Harmonic Interface pages: what a dissonant planet holds. */}
+      {label === 'Dissonance Detected' && (
+        <dd className="col-start-2 text-sub text-ink-muted">
+          {link('Dissonance Resonator', 'Dissonance Resonators')} and Corrupted Sentinels here; an{' '}
+          {link('Echo Locator', 'Echo Locator')} reveals a {link('Harmonic Camp', 'Harmonic Camp')}.
         </dd>
       )}
     </div>

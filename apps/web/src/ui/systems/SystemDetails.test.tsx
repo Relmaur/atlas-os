@@ -81,7 +81,8 @@ test('the system leads with its orbit, where you are, its place and what the gam
     Race: 'Korvax',
     // Wealth is folded into Economy (03b): the stars read as its strength.
     Economy: 'High Tech★★★2 of 3 strength',
-    Conflict: 'Medium',
+    // c22: the stars for the eye, the words for a screen reader.
+    Conflict: '★★ MediumConflict: medium, 2 of 3',
     'Your rating': '★★★★★5 of 5'
   });
   expect(facts).not.toHaveProperty('Wealth');

@@ -2,6 +2,7 @@
 // saveSystem().
 import { useEffect, useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import {
+  CONFLICT_STARS,
   conflictLevelOf,
   conflictWords,
   economyParts,
@@ -37,6 +38,8 @@ import { goBack } from '../shell/section-store.ts';
 import { LocationBlock, locationGlyphs, locationOf, type Location } from './LocationBlock.tsx';
 import { FIELD, LABEL_FIELD, Segments, TagEditor, type Option } from './editor-parts.tsx';
 import { DiscoveryFields } from './DiscoveryFields.tsx';
+import { codexHref } from './PlanetScan.tsx';
+import { wikiEntries } from '../shell/wiki-index.ts';
 import { useAppState } from '../useAppState.ts';
 import { useMedia } from '../parts/useMedia.ts';
 
@@ -380,49 +383,89 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
       )}
     </PairCard>
   );
-  // The Galactic Map's conflict word and its level, a pair like the economy's (round 4b, 06h–06j, d14b). The words come
-  // by level from the wiki's Conflict Level page, the system's own level first; a word sets the level only while the
-  // player hasn't chosen one, and a disagreement keeps theirs with a way to take the wiki's.
+  // The Galactic Map's conflict word and its stars, as the game shows them (round 8, c22, 06k–06o, d14c). The words
+  // come by level from the wiki's Conflict Level page, the system's own level first and the outlaw word last; a word
+  // sets the stars only while the player hasn't picked them, and a disagreement keeps theirs with a way to take the
+  // wiki's. Stars are drawn for the eye and said in words.
   const levels = conflictWords(map);
-  const levelOrder = (['low', 'medium', 'high', 'pirate'] as const)
-    .slice()
-    .sort((a, b) => Number(b === draft.conflict) - Number(a === draft.conflict));
+  const LEVELS = ['low', 'medium', 'high', 'pirate'] as const;
+  const levelOrder = [...LEVELS].sort(
+    (a, b) =>
+      Number(b === draft.conflict) - Number(a === draft.conflict) || Number(a === 'pirate') - Number(b === 'pirate')
+  );
   const conflictGroups: WordGroup[] = levels
     ? levelOrder.map(level => ({
-        label: `${level === 'pirate' ? 'Outlaw' : CONFLICT_LEVELS[level]} · wiki`,
+        label: `${level === 'pirate' ? '☠' : '★'.repeat(CONFLICT_STARS[level])} · wiki`,
         options: levels[level].map(value => ({
           value,
           extra: (
             <span className="text-caption text-ink-muted">
-              {level === 'pirate' ? 'Pirate' : CONFLICT_LEVELS[level]}
+              {level === 'pirate' ? 'Outlaw' : CONFLICT_LEVELS[level]}
             </span>
           )
         }))
       }))
     : [];
   const wordLevel = conflictLevelOf(map, draft.conflictWord);
-  const levelName = (level: keyof typeof CONFLICT_LEVELS) => (level === 'pirate' ? 'Pirate' : CONFLICT_LEVELS[level]);
+  const word = draft.conflictWord.trim();
+  const conflictPage = wikiEntries().find(entry => entry.title === 'Conflict Level' && !entry.removed)?.path;
   const conflictNote =
     wordLevel && draft.conflict && wordLevel !== draft.conflict ? (
       <div className="rounded-control border border-[rgba(251,191,36,0.45)] bg-units-amber-tint px-3.5 py-3 flex items-center gap-3">
-        <p className="flex-1 text-sub text-units-amber-text">
-          {`You chose ${levelName(draft.conflict)}. The wiki lists ${draft.conflictWord.trim()} as ${levelName(wordLevel)}; your choice stays.`}
+        <i aria-hidden="true" className="ph-bold ph-info text-units-amber-text self-start mt-0.5" />
+        <p className="flex-1 m-0 text-sub text-units-amber-text">
+          You chose <LevelMark level={draft.conflict} />. The wiki lists {word} as <LevelMark level={wordLevel} />; your
+          choice stays.
         </p>
         <button
           type="button"
           onClick={() => {
             set({ conflict: wordLevel });
           }}
-          className="h-10 px-3.5 rounded-control border border-[rgba(251,191,36,0.55)] text-units-amber-text text-sm font-semibold shrink-0 hover:bg-units-amber-tint"
+          className="h-11 px-3.5 rounded-control border border-[rgba(251,191,36,0.55)] text-units-amber-text text-sm font-semibold shrink-0 hover:bg-units-amber-tint"
         >
-          {`Use ${levelName(wordLevel)}`}
+          Use <LevelMark level={wordLevel} />
         </button>
       </div>
     ) : wordLevel ? (
-      <p className="text-caption text-ink-soft">
-        {wordLevel === 'pirate'
-          ? `${draft.conflictWord.trim()} is the wiki’s word for an outlaw system${draft.conflict === 'pirate' ? ', so Pirate is set.' : '.'}`
-          : `${draft.conflictWord.trim()} is a ${CONFLICT_LEVELS[wordLevel]} word on the wiki’s Conflict Level page${draft.conflict === wordLevel ? `, so ${CONFLICT_LEVELS[wordLevel]} is set.` : '.'}`}
+      <p className="m-0 text-caption text-ink-soft">
+        {wordLevel === 'pirate' ? (
+          <>
+            {`${word} is the wiki’s word for an outlaw system`}
+            {draft.conflict === 'pirate' ? (
+              <>
+                , so <LevelMark level="pirate" /> is set.
+              </>
+            ) : (
+              '.'
+            )}
+          </>
+        ) : (
+          <>
+            {word} is a <LevelMark level={wordLevel} /> word on the wiki’s{' '}
+            {conflictPage ? (
+              <a href={codexHref(conflictPage)} className="text-scanner-cyan-pale underline hover:text-quantity-cyan">
+                Conflict Level
+              </a>
+            ) : (
+              'Conflict Level'
+            )}{' '}
+            page
+            {draft.conflict === wordLevel ? (
+              <>
+                , so <LevelMark level={wordLevel} /> is set.
+              </>
+            ) : (
+              '.'
+            )}
+          </>
+        )}
+      </p>
+    ) : word && map ? (
+      <p className="m-0 text-caption text-ink-soft">{`“${word}” isn’t one of the wiki’s conflict words; it’s kept as typed, with no stars implied.`}</p>
+    ) : !word && !draft.conflict ? (
+      <p className="m-0 text-caption text-ink-muted">
+        Pick the word the Galactic Map shows and the stars follow, or tap the stars it shows. Both can stay empty.
       </p>
     ) : null;
   const conflictWordField = (
@@ -439,25 +482,45 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
       maxLength={40}
     />
   );
+  // ★ · ★★ · ★★★ · ☠, the same look as Wealth's stars, plus Clear (empties the stars only). Each says its words.
   const conflictLevels = (
-    <Segments
-      label="Conflict level"
-      hideLabel
-      dense={wide}
-      clearable
-      value={draft.conflict}
-      onChange={conflict => {
-        setConflictFollows(false);
-        set({ conflict: conflict as Draft['conflict'] });
-      }}
-      // At 540px four levels share half the panel: "Med." to the eye, "Medium" to a screen reader (d14b).
-      options={Object.entries(CONFLICT_LEVELS).map(([key, label]): Option => [
-        key,
-        key === 'pirate' ? 'Pirate' : wide && key === 'medium' ? 'Med.' : label,
-        undefined,
-        key === 'pirate' ? 'Pirate' : label
-      ])}
-    />
+    <div className="flex items-end gap-2">
+      <div className="flex-1 min-w-0">
+        <Segments
+          label={wide ? 'Level' : 'Level, as the map shows it'}
+          value={draft.conflict}
+          clearable
+          danger="pirate"
+          onChange={conflict => {
+            setConflictFollows(false);
+            set({ conflict: conflict as Draft['conflict'] });
+          }}
+          options={[
+            ['low', '★', undefined, 'Low, 1 of 3'],
+            ['medium', '★★', undefined, 'Medium, 2 of 3'],
+            ['high', '★★★', undefined, 'High, 3 of 3'],
+            [
+              'pirate',
+              '',
+              <i key="s" aria-hidden="true" className="ph-bold ph-skull text-[17px]" />,
+              'Pirate controlled, outlaw'
+            ]
+          ]}
+        />
+      </div>
+      <button
+        type="button"
+        disabled={!draft.conflict}
+        aria-label="Clear the conflict level"
+        onClick={() => {
+          setConflictFollows(false);
+          set({ conflict: '' });
+        }}
+        className="h-11 px-2 shrink-0 text-[15px] font-semibold text-quantity-cyan hover:text-scanner-cyan-glow disabled:text-ink-disabled"
+      >
+        Clear
+      </button>
+    </div>
   );
   const conflictField = wide ? (
     <div className="flex flex-col gap-2 min-w-0">
@@ -466,7 +529,7 @@ export function SystemEditor({ existing, preset }: { existing: System | undefine
       {conflictNote}
     </div>
   ) : (
-    <PairCard title="Conflict" caption="the Galactic Map’s word // its level">
+    <PairCard title="Conflict" caption="the map’s word and its stars">
       {conflictWordField}
       {conflictLevels}
       {conflictNote}
@@ -693,5 +756,20 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       {on && <i className="ph-bold ph-check text-[11px] mr-1.5" aria-hidden="true" />}
       {label}
     </button>
+  );
+}
+
+// A conflict level in a hint: its stars (or the skull) for the eye, its words for a screen reader.
+function LevelMark({ level }: { level: keyof typeof CONFLICT_LEVELS }) {
+  return level === 'pirate' ? (
+    <>
+      <i aria-hidden="true" className="ph-bold ph-skull align-[-2px]" />
+      <span className="sr-only">pirate controlled</span>
+    </>
+  ) : (
+    <>
+      <span aria-hidden="true">{'★'.repeat(CONFLICT_STARS[level])}</span>
+      <span className="sr-only">{`${CONFLICT_LEVELS[level].toLowerCase()}, ${String(CONFLICT_STARS[level])} of 3`}</span>
+    </>
   );
 }

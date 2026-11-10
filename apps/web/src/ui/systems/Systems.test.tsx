@@ -80,42 +80,116 @@ test('a system with a star or planets draws its orbit and says where you are; on
   expect(hesper.textContent).toContain('Never visited');
 });
 
-test('search and chips narrow the list; All clears the chips; Clear filters clears everything', async () => {
+test('c21 (02c–02g): Filters opens a sheet of groups that apply as you tap; chips show what’s on and remove themselves', async () => {
   render(<Systems />);
-  const chip = (name: RegExp | string) =>
-    within(screen.getByRole('group', { name: 'Filters' })).getByRole('button', { name });
-  expect(chip('All 3').getAttribute('aria-pressed')).toBe('true');
-  await userEvent.type(screen.getByRole('searchbox', { name: 'Search systems' }), 'hauler');
+  const filters = screen.getByRole('button', { name: 'Filters' });
+  expect(filters.getAttribute('aria-haspopup')).toBe('dialog');
+  expect(screen.queryByRole('group', { name: 'Filters on' })).toBeNull(); // nothing on: no chips, no line
+  await userEvent.click(filters);
+  const sheet = within(screen.getByRole('dialog', { name: 'Filters' }));
+  expect(document.activeElement?.textContent).toBe('Filters'); // focus starts on the title
+  // One star class and one race in this log: those groups have nothing to choose between, so they're hidden.
+  expect(sheet.queryByRole('radiogroup', { name: 'Star class' })).toBeNull();
+  expect(sheet.queryByRole('radiogroup', { name: 'Race' })).toBeNull();
+  // Tags exactly as stored, most used first, each "n systems".
+  expect(
+    within(sheet.getByRole('group', { name: 'Tags' }))
+      .getAllByRole('button')
+      .map(tag => tag.textContent)
+  ).toEqual(['trade-hub2, 2 systems', 'base1, 1 system', 'mining1, 1 system', 'outlaw1, 1 system']); // the count is drawn, then said
+  await userEvent.click(sheet.getByRole('button', { name: /^mining ?, 1 system$/ }));
+  expect(sheet.getByRole('button', { name: /^mining ?, 1 system$/ }).getAttribute('aria-pressed')).toBe('true');
+  expect(sheet.getByText('1 of 3 match')).toBeTruthy();
+  const favourites = sheet.getByRole('switch', { name: 'Favourites, 1' });
+  await userEvent.click(favourites);
+  expect(favourites.getAttribute('aria-checked')).toBe('true');
+  await userEvent.click(sheet.getByRole('button', { name: 'Show 1 system' }));
+
+  expect(screen.getByRole('button', { name: /^Filters ?, 2 on$/ })).toBeTruthy();
   expect(names()).toEqual(['Hesper Drift']);
   expect(screen.getByRole('status').textContent).toBe('1 of 3 systems');
-
-  await userEvent.click(chip('mining'));
-  expect(chip('mining').getAttribute('aria-pressed')).toBe('true');
-  expect(chip('All 3').getAttribute('aria-pressed')).toBe('false');
-  await userEvent.click(chip('All 3'));
-  expect(chip('mining').getAttribute('aria-pressed')).toBe('false');
-  expect(screen.getByRole<HTMLInputElement>('searchbox').value).toBe('hauler'); // All keeps the search
-
-  await userEvent.click(chip('Yellow 1'));
-  expect(screen.getByText('No systems match these filters.')).toBeTruthy();
-  await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+  const on = within(screen.getByRole('group', { name: 'Filters on' }));
+  // Removing a chip moves focus to the chip now in its place, then back to Filters.
+  await userEvent.click(on.getByRole('button', { name: 'Remove filter: tag mining' }));
+  expect(document.activeElement?.getAttribute('aria-label')).toBe('Remove filter: Favourites');
+  await userEvent.click(on.getByRole('button', { name: 'Remove filter: Favourites' }));
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Filters' }));
   expect(names()).toHaveLength(3);
-  expect(screen.getByRole<HTMLInputElement>('searchbox').value).toBe('');
-
-  await userEvent.click(chip(/Favourites 1/));
-  expect(names()).toEqual(['Hesper Drift']);
-  await userEvent.click(chip('Korvax'));
-  expect(names()).toEqual(['Hesper Drift']);
 });
 
-test('the sort is kept when filters are cleared', async () => {
+test('02g: when nothing matches, the chips stay and a card says what clashes, with one way out', async () => {
+  act(() => {
+    setSystemFilter({ tags: ['mining'], q: 'zzz' });
+  });
   render(<Systems />);
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Sort' }), 'name');
+  expect(screen.getByRole('status').textContent).toBe('0 of 3 systems');
+  expect(
+    screen.getByText('Nothing is tagged “mining” and matches “zzz”. Remove a filter above, or clear them all.')
+  ).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: 'Clear all filters' }));
+  // The search is its own: clearing the filters keeps it, and the card now offers to clear it.
+  expect(screen.getByText('Nothing matches “zzz”. Try another search.')).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+  expect(names()).toHaveLength(3);
+});
+
+test('02d: Sort is a button and a listbox of five; the sort is kept when filters are cleared', async () => {
+  act(() => {
+    setSystemFilter({ favorites: true });
+  });
+  render(<Systems />);
+  const sort = screen.getByRole('button', { name: 'Sort: Last visited' });
+  expect(sort.getAttribute('aria-haspopup')).toBe('listbox');
+  await userEvent.click(sort);
+  const list = screen.getByRole('listbox', { name: 'Sort' });
+  expect(
+    within(list)
+      .getAllByRole('option')
+      .map(option => option.textContent)
+  ).toEqual(['Last visited', 'Newest added', 'Name', 'Rating', 'Region']);
+  expect(within(list).getByRole('option', { name: 'Last visited' }).getAttribute('aria-selected')).toBe('true');
+  await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // to Name
+  expect(screen.queryByRole('listbox')).toBeNull();
+  expect(document.activeElement?.getAttribute('aria-label')).toBe('Sort: Name');
+  await userEvent.click(screen.getByRole('button', { name: 'Clear all' }));
   expect(names()).toEqual(['Ekwa Nexus', 'Hesper Drift', 'Outlaw Den']);
-  await userEvent.click(screen.getByRole('button', { name: /Favourites/ }));
-  await userEvent.type(screen.getByRole('searchbox'), 'zzz');
-  await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
-  expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Sort' }).value).toBe('name');
+  expect(screen.getByRole('button', { name: 'Sort: Name' })).toBeTruthy();
+});
+
+test('02h, c22: an outlaw system wears a crimson pill above its name, never in the meta line; conflict reads as stars and a word', () => {
+  setAppState(
+    buildState({
+      systems: [
+        {
+          id: 'sys-p',
+          name: 'Kesh Verge',
+          glyphs: '10010C4BAB22',
+          conflict: 'pirate',
+          conflictWord: 'Pirate Controlled'
+        },
+        { id: 'sys-q', name: 'Oddun Shoal', conflict: 'pirate' },
+        {
+          id: 'sys-r',
+          name: 'Vintam Reach',
+          glyphs: '20020C4BAB22',
+          race: 'korvax',
+          conflict: 'medium',
+          conflictWord: 'Rowdy'
+        }
+      ]
+    })
+  );
+  render(<Systems />);
+  const kesh = screen.getByRole('button', { name: /^Kesh Verge ?, outlaw system$/ }).closest('article')!;
+  expect(within(kesh).getByText('Pirate Controlled')).toBeTruthy();
+  expect(kesh.textContent).not.toContain('Pirate (outlaw)');
+  // No word logged: the pill says "Pirate (outlaw)"; it sits beside No address.
+  const oddun = screen.getByRole('button', { name: /^Oddun Shoal ?, outlaw system/ }).closest('article')!;
+  expect(within(oddun).getByText('Pirate (outlaw)')).toBeTruthy();
+  expect(within(oddun).getByText('No address')).toBeTruthy();
+  const vintam = screen.getByRole('heading', { name: 'Vintam Reach' }).closest('article')!;
+  expect(within(vintam).getByText('Conflict: Rowdy, medium, 2 of 3')).toBeTruthy();
+  expect(vintam.textContent).toContain('Korvax · ★★ Rowdy');
 });
 
 test('a card opens the system; Log system and the dashed button open the editor', async () => {
@@ -146,10 +220,19 @@ test('d01: on the Workbench each system is one row: star, name (★ for a favour
     expect.stringMatching(/^Ekwa NexusOdyalutai.*Here$/),
     expect.stringMatching(/^Outlaw Den.*Never visited$/)
   ]);
-  // The filter chips wait behind their toggle; the sort says it in a word.
-  expect(document.getElementById('systemTagFilters')).toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
-  expect(document.getElementById('systemTagFilters')).not.toBeNull();
+  // The funnel opens the filters as a popover (d01d); the sort says it in a word.
+  const funnel = screen.getByRole('button', { name: 'Filters' });
+  await userEvent.click(funnel);
+  const popover = within(screen.getByRole('dialog', { name: 'Filters' }));
+  await userEvent.click(popover.getByRole('switch', { name: 'Favourites, 1' }));
+  expect(screen.getByRole('button', { name: 'Filters, 1 on' })).toBeTruthy();
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('dialog', { name: 'Filters' })).toBeNull();
+  expect(document.activeElement).toBe(funnel);
+  // What's on sits under the field: the chips, "1 of 3 systems" and Clear all.
+  expect(screen.getByRole('button', { name: 'Remove filter: Favourites' })).toBeTruthy();
+  expect(screen.getByRole('status').textContent).toBe('1 of 3 systems');
+  await userEvent.click(screen.getByRole('button', { name: 'Clear all' }));
   expect(screen.getByRole('combobox', { name: 'Sort' }).textContent).toContain('Recent');
   expect(screen.getByPlaceholderText('Filter 3 systems')).toBeTruthy();
   // With the sidebar open the column is tighter: the field and the button say it in a word.
@@ -190,10 +273,9 @@ test('7c (02b, d01b): a system with no address says so above its name, inside it
   ).toBeTruthy();
   expect(screen.queryByRole('button', { name: /^No address/ })).toBeNull();
   expect(screen.getAllByText('No address')).toHaveLength(1);
-  const chips = within(screen.getByRole('group', { name: 'Filters' }));
-  const chip = chips.getByRole('button', { name: /Not mapped/ });
-  expect(chip.textContent).toBe('Not mapped1');
-  await userEvent.click(chip);
+  await userEvent.click(screen.getByRole('button', { name: 'Filters' }));
+  await userEvent.click(screen.getByRole('switch', { name: 'Not mapped, 1' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Show 1 system' }));
   expect(screen.queryByRole('button', { name: /^Ekwa Nexus/ })).toBeNull();
   expect(screen.getByRole('button', { name: /^Dissonant System #1/ })).toBeTruthy();
 

@@ -1,22 +1,24 @@
 // The Systems log (design 02): every system warped to, searchable and filterable the way the in-game Discoveries
 // page isn't. A system with its star or planets logged draws its orbit strip; one without stays a compact card.
 // From lg it's the Workbench's list pane (round 6, d01): one dense row per system beside the open one.
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { planetFamily } from '@atlas/core/facts';
 import { formatAgo } from '@atlas/core/format';
 import { homeSummary } from '@atlas/core/home';
 import { systemOrbit } from '@atlas/core/orbit';
+import { conflictReading } from '@atlas/core/galaxy-map';
 import {
-  DEFAULT_FILTER,
-  filterActive,
-  filterChips,
+  CLEAR_FILTERS,
+  filterPanel,
   filterSystems,
+  nothingMatches,
   systemMeta,
   systemsLine,
-  type FilterChip,
+  type MetaPart,
   type SystemFilter
 } from '@atlas/core/systems-list';
 import {
+  CONFLICT_LEVELS,
   OUTLAW_TAG,
   SORTS,
   lastVisit,
@@ -26,6 +28,7 @@ import {
   type System
 } from '@atlas/core/systems-model';
 import { NotMappedTag, NotMappedText } from '../parts/RowTags.tsx';
+import { PiratePill } from '../parts/Conflict.tsx';
 import { useAppState } from '../useAppState.ts';
 import { useNow } from '../useNow.ts';
 import { loadFacts, useFacts } from '../gear/facts-store.ts';
@@ -37,6 +40,7 @@ import { useMedia } from '../parts/useMedia.ts';
 import { useNavOpen } from '../shell/nav-store.ts';
 import { useSectionParam } from '../shell/section-store.ts';
 import { openSystem, openSystemEditor, setSystemFilter, useSystemFilter } from './panel-store.ts';
+import { ActiveFilters, FiltersButton, FiltersPopover, FiltersSheet, SortMenu } from './SystemFilters.tsx';
 
 const WIDE = '(min-width: 1024px)';
 // The list pane's sort says it in a word (d01: "Recent"), so the filter field keeps its room.
@@ -77,6 +81,15 @@ export function Systems() {
   const logNew = () => {
     openSystemEditor();
   };
+  const panel = filterPanel(systems, filter);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const closeSheet = useCallback(() => {
+    setSheetOpen(false);
+  }, []);
+  const filtersButton = useRef<HTMLButtonElement>(null);
+  const focusFilters = useCallback(() => {
+    filtersButton.current?.focus();
+  }, []);
 
   if (wide)
     return <SystemRows systems={systems} visible={visible} filter={filter} hereId={hereId} now={now} onLog={logNew} />;
@@ -113,10 +126,27 @@ export function Systems() {
           className="w-full h-[42px] rounded-control border border-control-edge focus:border-scanner-cyan-edge-strong bg-slate-ground pl-10 pr-3 text-base md:text-sm text-ink-bright placeholder:text-ink-disabled focus:outline-hidden"
         />
       </label>
-      <ChipRail chips={filterChips(systems, filter)} sort={filter.sort} />
-      <p id="systemResultCount" role="status" className="sr-only">
-        {filterActive(filter) ? `${String(visible.length)} of ${plural(systems.length, 'system')}` : ''}
-      </p>
+      <div id="systemFilterBar" className="flex flex-col gap-3 -mt-1">
+        <div className="grid grid-cols-2 gap-2">
+          <FiltersButton
+            ref={filtersButton}
+            on={panel.active.length}
+            open={sheetOpen}
+            onOpen={() => {
+              setSheetOpen(true);
+            }}
+          />
+          <SortMenu sort={filter.sort} />
+        </div>
+        <ActiveFilters
+          active={panel.active}
+          matching={visible.length}
+          total={systems.length}
+          q={filter.q}
+          focusFilters={focusFilters}
+        />
+      </div>
+      <FiltersSheet open={sheetOpen} onClose={closeSheet} systems={systems} filter={filter} matching={visible.length} />
       <ul id="systemList" className="grid grid-cols-1 gap-section">
         {visible.map(system => (
           <li key={system.id}>
@@ -130,16 +160,8 @@ export function Systems() {
           </li>
         ))}
         {systems.length > 0 && visible.length === 0 && (
-          <li className="p-card rounded-card border border-dashed border-control-edge flex flex-col items-center gap-2 text-center text-sub text-ink-muted">
-            No systems match these filters.
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSystemFilter({ ...DEFAULT_FILTER, sort: filter.sort });
-              }}
-            >
-              Clear filters
-            </Button>
+          <li>
+            <NothingMatches filter={filter} chips={panel.active.length} />
           </li>
         )}
         {systems.length === 0 && (
@@ -160,67 +182,30 @@ export function Systems() {
   );
 }
 
-// A deliberate rail on phones (it scrolls sideways inside itself, never the page); from lg the chips wrap. Each chip
-// is 32px tall with a 40px hit area. Sort sits at the end: the design has no place for it, and it's a feature people
-// use.
-function ChipRail({ chips, sort }: { chips: FilterChip[]; sort: SystemFilter['sort'] | null }) {
-  const chip =
-    "relative flex-none h-8 px-3 rounded-full border text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors duration-[var(--duration-micro)] after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']";
-  const off = 'border-control-edge bg-slate-ground text-ink-soft hover:border-control-edge-hover';
+// 02g: no system matches. The chips stay above; this says what clashes, with one way out.
+function NothingMatches({ filter, chips, wide = false }: { filter: SystemFilter; chips: number; wide?: boolean }) {
   return (
     <div
-      id="systemTagFilters"
-      role="group"
-      aria-label="Filters"
-      className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] -mx-4 px-4 py-1 -my-1 lg:mx-0 lg:px-0 lg:flex-wrap lg:overflow-visible"
+      className={`flex flex-col items-center gap-3 text-center ${
+        wide
+          ? 'px-[18px] py-6 border-t border-hairline'
+          : 'p-card rounded-card border border-dashed border-control-edge'
+      }`}
     >
-      {chips.map(item => (
-        <button
-          key={item.id}
-          type="button"
-          aria-pressed={item.on}
-          id={item.id === 'favorites' ? 'systemFavFilter' : undefined}
-          onClick={() => {
-            setSystemFilter(item.next);
-          }}
-          className={`${chip} ${item.on ? 'border-ready-emerald-edge bg-ready-emerald-tint text-ready-emerald-text' : off}`}
-        >
-          {item.star && (
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ background: `var(--color-star-${item.star})` }}
-              aria-hidden="true"
-            />
-          )}
-          {item.id === 'favorites' && <span aria-hidden="true">★</span>}
-          {item.icon && <i className={`ph-bold ph-${item.icon}`} aria-hidden="true" />}
-          {item.label}
-          {item.count !== null && <span className="font-mono">{item.count}</span>}
-        </button>
-      ))}
-      {sort !== null && (
-        <span className="relative flex-none">
-          <select
-            id="systemSort"
-            value={sort}
-            onChange={event => {
-              setSystemFilter({ sort: event.target.value as SystemFilter['sort'] });
-            }}
-            aria-label="Sort"
-            className={`${chip} ${off} appearance-none pr-7`}
-          >
-            {Object.entries(SORTS).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <i
-            className="ph-bold ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-ink-muted pointer-events-none"
-            aria-hidden="true"
-          />
-        </span>
-      )}
+      <h2 className={`m-0 font-display font-bold text-ink-bright ${wide ? 'text-[15px]' : 'text-[17px]'}`}>
+        No systems match
+      </h2>
+      <p className="m-0 text-sub text-ink-muted">
+        {`${nothingMatches(filter)} ${chips ? 'Remove a filter above, or clear them all.' : 'Try another search.'}`}
+      </p>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          setSystemFilter(chips ? CLEAR_FILTERS : { q: '' });
+        }}
+      >
+        {chips ? 'Clear all filters' : 'Clear search'}
+      </Button>
     </div>
   );
 }
@@ -246,6 +231,8 @@ function Tags({ tags }: { tags: string[] }) {
   );
 }
 
+// An outlaw system's card keeps a faint crimson edge (02h), so it stands out before its pill is read.
+const PIRATE_EDGE = 'border-[rgba(248,113,113,0.3)]';
 const footerText = 'font-mono text-[11px] uppercase text-ink-muted';
 const hereText = 'text-[11px] font-bold tracking-[0.1em] uppercase text-units-amber-text shrink-0';
 
@@ -269,7 +256,16 @@ function SystemCard({
   const status = system.tags.includes(OUTLAW_TAG) ? outlawStatus(system, restockHours, now) : null;
   // Round 7c: no address yet. A label above the name inside the card's one link, never a second tap target (02b).
   const mapped = systemMapped(system);
-  const notMapped = mapped ? null : <NotMappedTag what="system" />;
+  // Round 8 (02h): an outlaw system's crimson pill sits beside Not mapped, above the name, never in the meta line.
+  const conflict = conflictReading(system, CONFLICT_LEVELS);
+  const pirate = conflict?.pirate ? conflict.text : '';
+  const notMapped =
+    mapped && !pirate ? null : (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {pirate && <PiratePill text={pirate} hidden />}
+        {!mapped && <NotMappedTag what="system" />}
+      </div>
+    );
   // The whole card opens the system: the name's button stretches over it, so the heading stays a heading.
   const name = (
     <button
@@ -281,13 +277,14 @@ function SystemCard({
       className="text-left break-words focus-visible:outline-none after:absolute after:inset-0 after:content-['']"
     >
       {system.name}
+      {pirate && <span className="sr-only">, outlaw system</span>}
       {!mapped && <NotMappedText what="system" />}
     </button>
   );
 
-  const badge = status ? (
-    <OutlawPill status={status} />
-  ) : system.rating ? (
+  // 02h: the rating stays beside the name; an Outlaw Run station's restock state moves to the card's foot.
+  const restock = status ? <OutlawPill status={status} /> : null;
+  const badge = system.rating ? (
     <span className="text-[13px] tracking-[1px] text-units-amber-text shrink-0">
       <span aria-hidden="true">{'★'.repeat(system.rating)}</span>
       <span className="sr-only">Rated {system.rating} of 5</span>
@@ -303,7 +300,7 @@ function SystemCard({
       planet => familyOf(planet).infested
     );
     return (
-      <article className={`${card} overflow-hidden border-hero-edge`}>
+      <article className={`${card} overflow-hidden ${pirate ? PIRATE_EDGE : 'border-hero-edge'}`}>
         <div className="h-[74px] hero-grid">
           <OrbitDiagram
             name={system.name}
@@ -333,14 +330,14 @@ function SystemCard({
               {visited}
               {system.planets.length > 0 && ` · ${plural(system.planets.length, 'planet')}`}
             </span>
-            {here && <span className={hereText}>You are here</span>}
+            {here ? <span className={hereText}>You are here</span> : restock}
           </div>
         </div>
       </article>
     );
   }
   return (
-    <article className={`${card} border-hairline px-card py-3.5 flex flex-col gap-2`}>
+    <article className={`${card} ${pirate ? PIRATE_EDGE : 'border-hairline'} px-card py-3.5 flex flex-col gap-2`}>
       <div className="flex items-center gap-3">
         <span
           className="w-[34px] h-[34px] rounded-full border border-dashed border-grab grid place-items-center flex-none"
@@ -349,7 +346,7 @@ function SystemCard({
           <span className="w-2 h-2 rounded-full bg-ink-disabled" />
         </span>
         <div className="min-w-0 flex-1">
-          {notMapped && <div className="mb-1">{notMapped}</div>}
+          {notMapped && <div className="mb-1.5">{notMapped}</div>}
           <h2 className="font-display text-base font-bold text-ink-bright">{name}</h2>
           <p className="mt-0.5 text-caption text-ink-muted">
             {meta.length > 0 && <MetaLine parts={meta} />}
@@ -366,6 +363,7 @@ function SystemCard({
       <div className="flex justify-between items-center gap-2 pt-2 border-t border-hairline">
         <Tags tags={system.tags} />
         <span className={`ml-auto ${here ? hereText : footerText}`}>{here ? 'You are here' : visited}</span>
+        {!here && restock}
       </div>
     </article>
   );
@@ -391,9 +389,11 @@ function SystemRows({
 }) {
   const navOpen = useNavOpen();
   const at = useSectionParam();
-  const chips = filterChips(systems, filter);
-  const filtering = chips.some(chip => chip.on && chip.id !== 'all');
-  const [showFilters, setShowFilters] = useState(filtering);
+  const panel = filterPanel(systems, filter);
+  const funnel = useRef<HTMLButtonElement>(null);
+  const focusFunnel = useCallback(() => {
+    funnel.current?.focus();
+  }, []);
   const control =
     'h-[38px] rounded-control border border-control-edge bg-slate-ground text-ink inline-flex items-center gap-1.5 px-3 text-[13px] font-semibold hover:border-control-edge-hover';
   return (
@@ -434,24 +434,7 @@ function SystemRows({
               className="w-full h-[38px] rounded-control border border-control-edge focus:border-scanner-cyan-edge-strong bg-slate-ground pl-9 pr-3 text-[13px] text-ink-bright placeholder:text-ink-disabled focus:outline-hidden"
             />
           </label>
-          <button
-            type="button"
-            onClick={() => {
-              setShowFilters(!showFilters);
-            }}
-            aria-expanded={showFilters}
-            aria-controls="systemTagFilters"
-            aria-label={filtering ? 'Filters (some on)' : 'Filters'}
-            className={`${control} relative w-[38px] justify-center px-0`}
-          >
-            <i className="ph-bold ph-funnel" aria-hidden="true" />
-            {filtering && (
-              <span
-                className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-scanner-cyan-glow"
-                aria-hidden="true"
-              />
-            )}
-          </button>
+          <FiltersPopover systems={systems} filter={filter} matching={visible.length} buttonRef={funnel} />
           <span className="relative shrink-0">
             <i
               className="ph-bold ph-sort-descending absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
@@ -474,18 +457,29 @@ function SystemRows({
             </select>
           </span>
         </div>
-        {showFilters && <ChipRail chips={chips} sort={null} />}
+        <ActiveFilters
+          active={panel.active}
+          matching={visible.length}
+          total={systems.length}
+          q={filter.q}
+          focusFilters={focusFunnel}
+          wide
+        />
       </div>
-      <p id="systemResultCount" role="status" className="sr-only">
-        {filterActive(filter) ? `${String(visible.length)} of ${plural(systems.length, 'system')}` : ''}
-      </p>
       <ul id="systemList" className="flex-1 min-h-0 overflow-y-auto">
         {visible.map(system => {
           const last = lastVisit(system);
-          const place = systemMeta(system)
-            .map(part => part.text)
+          // The row's place line: where it is and, as the game shows it, its conflict ("★★ Rowdy"); no wealth stars.
+          const parts = systemMeta(system).map(({ text, conflict }): MetaPart =>
+            conflict ? { text, conflict } : { text }
+          );
+          const place = parts
+            .map(part => (part.conflict?.stars ? `${'★'.repeat(part.conflict.stars)} ${part.text}` : part.text))
             .filter(Boolean)
             .join(' · ');
+          const reading = conflictReading(system, CONFLICT_LEVELS);
+          const pirate = reading?.pirate ? reading.text : '';
+          const mapped = systemMapped(system);
           const open = at === system.id;
           const here = system.id === hereId;
           return (
@@ -504,11 +498,17 @@ function SystemRows({
               >
                 <StarDot system={system} size="w-2.5 h-2.5" />
                 <span className="min-w-0 flex flex-col gap-0.5">
-                  {/* Round 7c (d01b): the tag above the name; the row grows to fit it. */}
-                  {!systemMapped(system) && <NotMappedTag what="system" />}
+                  {/* Round 7c (d01b) and 8 (d01d): the tags above the name; the row grows to fit them. */}
+                  {(pirate || !mapped) && (
+                    <span className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                      {pirate && <PiratePill text={pirate} hidden />}
+                      {!mapped && <NotMappedTag what="system" />}
+                    </span>
+                  )}
                   <span title={system.name} className="truncate text-sm font-semibold text-ink-bright">
                     {system.name}
-                    {!systemMapped(system) && <NotMappedText what="system" />}
+                    {pirate && <span className="sr-only">, outlaw system</span>}
+                    {!mapped && <NotMappedText what="system" />}
                     {system.favorite && (
                       <>
                         <span className="text-units-amber-text" aria-hidden="true">
@@ -520,7 +520,7 @@ function SystemRows({
                   </span>
                   {place && (
                     <span title={place} className="truncate text-xs text-ink-muted">
-                      {place}
+                      <MetaLine parts={parts} />
                     </span>
                   )}
                 </span>
@@ -534,16 +534,8 @@ function SystemRows({
           );
         })}
         {systems.length > 0 && visible.length === 0 && (
-          <li className="px-[18px] py-6 flex flex-col items-center gap-2 text-center text-sub text-ink-muted border-t border-hairline">
-            No systems match these filters.
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSystemFilter({ ...DEFAULT_FILTER, sort: filter.sort });
-              }}
-            >
-              Clear filters
-            </Button>
+          <li>
+            <NothingMatches filter={filter} chips={panel.active.length} wide />
           </li>
         )}
         {systems.length === 0 && (

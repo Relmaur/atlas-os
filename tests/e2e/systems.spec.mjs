@@ -1,10 +1,14 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, storedState, logLink } from './fixtures.mjs';
 
-// From lg the Systems list keeps its filter chips behind a Filters button (d01); below lg they're always there.
+// Round 8 (c21): Filters opens the same groups everywhere, a sheet on a phone and a popover on the Workbench; they
+// apply as you tap, and Esc closes either.
 const openFilters = async page => {
-  const toggle = page.locator('#sec-systems').getByRole('button', { name: /^Filters/ });
-  if (await toggle.isVisible()) await toggle.click();
+  await page
+    .locator('#sec-systems')
+    .getByRole('button', { name: /^Filters/ })
+    .click();
+  return page.getByRole('dialog', { name: 'Filters' });
 };
 
 test('adds a system with glyphs and a tag, logging the arrival', async ({ page }) => {
@@ -75,18 +79,18 @@ test('the Favourites filter shows only favourite systems', async ({ page }) => {
     await details.getByRole('button', { name: 'Back' }).click();
   await openFilters(page);
   await page.locator('#systemFavFilter').click();
-  await expect(page.locator('#systemFavFilter')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#systemFavFilter')).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('Escape');
   await expect(page.locator('#systemList')).toContainText('Hesper Drift');
   await expect(page.locator('#systemList')).not.toContainText('Ekwa Nexus');
 });
 
 test('filters by tag', async ({ page }) => {
   await page.goto('./#systems');
-  await openFilters(page);
-  await page
-    .locator('#systemTagFilters')
-    .getByRole('button', { name: /trade-hub/ })
-    .click();
+  const filters = await openFilters(page);
+  await filters.getByRole('button', { name: /^trade-hub/ }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Remove filter: tag trade-hub' })).toBeVisible();
   await expect(page.locator('#systemList')).toContainText('Ekwa Nexus');
   await expect(page.locator('#systemList')).not.toContainText('Hesper Drift');
 });
@@ -238,7 +242,7 @@ test('d14: the system editor panel at 1024, 1440 and 1920 pairs its fields, keep
       const box = el => el.getBoundingClientRect();
       const field = name =>
         [...document.querySelectorAll('#systemEditor label')].find(l => l.firstChild?.textContent?.trim() === name);
-      // d14b: the conflict column (the map's word over its level) sits beside Dominant race.
+      // d14b, d14c: the conflict column (the map's word over its stars) sits beside Dominant race.
       const label = text =>
         [...document.querySelectorAll('#systemEditor p, #systemEditor label')].find(
           el => el.firstChild?.textContent?.trim() === text
